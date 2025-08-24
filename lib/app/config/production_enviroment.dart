@@ -6,9 +6,9 @@ import 'package:resturant_funny/shared/enums/enviroment.dart';
 class ProductionEnvironment extends Environment {
   ProductionEnvironment()
       : super(
-          type: EnvironmentType.production,
-          apiBaseUrl: EnvConfig.API_URL,
-          enableLogs: false,
-          enableDebugMode: false,
-        );
+            type: EnvironmentType.production,
+            apiBaseUrl: EnvConfig.API_URL,
+            enableLogs: false,
+            enableDebugMode: false,
+            timeOut: EnvConfig.API_TIMEOUT);
 }

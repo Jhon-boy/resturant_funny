@@ -56,28 +56,34 @@ class HttpClient {
         if (headers != null) _logger.i('Headers: $headers');
         if (encodedBody != null) _logger.i('Body: $encodedBody');
       }
-
+      final timeoutDuration = EnvironmentConfig.current.timeOut;
       // Ejecutar petición HTTP
       http.Response response;
       switch (method.toUpperCase()) {
         case 'GET':
-          response = await http.get(Uri.parse(url), headers: headers);
+          response = await http
+              .get(Uri.parse(url), headers: headers)
+              .timeout(Duration(seconds: timeoutDuration));
           break;
         case 'POST':
-          response = await http.post(Uri.parse(url),
-              headers: headers, body: encodedBody);
+          response = await http
+              .post(Uri.parse(url), headers: headers, body: encodedBody)
+              .timeout(Duration(seconds: timeoutDuration));
           break;
         case 'PUT':
-          response = await http.put(Uri.parse(url),
-              headers: headers, body: encodedBody);
+          response = await http
+              .put(Uri.parse(url), headers: headers, body: encodedBody)
+              .timeout(Duration(seconds: timeoutDuration));
           break;
         case 'PATCH':
-          response = await http.patch(Uri.parse(url),
-              headers: headers, body: encodedBody);
+          response = await http
+              .patch(Uri.parse(url), headers: headers, body: encodedBody)
+              .timeout(Duration(seconds: timeoutDuration));
           break;
         case 'DELETE':
-          response = await http.delete(Uri.parse(url),
-              headers: headers, body: encodedBody);
+          response = await http
+              .delete(Uri.parse(url), headers: headers, body: encodedBody)
+              .timeout(Duration(seconds: timeoutDuration));
           break;
         default:
           throw Exception('Método HTTP no soportado: $method');

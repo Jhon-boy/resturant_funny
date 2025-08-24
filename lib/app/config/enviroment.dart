@@ -10,12 +10,14 @@ class Environment {
   final String apiBaseUrl;
   final bool enableLogs;
   final bool enableDebugMode;
+  final int timeOut;
 
   const Environment({
     required this.type,
     required this.apiBaseUrl,
     required this.enableLogs,
     required this.enableDebugMode,
+    required this.timeOut
   });
 
   /// Método para imprimir logs solo si están habilitados

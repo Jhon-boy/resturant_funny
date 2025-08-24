@@ -10,5 +10,6 @@ class DevelopmentEnvironment extends Environment {
           apiBaseUrl: EnvConfig.API_URL,
           enableLogs: true,
           enableDebugMode: true,
+          timeOut: EnvConfig.API_TIMEOUT
         );
 }

@@ -10,5 +10,6 @@ class TestingEnvironment extends Environment {
           apiBaseUrl: EnvConfig.API_URL,
           enableLogs: true,
           enableDebugMode: false,
+           timeOut: EnvConfig.API_TIMEOUT
         );
 }
