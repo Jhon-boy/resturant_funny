@@ -36,23 +36,14 @@ class EnvConfig {
   }
 
   /// Variables de entorno expuestas como propiedades
-  static String get API_URL => _envVars['API_URL'] ?? '';
-  static String get API_KEY => _envVars['API_KEY'] ?? '';
-  static String get DATABASE_URL => _envVars['DATABASE_URL'] ?? '';
-  static String get ENVIRONMENT => _envVars['ENVIRONMENT'] ?? 'development';
+  static String get API_URL => _envVars['API_BASE_URL'] ?? '';
   static int get API_TIMEOUT =>
       int.tryParse(_envVars['API_TIMEOUT'] ?? '30000') ?? 30000;
-  static String get APP_NAME => _envVars['APP_NAME'] ?? 'Restaurant Funny';
-  static String get APP_VERSION => _envVars['APP_VERSION'] ?? '1.0.0';
+
+  /// AMBIENTES
+  static String get ENVIRONMENT => _envVars['ENVIRONMENT'] ?? 'development';
 
   /// Variables de Supabase
   static String get SUPABASE_URL => _envVars['SUPABASE_URL'] ?? '';
   static String get SUPABASE_ANON_KEY => _envVars['SUPABASE_ANON_KEY'] ?? '';
-  static String get SUPABASE_SERVICE_ROLE_KEY =>
-      _envVars['SUPABASE_SERVICE_ROLE_KEY'] ?? '';
-  static String get SUPABASE_DATABASE_URL =>
-      _envVars['SUPABASE_DATABASE_URL'] ?? '';
-  static String get SUPABASE_PROJECT_ID =>
-      _envVars['SUPABASE_PROJECT_ID'] ?? '';
-  static String get SUPABASE_REGION => _envVars['SUPABASE_REGION'] ?? '';
 }

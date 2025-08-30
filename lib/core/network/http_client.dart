@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:resturant_funny/app/config/enviroment.dart';
-import 'package:resturant_funny/providers/auth_provider.dart';
+import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:logger/logger.dart';
 
 // METODO PARA REALIZAR PETICIONES HTTP A CUALQUIER API
@@ -36,7 +36,7 @@ class HttpClient {
     bool showLoader = true,
   }) async {
     if (showLoader) {
-      ref.read(userProvider.notifier).setLoading(true);
+      ref.read(appStateProvider.notifier).setLoading(true);
     }
 
     try {
@@ -104,7 +104,7 @@ class HttpClient {
       rethrow;
     } finally {
       if (showLoader) {
-        ref.read(userProvider.notifier).setLoading(false);
+        ref.read(appStateProvider.notifier).setLoading(false);
       }
     }
   }
