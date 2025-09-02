@@ -53,6 +53,7 @@ dependencies:
   shimmer_animation: ^2.2.2
   device_info_plus: ^11.5.0
   network_info_plus: ^6.1.4
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
@@ -70,7 +71,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
+  assets:
+    - .env
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

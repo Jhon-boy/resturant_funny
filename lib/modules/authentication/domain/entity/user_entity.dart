@@ -1,187 +1,132 @@
-import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
-
 class UserEntity {
-  final String id;
-  final String nombre;
-  final String identificacion;
-  final String numeroEmpleado;
-  final String email;
-  final String telefono;
-  final String cargo;
-  final String departamento;
-  final List<String> roles;
-  final String estado;
-  final DateTime fechaIngreso;
-  final DateTime? fechaNacimiento;
-  final String? avatar;
+  // ==== Campos obligatorios ====
+  final String nombres;
+  final String apellidos;
+
+  // ==== Campos de TUSUARIO ====
+  final int? idUsuario;
+  final int? idSucursal;
+  final String? usuario;
+  final String? password;
+  final bool? temporal;
+  final DateTime? fCreacionUsuario;
+  final DateTime? fModificacionUsuario;
+  final String? usuarioIngreso;
+  final String? userModificacion;
+
+  // ==== Campos de TPERSONA ====
+  final String? identificacion;
+  final DateTime? fnacimiento;
+  final String? genero;
+  final String? correo;
+  final String? telefono;
   final String? direccion;
-  final bool isActive;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? tipoIdentificacion;
+  final String? estadoPersona;
+  final DateTime? fCreacionPersona;
+  final DateTime? fModificacionPersona;
+  final String? usuarioIngresoPersona;
+  final String? userModificacionPersona;
 
   UserEntity({
-    required this.id,
-    required this.nombre,
-    required this.identificacion,
-    required this.numeroEmpleado,
-    required this.email,
-    required this.telefono,
-    required this.cargo,
-    required this.departamento,
-    required this.roles,
-    required this.estado,
-    required this.fechaIngreso,
-    this.fechaNacimiento,
-    this.avatar,
+    required this.nombres,
+    required this.apellidos,
+    this.idUsuario,
+    this.idSucursal,
+    this.usuario,
+    this.password,
+    this.temporal,
+    this.fCreacionUsuario,
+    this.fModificacionUsuario,
+    this.usuarioIngreso,
+    this.userModificacion,
+    this.identificacion,
+    this.fnacimiento,
+    this.genero,
+    this.correo,
+    this.telefono,
     this.direccion,
-    this.isActive = true,
-    required this.createdAt,
-    required this.updatedAt,
+    this.tipoIdentificacion,
+    this.estadoPersona,
+    this.fCreacionPersona,
+    this.fModificacionPersona,
+    this.usuarioIngresoPersona,
+    this.userModificacionPersona,
   });
 
-  // JSON Serialization
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'nombre': nombre,
-      'identificacion': identificacion,
-      'numeroEmpleado': numeroEmpleado,
-      'email': email,
-      'telefono': telefono,
-      'cargo': cargo,
-      'departamento': departamento,
-      'roles': roles,
-      'estado': estado,
-      'fechaIngreso': fechaIngreso.toIso8601String(),
-      'fechaNacimiento': fechaNacimiento?.toIso8601String(),
-      'avatar': avatar,
-      'direccion': direccion,
-      'isActive': isActive,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
-
-  // JSON Deserialization
-  factory UserEntity.fromJson(Map<String, dynamic> json) {
-    return UserEntity(
-      id: json['id'] ?? '',
-      nombre: json['nombre'] ?? '',
-      identificacion: json['identificacion'] ?? '',
-      numeroEmpleado: json['numeroEmpleado'] ?? '',
-      email: json['email'] ?? '',
-      telefono: json['telefono'] ?? '',
-      cargo: json['cargo'] ?? '',
-      departamento: json['departamento'] ?? '',
-      roles: List<String>.from(json['roles'] ?? []),
-      estado: json['estado'] ?? '',
-      fechaIngreso: DateTime.parse(
-          json['fechaIngreso'] ?? DateTime.now().toIso8601String()),
-      fechaNacimiento: json['fechaNacimiento'] != null
-          ? DateTime.parse(json['fechaNacimiento'])
-          : null,
-      avatar: json['avatar'],
-      direccion: json['direccion'],
-      isActive: json['isActive'] ?? true,
-      createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
-    );
-  }
-
-  // Copy with method for creating modified instances
-  UserEntity copyWith({
-    String? id,
-    String? nombre,
-    String? identificacion,
-    String? numeroEmpleado,
-    String? email,
-    String? telefono,
-    String? cargo,
-    String? departamento,
-    List<RolEntity>? roles,
-    String? estado,
-    DateTime? fechaIngreso,
-    DateTime? fechaNacimiento,
-    String? avatar,
-    String? direccion,
-    bool? isActive,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+  // ==== Factory desde JSON combinado ====
+  factory UserEntity.fromJson({
+    required Map<String, dynamic> usuarioJson,
+    required Map<String, dynamic> personaJson,
   }) {
     return UserEntity(
-      id: id ?? this.id,
-      nombre: nombre ?? this.nombre,
-      identificacion: identificacion ?? this.identificacion,
-      numeroEmpleado: numeroEmpleado ?? this.numeroEmpleado,
-      email: email ?? this.email,
-      telefono: telefono ?? this.telefono,
-      cargo: cargo ?? this.cargo,
-      departamento: departamento ?? this.departamento,
-      roles: roles?.map((role) => role.nombre).toList() ?? this.roles,
-      estado: estado ?? this.estado,
-      fechaIngreso: fechaIngreso ?? this.fechaIngreso,
-      fechaNacimiento: fechaNacimiento ?? this.fechaNacimiento,
-      avatar: avatar ?? this.avatar,
-      direccion: direccion ?? this.direccion,
-      isActive: isActive ?? this.isActive,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      // TPERSONA obligatorios
+      nombres: personaJson['NOMBRES'] ?? '',
+      apellidos: personaJson['APELLIDOS'] ?? '',
+
+      // TUSUARIO
+      idUsuario: usuarioJson['IDUSUARIO'],
+      idSucursal: usuarioJson['IDSUCURSAL'],
+      usuario: usuarioJson['USUARIO'],
+      password: usuarioJson['PASSWORD'],
+      temporal: usuarioJson['TEMPORAL'],
+      fCreacionUsuario: usuarioJson['FCREACION'] != null
+          ? DateTime.parse(usuarioJson['FCREACION'])
+          : null,
+      fModificacionUsuario: usuarioJson['FMODIFICACION'] != null
+          ? DateTime.parse(usuarioJson['FMODIFICACION'])
+          : null,
+      usuarioIngreso: usuarioJson['USUARIOINGRESO'],
+      userModificacion: usuarioJson['USERMODIFICACION'],
+
+      // TPERSONA
+      identificacion: personaJson['IDENTIFICACION'],
+      fnacimiento: personaJson['FNACIMIENTO'] != null
+          ? DateTime.parse(personaJson['FNACIMIENTO'])
+          : null,
+      genero: personaJson['GENERO'],
+      correo: personaJson['CORREO'],
+      telefono: personaJson['TELEFONO'],
+      direccion: personaJson['DIRECCION'],
+      tipoIdentificacion: personaJson['TIPOIDENTIFICACION'],
+      estadoPersona: personaJson['ESTADO'],
+      fCreacionPersona: personaJson['FCREACION'] != null
+          ? DateTime.parse(personaJson['FCREACION'])
+          : null,
+      fModificacionPersona: personaJson['FMODIFICACION'] != null
+          ? DateTime.parse(personaJson['FMODIFICACION'])
+          : null,
+      usuarioIngresoPersona: personaJson['USUARIOINGRESO'],
+      userModificacionPersona: personaJson['USERMODIFICACION'],
     );
   }
 
-  // Equality operators
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is UserEntity &&
-        other.id == id &&
-        other.nombre == nombre &&
-        other.identificacion == identificacion &&
-        other.numeroEmpleado == numeroEmpleado &&
-        other.email == email &&
-        other.telefono == telefono &&
-        other.cargo == cargo &&
-        other.departamento == departamento &&
-        other.roles.length == roles.length &&
-        other.roles.every((role) => roles.contains(role)) &&
-        other.estado == estado &&
-        other.fechaIngreso == fechaIngreso &&
-        other.fechaNacimiento == fechaNacimiento &&
-        other.avatar == avatar &&
-        other.direccion == direccion &&
-        other.isActive == isActive &&
-        other.createdAt == createdAt &&
-        other.updatedAt == updatedAt;
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(
-      id,
-      nombre,
-      identificacion,
-      numeroEmpleado,
-      email,
-      telefono,
-      cargo,
-      departamento,
-      Object.hashAll(roles),
-      estado,
-      fechaIngreso,
-      fechaNacimiento,
-      avatar,
-      direccion,
-      isActive,
-      createdAt,
-      updatedAt,
-    );
-  }
-
-  // ToString method for debugging
-  @override
-  String toString() {
-    return 'UserEntity(id: $id, nombre: $nombre, email: $email, cargo: $cargo, departamento: $departamento, roles: $roles, isActive: $isActive)';
+  // ==== ToJson opcional ====
+  Map<String, dynamic> toJson() {
+    return {
+      'nombres': nombres,
+      'apellidos': apellidos,
+      'idUsuario': idUsuario,
+      'idSucursal': idSucursal,
+      'usuario': usuario,
+      'password': password,
+      'temporal': temporal,
+      'fCreacionUsuario': fCreacionUsuario?.toIso8601String(),
+      'fModificacionUsuario': fModificacionUsuario?.toIso8601String(),
+      'usuarioIngreso': usuarioIngreso,
+      'userModificacion': userModificacion,
+      'identificacion': identificacion,
+      'fnacimiento': fnacimiento?.toIso8601String(),
+      'genero': genero,
+      'correo': correo,
+      'telefono': telefono,
+      'direccion': direccion,
+      'tipoIdentificacion': tipoIdentificacion,
+      'estadoPersona': estadoPersona,
+      'fCreacionPersona': fCreacionPersona?.toIso8601String(),
+      'fModificacionPersona': fModificacionPersona?.toIso8601String(),
+      'usuarioIngresoPersona': usuarioIngresoPersona,
+      'userModificacionPersona': userModificacionPersona,
+    };
   }
 }

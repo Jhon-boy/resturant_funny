@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ThemeApp {
   // === Colores principales ===
-  static const Color primary = Color(0xFFFF6B00); // Botón login (naranja)
+  static const Color primary = Color(0xFFFF6B00); 
   static const Color background = Color(0xFFF5F5F5);
   static const Color headerBackground = Color(0xFF0D0C22);
 

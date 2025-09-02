@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/auth_state.dart';
+
 // NOTIFICADOR PARA LA AUTENTICACION
 // ESTADO DE LA AUTENTICACION
 class UserNotifier extends StateNotifier<AuthState> {
@@ -50,7 +51,7 @@ class UserNotifier extends StateNotifier<AuthState> {
 
   String? get token => state.token;
 
-  List<String> get roles => state.user?.roles ?? [];
+  List<String> get roles => [];
 
   bool get isAdmin => roles.contains('ADMIN');
 }

@@ -12,6 +12,7 @@ class CustomButton extends StatelessWidget {
   final double? height;
   final double? width;
   final double borderRadius;
+  final bool enable;
 
   const CustomButton({
     super.key,
@@ -23,6 +24,7 @@ class CustomButton extends StatelessWidget {
     this.height,
     this.width,
     this.borderRadius = 12.0,
+    this.enable = true,
   });
 
   @override
@@ -31,9 +33,11 @@ class CustomButton extends StatelessWidget {
       height: height ?? 50,
       width: width ?? double.infinity,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: enable ? onPressed : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: colorButton ?? ThemeApp.primary,
+          backgroundColor: enable
+              ? (colorButton ?? ThemeApp.primary)
+              : const Color.fromARGB(255, 241, 150, 85),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),

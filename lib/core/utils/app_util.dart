@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -98,4 +100,9 @@ class AppUtils {
 
     return _cachedDeviceInfo!;
   }
+  //METODO QUE TRANSFORMA EN UN TEXTO A SHA26
+  static String generateSha256(String input) {
+    return sha256.convert(utf8.encode(input)).toString();
+  }
+  
 }

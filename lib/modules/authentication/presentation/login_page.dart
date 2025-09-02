@@ -1,15 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/snack_helper.dart';
+import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
+import 'package:resturant_funny/modules/authentication/data/repository/auth_repository_impl.dart';
+import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   bool rememberMe = false;
+  bool obscureText = true;
+  final TextEditingController usuarioController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  late final AuthRepository _authRepository;
+  bool canLogin = false;
+
+  iniciarSesion() async {
+    if (usuarioController.text.isEmpty || passwordController.text.isEmpty) {
+      SnackHelper.show(context,
+          message: "Complete todos los campos", isError: true);
+      return;
+    }
+    final result = await _authRepository.login(
+        usuarioController.text, passwordController.text);
+
+    result.fold((failure) {
+      DialogHelper.error(
+        context,
+        message: failure.message,
+        onConfirmed: () {},
+      );
+    }, (user) {
+      DialogHelper.success(
+        context,
+        message: 'Bienvenido ${user.nombres}!',
+        onConfirmed: () {
+          //
+        },
+      );
+    });
+  }
+
+  void _validateFields() {
+    setState(() {
+      canLogin = usuarioController.text.isNotEmpty &&
+          passwordController.text.isNotEmpty;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _authRepository = AuthRepositoryImpl(
+      remoteDataSource: AuthRemoteDataSourceImpl(ref: ref),
+    );
+    usuarioController.addListener(_validateFields);
+    passwordController.addListener(_validateFields);
+  }
+
+  @override
+  void dispose() {
+    usuarioController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +135,9 @@ class _LoginPageState extends State<LoginPage> {
                     const Text("USUARIO"),
                     const SizedBox(height: 8),
                     TextFormField(
-                      maxLength: 30,
+                      maxLength: AppConstants.MAX_CARACTERES_TITULOS,
+                      controller: usuarioController,
                       decoration: const InputDecoration(
-                        
                         hintText: "usuario",
                         prefixIcon: Icon(Icons.people),
                       ),
@@ -83,29 +146,36 @@ class _LoginPageState extends State<LoginPage> {
                     const Text("CONTRASEÑA"),
                     const SizedBox(height: 8),
                     TextFormField(
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        hintText: "********",
-                        prefixIcon: Icon(Icons.lock_outline),
-                        suffixIcon: Icon(Icons.visibility_outlined),
-                      ),
+                      obscureText: obscureText,
+                      controller: passwordController,
+                      decoration: InputDecoration(
+                          hintText: "********",
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                obscureText = !obscureText;
+                              });
+                            },
+                            icon: Icon(
+                              obscureText
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                          )),
                     ),
                     const SizedBox(height: 30),
 
                     // ===== LOGIN BUTTON =====
                     SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        child: const Text(
-                          "INICIAR SESIÓN",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
+                        width: double.infinity,
+                        child: CustomButton(
+                          onPressed: () {
+                            iniciarSesion();
+                          },
+                          text: "Iniciar Sesión",
+                          enable: canLogin,
+                        )),
                     const SizedBox(height: 20),
 
                     // ===== SIGN UP =====
@@ -171,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
         decoration: BoxDecoration(
           shape: BoxShape.rectangle,
           borderRadius: BorderRadius.circular(20),
-          color: color, 
+          color: color,
           boxShadow: [
             BoxShadow(
               color: ThemeApp.apple.withOpacity(0.15),

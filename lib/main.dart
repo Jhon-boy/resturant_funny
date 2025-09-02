@@ -17,10 +17,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await EnvConfig.load();
 // Cargar configuración del entorno
   EnvironmentConfig.initialize(EnvironmentType.development);
-
+  debugPrint('Supabase URL: ${EnvConfig.SUPABASE_URL}');
+  debugPrint('Supabase Anon Key: ${EnvConfig.SUPABASE_ANON_KEY}');
   // Inicializar servicios
   await StorageService.initialize();
 
@@ -103,7 +104,6 @@ class _MyAppState extends ConsumerState<MyApp> {
         '/splash': (context) => const SplashPage(),
       },
 
-      // Error handling
       builder: (context, child) {
         ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
           return Scaffold(
@@ -125,6 +125,35 @@ class _MyAppState extends ConsumerState<MyApp> {
                   Text(
                     "Por favor, inténtalo nuevamente",
                     style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: 200,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (AppUtils.navigatorKey.currentState != null) {
+                            AppUtils.navigatorKey.currentState!
+                                .pushReplacementNamed('/splash');
+                          }
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Reintentar",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
