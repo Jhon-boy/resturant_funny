@@ -23,8 +23,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   late final AuthRepository _authRepository;
   bool canLogin = false;
+  bool isLoading = false;
 
   iniciarSesion() async {
+    setState(() {
+      isLoading = true;
+    });
     if (usuarioController.text.isEmpty || passwordController.text.isEmpty) {
       SnackHelper.show(context,
           message: "Complete todos los campos", isError: true);
@@ -32,7 +36,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
     final result = await _authRepository.login(
         usuarioController.text, passwordController.text);
-
+    setState(() {
+      isLoading = false;
+    });
     result.fold((failure) {
       DialogHelper.error(
         context,
@@ -40,13 +46,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         onConfirmed: () {},
       );
     }, (user) {
-      DialogHelper.success(
-        context,
-        message: 'Bienvenido ${user.nombres}!',
-        onConfirmed: () {
-          //
-        },
-      );
+      Navigator.of(context).pushNamedAndRemoveUntil('/base', (r) => false);
+      SnackHelper.show(context, message: 'Bienvenido ${user.nombres}!');
     });
   }
 
@@ -170,10 +171,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     SizedBox(
                         width: double.infinity,
                         child: CustomButton(
+                          isLoading: isLoading,
                           onPressed: () {
                             iniciarSesion();
                           },
-                          text: "Iniciar Sesión",
+                          text: isLoading ? "Cargando..." : "Iniciar Sesión",
                           enable: canLogin,
                         )),
                     const SizedBox(height: 20),

@@ -29,12 +29,12 @@ class AuthRemoteDataSourceImpl {
           .maybeSingle();
 
       if (usuarioResponse == null) {
-        throw ServerException(message: "Usuario no encontrado");
+        throw ServerException(message: "Usuario 0 contraseña incorrectos");
       }
 
       final hashedPassword = AppUtils.generateSha256(password);
       if (usuarioResponse['PASSWORD'] != hashedPassword) {
-        throw ServerException(message: "Contraseña incorrecta");
+        throw ServerException(message: "Usuario O contraseña incorrectos");
       }
       final persona =
           await getPersonaByIdentificacion(usuarioResponse['IDENTIFICACION']);
@@ -45,6 +45,7 @@ class AuthRemoteDataSourceImpl {
 
       return user;
     } catch (e) {
+      debugPrint("Error en login: ${e.toString()}");
       debugPrint(e.toString());
       if (e is ServerException) rethrow;
       throw ServerException(message: "Error en login: ${e.toString()}");

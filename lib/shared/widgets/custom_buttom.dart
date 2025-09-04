@@ -13,6 +13,7 @@ class CustomButton extends StatelessWidget {
   final double? width;
   final double borderRadius;
   final bool enable;
+  final bool? isLoading;
 
   const CustomButton({
     super.key,
@@ -25,6 +26,7 @@ class CustomButton extends StatelessWidget {
     this.width,
     this.borderRadius = 12.0,
     this.enable = true,
+    this.isLoading = false,
   });
 
   @override
@@ -33,7 +35,11 @@ class CustomButton extends StatelessWidget {
       height: height ?? 50,
       width: width ?? double.infinity,
       child: ElevatedButton(
-        onPressed: enable ? onPressed : null,
+        onPressed: enable
+            ? isLoading == true
+                ? null
+                : onPressed
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: enable
               ? (colorButton ?? ThemeApp.primary)
@@ -46,19 +52,32 @@ class CustomButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (icon != null) ...[
-              Icon(icon, color: colorText ?? Colors.white),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              text,
-              style: TextStyle(
-                fontFamily: ThemeApp.fontFamily,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: colorText ?? Colors.white,
+            if (isLoading == true) ...[
+              Text(
+                "Cargando...",
+                style: TextStyle(
+                  fontFamily: ThemeApp.fontFamily,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colorText ?? Colors.white,
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+            ] else ...[
+              if (icon != null) ...[
+                Icon(icon, color: colorText ?? Colors.white),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                text,
+                style: TextStyle(
+                  fontFamily: ThemeApp.fontFamily,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colorText ?? Colors.white,
+                ),
+              ),
+            ]
           ],
         ),
       ),
