@@ -24,3 +24,17 @@ class NetworkException implements Exception {
   @override
   String toString() => message;
 }
+class DatabaseException implements Exception {
+  final String message;
+  DatabaseException(this.message);
+  
+  @override
+  String toString() => 'DatabaseException: $message';
+}
+class SessionException implements Exception {
+  final String message;
+  SessionException(this.message);
+  
+  @override
+  String toString() => 'SessionException: $message';
+}

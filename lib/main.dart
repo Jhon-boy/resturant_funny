@@ -99,9 +99,9 @@ class _MyAppState extends ConsumerState<MyApp> {
 
       // Navegación
       navigatorKey: AppUtils.navigatorKey,
-      initialRoute: appState.isFirstTime ? '/splash' : '/',
+      initialRoute: '/login',
       routes: {
-        '/': (context) => const LoginPage(),
+        '/login': (context) => const LoginPage(),
         '/splash': (context) => const SplashPage(),
         '/base': (context) => const BaseRoute(),
       },

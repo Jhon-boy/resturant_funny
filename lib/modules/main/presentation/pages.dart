@@ -1,19 +1,5 @@
 import 'package:flutter/material.dart';
 
-class InicioPage extends StatelessWidget {
-  const InicioPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Productos del día',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-    );
-  }
-}
-
 class VentaPage extends StatelessWidget {
   const VentaPage({super.key});
 

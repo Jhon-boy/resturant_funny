@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:resturant_funny/modules/main/presentation/base_shell.dart';
+import 'package:resturant_funny/modules/inicio/presentation/inicio_page.dart';
+import 'package:resturant_funny/modules/main/presentation/pantalla_base.dart';
 import 'package:resturant_funny/modules/main/presentation/pages.dart';
 
 class BaseRoute extends StatelessWidget {
@@ -7,17 +8,17 @@ class BaseRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const BaseShell(
+    return const PantallaBase(
       items: [
-        BaseShellItem(
+        PantallaBaseItem(
             label: 'Inicio', icon: Icons.home_outlined, builder: _inicio),
-        BaseShellItem(
+        PantallaBaseItem(
             label: 'Venta',
             icon: Icons.point_of_sale_outlined,
             builder: _venta),
-        BaseShellItem(
+        PantallaBaseItem(
             label: 'Mi Día', icon: Icons.insights_outlined, builder: _midia),
-        BaseShellItem(
+        PantallaBaseItem(
             label: 'Más', icon: Icons.menu_open_outlined, builder: _mas),
       ],
     );
