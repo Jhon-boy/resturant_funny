@@ -1,10 +1,13 @@
 // ignore_for_file: unrelated_type_equality_checks
 
 import 'package:dartz/dartz.dart';
+import 'package:flutter/widgets.dart';
 import 'package:resturant_funny/core/errors/exception.dart';
+import 'package:resturant_funny/core/models/deviceInfo_model.dart';
 import 'package:resturant_funny/core/services/conection_service.dart';
 import 'package:resturant_funny/core/utils/either.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
+import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
 
@@ -65,8 +68,88 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('ERROR EN LA BASE DE DATOS: $e');
       return const Left(ServerFailure('Unexpected error in logout'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> isTrustedDevice(
+      DeviceInfoModel deviceInfo) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+
+    try {
+      final userEntity = await remoteDataSource.isTrustedDevice(deviceInfo);
+      if (userEntity == null) {
+        return const Left(DatabaseFailure('Dispositivo no autorizado'));
+      }
+      return Right(userEntity);
+    } catch (e) {
+      debugPrint('ERROR EN LA BASE DE DATOS: $e');
+      return const Left(DatabaseFailure('Error verificando dispositivo'));
+    }
+  }
+
+  /// Verifica si el dispositivo actual es de confianza (método conveniente)
+  Future<Either<Failure, bool>> isCurrentDeviceTrusted() async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+
+    try {
+      final isValid = await remoteDataSource.isCurrentDeviceTrusted();
+      return Right(isValid);
+    } catch (e) {
+      debugPrint('ERROR EN LA BASE DE DATOS: $e');
+      return const Right(false);
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> registerTrustedDevice(UserEntity entity) async {
+    try {
+      final register = await remoteDataSource.registerTrustedDevice(entity);
+
+      return Right(register);
+    } catch (e) {
+      debugPrint('ERROR EN LA BASE DE DATOS: $e');
+      return const Right(false);
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> removeTrustedDevice(String imei) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+
+    try {
+      final success = await remoteDataSource.removeTrustedDevice(imei);
+      return Right(success);
+    } catch (e) {
+      debugPrint('ERROR EN LA BASE DE DATOS: $e');
+      return const Right(false);
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<RolEntity>>> getRolesByUser(int idUsuario) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+    try {
+      final success = await remoteDataSource.getRolesUsuario(idUsuario);
+      return Right(success);
+    } catch (e) {
+      debugPrint('ERROR EN LA BASE DE DATOS: $e');
+      return const Right([]);
     }
   }
 }

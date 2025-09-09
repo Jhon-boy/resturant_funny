@@ -1,11 +1,16 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
 import 'package:resturant_funny/modules/authentication/data/repository/auth_repository_impl.dart';
+import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
+import 'package:resturant_funny/modules/authentication/presentation/splash_page.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
@@ -25,29 +30,82 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool canLogin = false;
   bool isLoading = false;
 
-  iniciarSesion() async {
+  Future<void> iniciarSesion() async {
     setState(() {
       isLoading = true;
     });
+
     if (usuarioController.text.isEmpty || passwordController.text.isEmpty) {
+      setState(() {
+        isLoading = false;
+      });
       SnackHelper.show(context,
           message: "Complete todos los campos", isError: true);
       return;
     }
     final result = await _authRepository.login(
-        usuarioController.text, passwordController.text);
+      usuarioController.text,
+      passwordController.text,
+    );
+
     setState(() {
       isLoading = false;
     });
-    result.fold((failure) {
-      DialogHelper.error(
-        context,
-        message: failure.message,
-        onConfirmed: () {},
-      );
-    }, (user) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/base', (r) => false);
-      SnackHelper.show(context, message: 'Bienvenido ${user.nombres}!');
+
+    result.fold(
+      (failure) {
+        DialogHelper.error(context,
+            message: failure.message, onConfirmed: () {});
+      },
+      (user) async {
+        try {
+          final rolesResult =
+              await _authRepository.getRolesByUser(user.idUsuario!);
+          final roles = rolesResult.getOrElse(() => []);
+          ref.read(userProvider.notifier).setUser(user, roles: roles);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SplashPage()),
+          );
+          SnackHelper.show(context, message: 'Bienvenido ${user.nombres}!');
+        } catch (e) {
+          debugPrint("Error obteniendo roles o guardando usuario: $e");
+          DialogHelper.error(
+            context,
+            message: "Error al cargar la información del usuario",
+            onConfirmed: () {},
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> checkDevice() async {
+    final deviceInfo =await  AppUtils.getInfoDevice();
+    final trusDevice =
+        await _authRepository.isTrustedDevice(deviceInfo);
+    trusDevice.fold((failure) {
+      debugPrint("Dispositivo no Registrado");
+    }, (user) async {
+      try {
+        final rolesResult =
+            await _authRepository.getRolesByUser(user.idUsuario!);
+        final roles = rolesResult.getOrElse(() => []);
+
+        ref.read(userProvider.notifier).setUser(user, roles: roles);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SplashPage()),
+        );
+        SnackHelper.show(context, message: 'Bienvenido ${user.nombres}!');
+      } catch (e) {
+        debugPrint("Error obteniendo roles o guardando usuario: $e");
+        DialogHelper.error(
+          context,
+          message: "Error al cargar la información del usuario",
+          onConfirmed: () {},
+        );
+      }
     });
   }
 
@@ -61,6 +119,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkDevice();
+    });
+
     _authRepository = AuthRepositoryImpl(
       remoteDataSource: AuthRemoteDataSourceImpl(ref: ref),
     );

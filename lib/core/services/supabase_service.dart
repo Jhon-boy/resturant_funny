@@ -81,6 +81,26 @@ class SupabaseService {
     }
   }
 
+//METODO LIBRE DE SELECCION A TABLAS QUE NO TENGA GUARDADO LA SESION
+  static Future<Map<String, dynamic>?> selectSingleFree({
+    required String table,
+    String columns = '*',
+    required Map<String, dynamic> filters,
+  }) async {
+    try {
+      PostgrestFilterBuilder query = _supabase.from(table).select(columns);
+
+      filters.forEach((column, value) {
+        query = query.eq(column, value);
+      });
+
+      return await query.maybeSingle();
+    } catch (e) {
+      _handleDatabaseError(e, 'SELECT_SINGLE', table);
+      rethrow;
+    }
+  }
+
   // =====================================
   // INSERT
   // =====================================

@@ -4,6 +4,8 @@ import 'package:resturant_funny/core/errors/exception.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
+import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
+import 'package:resturant_funny/shared/enums/entities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -28,7 +30,7 @@ class EnhancedAuthService {
 
       // Consultar usuario directamente (igual que tu implementación manual)
       final usuarioResponse = await _supabase
-          .from("TUSUARIO")
+          .from(Entities.TUSUARIO.tableName)
           .select("*")
           .eq("USUARIO", usuario)
           .maybeSingle();
@@ -61,8 +63,8 @@ class EnhancedAuthService {
       );
 
       // Generar token de sesión simple
-      _currentSessionToken = DateTime.now().millisecondsSinceEpoch.toString();
-      sessionExpiry = DateTime.now().add(const Duration(hours: 4));
+      _currentSessionToken = AppUtils.generateToken();
+      sessionExpiry = AppUtils.generateTimeExpiration();
 
       // Guardar sesión localmente
       await _saveSession();
@@ -80,7 +82,7 @@ class EnhancedAuthService {
       };
     }
   }
- 
+
   static Future<UserEntity> login(String usuario, String password) async {
     final result = await loginSecure(usuario, password);
 
@@ -95,7 +97,7 @@ class EnhancedAuthService {
   static Future<bool> validateCurrentSession() async {
     if (_currentSessionToken == null || _currentUser == null) return false;
 
-    try { 
+    try {
       if (sessionExpiry != null && sessionExpiry!.isAfter(DateTime.now())) {
         return true;
       } else {
@@ -176,7 +178,7 @@ class EnhancedAuthService {
       }
 
       final response = await _supabase
-          .from("TPERSONA")
+          .from(Entities.TPERSONA.tableName)
           .select("*")
           .eq("IDENTIFICACION", identificacion)
           .maybeSingle();
@@ -188,6 +190,32 @@ class EnhancedAuthService {
       }
 
       return PersonaEntity.fromJson(response);
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+          message: "Error obteniendo datos de persona: ${e.toString()}");
+    }
+  }
+
+  static Future<TUsuariEntity> getUserById(int idUsuario) async {
+    try {
+      if (!isLoggedIn) {
+        throw ServerException(message: "Sesión no válida");
+      }
+
+      final response = await _supabase
+          .from(Entities.TUSUARIO.tableName)
+          .select("*")
+          .eq("IDUSUARIO", idUsuario)
+          .maybeSingle();
+
+      if (response == null) {
+        throw ServerException(
+          message: "No se encontraron datos de persona para $idUsuario",
+        );
+      }
+
+      return TUsuariEntity.fromJson(response);
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(
@@ -215,7 +243,7 @@ class EnhancedAuthService {
 
       // Actualizar contraseña
       await _supabase
-          .from('TUSUARIO')
+          .from(Entities.TUSUARIO.tableName)
           .update({'PASSWORD': newHash}).eq('USUARIO', _currentUser!.usuario!);
 
       return {
@@ -238,7 +266,8 @@ class EnhancedAuthService {
 
   static bool _isSessionValid() {
     if (sessionExpiry == null) return false;
-    return sessionExpiry!.isAfter(DateTime.now().add(Duration(minutes: 5)));
+    return sessionExpiry!
+        .isAfter(DateTime.now().add(const Duration(minutes: 5)));
   }
 
   static Future<void> _saveSession() async {
@@ -256,5 +285,32 @@ class EnhancedAuthService {
       };
       await prefs.setString('current_user_data', json.encode(userData));
     }
+  }
+
+  /// Guardar sesión cuando el dispositivo es de confianza
+  static Future<void> saveDeviceTrustSession({
+    required UserEntity user,
+    required String sessionToken,
+    required DateTime expiry,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('user_session_token', sessionToken);
+    await prefs.setString('user_session_expiry', expiry.toIso8601String());
+
+    // Guardar datos de usuario
+    final userData = {
+      'usuario': user.toJson(),
+      'persona': user.toJson(),
+    };
+    await prefs.setString('current_user_data', json.encode(userData));
+
+    // Actualizar variables estáticas
+    _currentUser = user;
+    _currentSessionToken = sessionToken;
+    sessionExpiry = expiry;
+
+    // Configurar header
+    _supabase.rest.headers['Authorization'] = 'Bearer $sessionToken';
   }
 }

@@ -6,6 +6,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/models/deviceInfo_model.dart';
 
 //CLASE Util dedicado a la desarrollo de metodos utiles en toda la aplicacion
@@ -100,9 +101,17 @@ class AppUtils {
 
     return _cachedDeviceInfo!;
   }
+
   //METODO QUE TRANSFORMA EN UN TEXTO A SHA26
   static String generateSha256(String input) {
     return sha256.convert(utf8.encode(input)).toString();
   }
-  
+
+  static String generateToken() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  static DateTime  generateTimeExpiration() {
+    return DateTime.now().add( Duration( hours:  AppConstants.TOKEN_EXPIRATION));
+  }
 }

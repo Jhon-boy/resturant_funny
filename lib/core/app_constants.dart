@@ -7,4 +7,5 @@ class AppConstants {
   static final int STATUS_OK = 200;
   static final int MAX_CARACTERES_TITULOS = 40;
   static final int MAX_CARACTERES_DESCRIPCION = 200;
+  static final int TOKEN_EXPIRATION = 4;
 }

@@ -25,13 +25,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   Future<void> verificarDispositivoConfianza() async {
     ref.read(appStateProvider.notifier).setLoading(true);
     await Future.delayed(const Duration(seconds: 5));
-
-    // Desactivar loader
     ref.read(appStateProvider.notifier).setLoading(false);
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
+    Navigator.of(context).pushNamedAndRemoveUntil('/base', (r) => false);
   }
 
   @override
