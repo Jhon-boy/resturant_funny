@@ -1,5 +1,5 @@
-import 'producto_entity.dart';
-import 'sucursal_entity.dart';
+import 'entity/producto_entity.dart';
+import 'entity/sucursal_entity.dart';
 
 /// Entidad que combina productos y sucursal para el provider
 class DiningContext {

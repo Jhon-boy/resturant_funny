@@ -1,0 +1,277 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
+import 'package:resturant_funny/modules/main/domain/providers/dining_provider.dart';
+import 'package:resturant_funny/modules/main/data/datasource/productos_remote_data_source.dart';
+import 'package:resturant_funny/modules/main/data/repository/productos_repository_impl.dart';
+import 'package:resturant_funny/modules/main/domain/repository/productos_repository.dart';
+import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
+import 'package:resturant_funny/modules/main/presentation/widget/no_producto_widget.dart';
+import 'package:resturant_funny/modules/main/presentation/widget/producto_card_widget.dart';
+import 'package:resturant_funny/modules/main/presentation/widget/producto_carrusel_widget.dart';
+import 'package:resturant_funny/modules/ventas/presentation/producto_detalle_venta.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:resturant_funny/core/utils/responsive_util.dart';
+
+class InicioPage extends ConsumerStatefulWidget {
+  const InicioPage({super.key});
+
+  @override
+  ConsumerState<InicioPage> createState() => _InicioPageState();
+}
+
+class _InicioPageState extends ConsumerState<InicioPage> {
+  List<ProductoEntity> _productos = [];
+  bool _isLoading = true;
+  late final ProductosRepository _productosRepository;
+
+  @override
+  void initState() {
+    super.initState();
+    _productosRepository =
+        ProductosRepositoryImpl(ProductosRemoteDataSource(ref: ref));
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    setState(() => _isLoading = true);
+
+    final diningContext = ref.read(diningProvider);
+
+    setState(() {
+      _productos = diningContext.productosDisponibles;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _refreshProductos() async {
+    setState(() => _isLoading = true);
+
+    final idSucursal =
+        ref.read(userProvider.notifier).getUser()?.idSucursal ?? 1;
+
+    final result = await _productosRepository.getProductos(idSucursal);
+    result.fold(
+      (_) {
+        if (mounted) {
+          DialogHelper.error(context,
+              message: "Error el actualizar los productos", onConfirmed: () {});
+        }
+      },
+      (productos) {
+        ref.read(diningProvider.notifier).setProductos(productos);
+        if (mounted) {
+          setState(() {
+            _productos = productos.where((p) => p.isDisponible).toList();
+            _isLoading = false;
+          });
+        }
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const ShimmerLoader();
+    }
+
+    if (_productos.isEmpty) {
+      return RefreshIndicator(
+        color: ThemeApp.primary,
+        onRefresh: _refreshProductos,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          children: const [
+            NoProductosWidget(),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshProductos,
+      child: _InicioContent(productos: _productos),
+    );
+  }
+}
+
+class _InicioContent extends StatelessWidget {
+  final List<ProductoEntity> productos;
+  const _InicioContent({required this.productos});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Productos del día',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 20),
+          ProductoCarouselWidget(
+            productos: productos,
+            onTap: (p) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProductoDetallePage(producto: p),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          const Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: ThemeApp.textSecondary,
+                  thickness: 1,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  "Mas productos",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: ThemeApp.textSecondary,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Divider(
+                  color: ThemeApp.textSecondary,
+                  thickness: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: productos.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: ResponsiveUtil.columnsForGrid(
+                context,
+                minTileWidth: 200,
+                minColumns: 2,
+                maxColumns: 6,
+              ),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
+            itemBuilder: (context, index) {
+              final producto = productos[index];
+              return ProductoCardWidget(
+                producto: producto,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProductoDetallePage(producto: producto),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ShimmerLoader extends StatelessWidget {
+  const ShimmerLoader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Productos del día',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 180,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: 5,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) => _shimmerBox(
+                width: 280,
+                height: 180,
+                borderRadius: 16,
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 6,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: ResponsiveUtil.columnsForGrid(
+                context,
+                minTileWidth: 200,
+                minColumns: 2,
+                maxColumns: 6,
+              ),
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
+            itemBuilder: (context, index) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _shimmerBox(
+                      width: double.infinity, height: 120, borderRadius: 12),
+                  const SizedBox(height: 8),
+                  _shimmerBox(width: 100, height: 16, borderRadius: 8),
+                  const SizedBox(height: 6),
+                  _shimmerBox(width: 60, height: 14, borderRadius: 6),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Widget _shimmerBox({
+    required double width,
+    required double height,
+    double borderRadius = 8,
+  }) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+      ),
+    );
+  }
+}

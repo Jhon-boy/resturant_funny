@@ -8,7 +8,7 @@ import 'package:resturant_funny/core/services/conection_service.dart';
 import 'package:resturant_funny/core/utils/either.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
-import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -22,7 +22,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> login(
+  Future<Either<Failure, UserModel>> login(
       String email, String password) async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
@@ -35,12 +35,12 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (_) {
-      return const Left(ServerFailure('An unexpected error occurred'));
+      return const Left(ServerFailure('Ha ocurrido un error, intentalo mas luego'));
     }
   }
 
   @override
-  Future<Either<Failure, UserEntity>> checkAuthStatus() async {
+  Future<Either<Failure, UserModel>> checkAuthStatus() async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
       return const Left(NetworkFailure('No internet connection'));
@@ -75,7 +75,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> isTrustedDevice(
+  Future<Either<Failure, UserModel>> isTrustedDevice(
       DeviceInfoModel deviceInfo) async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
@@ -83,11 +83,11 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     try {
-      final userEntity = await remoteDataSource.isTrustedDevice(deviceInfo);
-      if (userEntity == null) {
+      final UserModel = await remoteDataSource.isTrustedDevice(deviceInfo);
+      if (UserModel == null) {
         return const Left(DatabaseFailure('Dispositivo no autorizado'));
       }
-      return Right(userEntity);
+      return Right(UserModel);
     } catch (e) {
       debugPrint('ERROR EN LA BASE DE DATOS: $e');
       return const Left(DatabaseFailure('Error verificando dispositivo'));
@@ -111,7 +111,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> registerTrustedDevice(UserEntity entity) async {
+  Future<Either<Failure, bool>> registerTrustedDevice(UserModel entity) async {
     try {
       final register = await remoteDataSource.registerTrustedDevice(entity);
 

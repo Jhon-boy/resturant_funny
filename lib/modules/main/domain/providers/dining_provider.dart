@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/modules/main/domain/providers/dining_notifier.dart';
-import '../entity/dining_context.dart';
+import '../dining_context.dart';
 import '../entity/producto_entity.dart';
 
 /// Provider principal para el contexto de dining

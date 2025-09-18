@@ -1,7 +1,7 @@
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
-import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 class UserContext {
-  final UserEntity? user;
+  final UserModel? user;
   final List<RolEntity> roles;
   final bool isLoading;
   final String? error;
@@ -21,12 +21,12 @@ class UserContext {
     return UserContext(isLoading: false, error: error);
   }
 
-  factory UserContext.success({required UserEntity user, List<RolEntity>? roles}) {
+  factory UserContext.success({required UserModel user, List<RolEntity>? roles}) {
     return UserContext(user: user, roles: roles ?? [], isLoading: false);
   }
 
   UserContext copyWith({
-    UserEntity? user,
+    UserModel? user,
     List<RolEntity>? roles,
     bool? isLoading,
     String? error,

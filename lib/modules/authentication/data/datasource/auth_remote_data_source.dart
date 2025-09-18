@@ -10,7 +10,7 @@ import 'package:resturant_funny/core/services/supabase_service.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
-import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/shared/enums/endpoints.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,7 +25,7 @@ class AuthRemoteDataSourceImpl {
   final SupabaseClient supabase = Supabase.instance.client;
 
   /// LOGIN con usuario y contraseña
-  Future<UserEntity> login(String usuario, String password) async {
+  Future<UserModel> login(String usuario, String password) async {
     try {
       return await EnhancedAuthService.login(usuario, password);
     } catch (e) {
@@ -91,7 +91,7 @@ class AuthRemoteDataSourceImpl {
   }
 
   /// Verifica si un dispositivo es de confianza
-  Future<UserEntity?> isTrustedDevice(DeviceInfoModel deviceInfo) async {
+  Future<UserModel?> isTrustedDevice(DeviceInfoModel deviceInfo) async {
     try {
       final deviceRecord = await SupabaseService.selectSingleFree(
         table: Entities.TDISPOSITIVO.tableName,
@@ -103,7 +103,7 @@ class AuthRemoteDataSourceImpl {
       if (deviceRecord == null) return null;
       if (!_verifyDeviceData(deviceInfo, deviceRecord)) return null;
       final userId = deviceRecord['IDUSUARIO'] as int;
-      final user = await _buildUserEntity(userId);
+      final user = await _buildUserModel(userId);
       await EnhancedAuthService.saveDeviceTrustSession(
         user: user,
         sessionToken: AppUtils.generateToken(),
@@ -117,11 +117,11 @@ class AuthRemoteDataSourceImpl {
   }
 
 // Obtiene la informacion del usuario a travez del IDUSUARIO
-  Future<UserEntity> _buildUserEntity(int userId) async {
+  Future<UserModel> _buildUserModel(int userId) async {
     final userInfo = await EnhancedAuthService.getUserById(userId);
     final personaInfo = await EnhancedAuthService.getPersonaByIdentificacion(
         userInfo.identificacion);
-    return UserEntity.fromJson(
+    return UserModel.fromJson(
       usuarioJson: userInfo.toJson(),
       personaJson: personaInfo.toJson(),
     );
@@ -131,9 +131,9 @@ class AuthRemoteDataSourceImpl {
   Future<bool> isCurrentDeviceTrusted() async {
     try {
       final deviceInfo = await AppUtils.getInfoDevice();
-      final userEntity = await isTrustedDevice(deviceInfo);
+      final UserModel = await isTrustedDevice(deviceInfo);
 
-      return userEntity != null;
+      return UserModel != null;
     } catch (e) {
       debugPrint(
           "Error obteniendo información del dispositivo: ${e.toString()}");
@@ -142,7 +142,7 @@ class AuthRemoteDataSourceImpl {
   }
 
   /// Registra un dispositivo como de confianza
-  Future<bool> registerTrustedDevice(UserEntity entity) async {
+  Future<bool> registerTrustedDevice(UserModel entity) async {
     try {
       final deviceInfo = await AppUtils.getInfoDevice();
 

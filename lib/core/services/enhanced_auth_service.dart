@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/errors/exception.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
-import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,10 +14,10 @@ class EnhancedAuthService {
   static final SupabaseClient _supabase = Supabase.instance.client;
   static String? _currentSessionToken;
   static DateTime? sessionExpiry;
-  static UserEntity? _currentUser;
+  static UserModel? _currentUser;
 
   // Getters públicos
-  static UserEntity? get currentUser => _currentUser;
+  static UserModel? get currentUser => _currentUser;
   static bool get isLoggedIn => _currentUser != null && _isSessionValid();
   static String? get sessionToken => _currentSessionToken;
 
@@ -52,12 +52,12 @@ class EnhancedAuthService {
         };
       }
 
-      // Obtener datos de persona
-      final persona =
-          await getPersonaByIdentificacion(usuarioResponse['IDENTIFICACION']);
+      // Obtener datos de persona DIRECTAMENTE (sin validar sesión)
+      final persona = await _getPersonaByIdentificacionDirect(
+          usuarioResponse['IDENTIFICACION']);
 
       // Crear entidad de usuario
-      _currentUser = UserEntity.fromJson(
+      _currentUser = UserModel.fromJson(
         usuarioJson: usuarioResponse,
         personaJson: persona.toJson(),
       );
@@ -83,11 +83,11 @@ class EnhancedAuthService {
     }
   }
 
-  static Future<UserEntity> login(String usuario, String password) async {
+  static Future<UserModel> login(String usuario, String password) async {
     final result = await loginSecure(usuario, password);
 
     if (result['success']) {
-      return result['user'] as UserEntity;
+      return result['user'] as UserModel;
     } else {
       throw ServerException(message: result['message']);
     }
@@ -149,7 +149,7 @@ class EnhancedAuthService {
 
           // Restaurar datos de usuario
           final userData = json.decode(userDataString);
-          _currentUser = UserEntity.fromJson(
+          _currentUser = UserModel.fromJson(
             usuarioJson: userData['usuario'],
             personaJson: userData['persona'],
           );
@@ -169,12 +169,37 @@ class EnhancedAuthService {
     }
   }
 
+  /// OBTENER DATOS DE PERSONA DIRECTAMENTE (SIN VALIDAR SESIÓN - PARA LOGIN)
+  static Future<PersonaEntity> _getPersonaByIdentificacionDirect(
+      String identificacion) async {
+    try {
+      final response = await _supabase
+          .from(Entities.TPERSONA.tableName)
+          .select("*")
+          .eq("IDENTIFICACION", identificacion)
+          .maybeSingle();
+
+      if (response == null) {
+        throw ServerException(
+          message: "No se encontraron datos de persona para $identificacion",
+        );
+      }
+
+      return PersonaEntity.fromJson(response);
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+          message: "Error obteniendo datos de persona: ${e.toString()}");
+    }
+  }
+
   /// OBTENER DATOS DE PERSONA (CON SEGURIDAD RLS)
   static Future<PersonaEntity> getPersonaByIdentificacion(
       String identificacion) async {
     try {
       if (!isLoggedIn) {
-        throw ServerException(message: "Sesión no válida");
+        throw ServerException(
+            message: "getPersonaByIdentificacion Sesión no válida");
       }
 
       final response = await _supabase
@@ -200,7 +225,7 @@ class EnhancedAuthService {
   static Future<TUsuariEntity> getUserById(int idUsuario) async {
     try {
       if (!isLoggedIn) {
-        throw ServerException(message: "Sesión no válida");
+        throw ServerException(message: " getUserById Sesión no válida");
       }
 
       final response = await _supabase
@@ -289,7 +314,7 @@ class EnhancedAuthService {
 
   /// Guardar sesión cuando el dispositivo es de confianza
   static Future<void> saveDeviceTrustSession({
-    required UserEntity user,
+    required UserModel user,
     required String sessionToken,
     required DateTime expiry,
   }) async {

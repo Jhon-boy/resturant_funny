@@ -1,14 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
-import 'package:resturant_funny/modules/authentication/domain/entity/user_entity.dart';
-import 'package:resturant_funny/modules/authentication/domain/entity/user_context.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
+import 'package:resturant_funny/modules/authentication/domain/user_context.dart';
 
 class UserNotifier extends StateNotifier<UserContext> {
   UserNotifier() : super(UserContext.initial());
 
   /// Setear usuario y roles después del login
-  void setUser(UserEntity user, {List<RolEntity>? roles}) {
+  void setUser(UserModel user, {List<RolEntity>? roles}) {
     state = UserContext.success(user: user, roles: roles);
+  }
+
+  UserModel? getUser() {
+    return state.user;
   }
 
   /// Limpiar usuario (logout)
@@ -17,7 +21,7 @@ class UserNotifier extends StateNotifier<UserContext> {
   }
 
   /// Actualizar datos del usuario
-  void updateUser(UserEntity user) {
+  void updateUser(UserModel user) {
     state = state.copyWith(user: user);
   }
 
@@ -38,6 +42,7 @@ class UserNotifier extends StateNotifier<UserContext> {
 
   /// Verifica si tiene un rol específico
   bool tieneRol(String nombreRol) {
-    return state.roles.any((rol) => rol.nombre.toLowerCase() == nombreRol.toLowerCase());
+    return state.roles
+        .any((rol) => rol.nombre.toLowerCase() == nombreRol.toLowerCase());
   }
 }

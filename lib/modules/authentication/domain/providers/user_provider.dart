@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:resturant_funny/modules/authentication/domain/entity/user_context.dart';
+import 'package:resturant_funny/modules/authentication/domain/user_context.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_notifier.dart';
 
 // NOTIFICADOR PARA LA AUTENTICACION

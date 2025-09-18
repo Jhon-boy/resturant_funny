@@ -1,4 +1,4 @@
-class UserEntity {
+class UserModel {
   // ==== Campos obligatorios ====
   final String nombres;
   final String apellidos;
@@ -28,7 +28,7 @@ class UserEntity {
   final String? usuarioIngresoPersona;
   final String? userModificacionPersona;
 
-  UserEntity({
+  UserModel({
     required this.nombres,
     required this.apellidos,
     this.idUsuario,
@@ -55,11 +55,11 @@ class UserEntity {
   });
 
   // ==== Factory desde JSON combinado ====
-  factory UserEntity.fromJson({
+  factory UserModel.fromJson({
     required Map<String, dynamic> usuarioJson,
     required Map<String, dynamic> personaJson,
   }) {
-    return UserEntity(
+    return UserModel(
       // TPERSONA obligatorios
       nombres: personaJson['NOMBRES'] ?? '',
       apellidos: personaJson['APELLIDOS'] ?? '',

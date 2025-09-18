@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:resturant_funny/modules/inicio/presentation/inicio_page.dart';
+import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
 import 'package:resturant_funny/modules/main/presentation/pantalla_base.dart';
-import 'package:resturant_funny/modules/main/presentation/pages.dart';
+import 'package:resturant_funny/modules/ventas/presentation/ventas_page.dart';
+import 'package:resturant_funny/modules/main/presentation/pantalla_items.dart';
 
-class BaseRoute extends StatelessWidget {
-  const BaseRoute({super.key});
+class MenuRoute extends StatelessWidget {
+  const MenuRoute({super.key});
 
   @override
   Widget build(BuildContext context) {
