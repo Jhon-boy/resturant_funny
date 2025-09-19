@@ -190,4 +190,5 @@ class ProductoEntity {
       estado,
     );
   }
+  
 }

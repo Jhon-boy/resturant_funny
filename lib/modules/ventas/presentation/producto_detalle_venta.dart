@@ -8,6 +8,9 @@ import 'package:resturant_funny/modules/main/data/repository/productos_repositor
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
 import 'package:resturant_funny/modules/main/domain/repository/productos_repository.dart';
 import 'package:resturant_funny/modules/main/presentation/widget/shimer_producto.dart';
+import 'package:resturant_funny/modules/ventas/presentation/widget/cart_item.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
 class ProductoDetallePage extends ConsumerStatefulWidget {
   final ProductoEntity producto;
@@ -21,8 +24,10 @@ class ProductoDetallePage extends ConsumerStatefulWidget {
 
 class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
   ProductoEntity? _productoActualizado;
+  List<ProductoEntity> productosLista = [];
   late final ProductosRepository _productosRepository;
-  bool _isLoading = true;
+  bool _loadingProducto = true;
+  bool _loadingProductos = true;
 
   @override
   void initState() {
@@ -32,11 +37,12 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _cargarProducto();
+      _cargarProductos();
     });
   }
 
   Future<void> _cargarProducto() async {
-    setState(() => _isLoading = true);
+    setState(() => _loadingProducto = true);
 
     try {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -49,20 +55,41 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
       }, (producto) {
         setState(() {
           _productoActualizado = producto;
-          _isLoading = false;
+          _loadingProducto = false;
         });
       });
     } catch (_) {
       setState(() {
         _productoActualizado = widget.producto;
-        _isLoading = false;
+        _loadingProducto = false;
       });
+    }
+  }
+
+  Future<void> _cargarProductos() async {
+    setState(() => _loadingProductos = true);
+    try {
+      final result =
+          await _productosRepository.getProductos(widget.producto.idSucursal);
+      result.fold((failure) {
+        DialogHelper.error(context,
+            message: "Error al cargar productos", onConfirmed: () {});
+      }, (productos) {
+        setState(() {
+          productosLista = productos;
+        });
+      });
+    } catch (e) {
+      debugPrint("Error al obtener productos");
+    } finally {
+      setState(() => _loadingProductos = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    final isLoading = _loadingProducto || _loadingProductos;
+    if (isLoading) {
       return const ShimmerDetalle();
     }
 
@@ -77,27 +104,82 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
         backgroundColor: ThemeApp.headerBackground,
         foregroundColor: Colors.white,
       ),
-      body: _DetalleCompra(producto: producto),
+      body: _DetalleCompra(
+        initialProducto: producto,
+        productosDisponibles: productosLista,
+      ),
     );
   }
 }
 
 class _DetalleCompra extends StatefulWidget {
-  final ProductoEntity producto;
-  const _DetalleCompra({required this.producto});
+  final ProductoEntity initialProducto;
+  final List<ProductoEntity> productosDisponibles;
+  const _DetalleCompra(
+      {required this.initialProducto, required this.productosDisponibles});
 
   @override
   State<_DetalleCompra> createState() => _DetalleCompraState();
 }
 
 class _DetalleCompraState extends State<_DetalleCompra> {
-  int _cantidad = 1;
+  final List<CartItem> _carrito = [];
+  bool _aplicaIva = true;
+  ProductoEntity? _productoAAgregar;
+
+  @override
+  void initState() {
+    super.initState();
+    _carrito.add(CartItem(producto: widget.initialProducto, cantidad: 1));
+  }
+
+  double get _subtotal {
+    return _carrito.fold(
+        0.0, (acc, item) => acc + (item.producto.precio * item.cantidad));
+  }
+
+  double get _iva => _aplicaIva ? _subtotal * 0.15 : 0.0;
+  double get _total => _subtotal + _iva;
+
+  void _incrementarCantidad(int index) {
+    setState(() {
+      _carrito[index].cantidad++;
+    });
+  }
+
+  void _disminuirCantidad(int index) {
+    setState(() {
+      if (_carrito[index].cantidad > 1) {
+        _carrito[index].cantidad--;
+      }
+    });
+  }
+
+  void _eliminarItem(int index) {
+    setState(() {
+      _carrito.removeAt(index);
+      SnackHelper.show(context, message: 'Producto Eliminado', isError: true);
+    });
+  }
+
+  void _agregarProductoSeleccionado() {
+    final seleccionado = _productoAAgregar;
+    if (seleccionado == null) return;
+    final indexExistente = _carrito
+        .indexWhere((e) => e.producto.idProducto == seleccionado.idProducto);
+    setState(() {
+      if (indexExistente >= 0) {
+        _carrito[indexExistente].cantidad++;
+      } else {
+        _carrito.add(CartItem(producto: seleccionado, cantidad: 1));
+      }
+      _productoAAgregar = null;
+      SnackHelper.show(context, message: 'Producto agregago', isSuccess: true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final producto = widget.producto;
-    final total = _cantidad * producto.precio;
-
     final padding = ResponsiveUtil.byWidth<double>(
       context,
       small: 16,
@@ -109,67 +191,155 @@ class _DetalleCompraState extends State<_DetalleCompra> {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Nombre
-        Text(
-          producto.nombre,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
-
-        Text(
-          "Precio: \$${producto.precio.toStringAsFixed(2)}",
-          style: const TextStyle(
-            color: ThemeApp.primary,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            IconButton(
-              onPressed:
-                  _cantidad > 1 ? () => setState(() => _cantidad--) : null,
-              icon: const Icon(Icons.remove_circle),
-            ),
-            Text("$_cantidad", style: const TextStyle(fontSize: 18)),
-            IconButton(
-              onPressed: () => setState(() => _cantidad++),
-              icon: const Icon(Icons.add_circle),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Total calculado
-        Text(
-          "Total: \$${total.toStringAsFixed(2)}",
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 30),
-
-        // Botón compra
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: producto.disponible!
-                ? () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "Compra finalizada → ${producto.nombre} x$_cantidad por \$${total.toStringAsFixed(2)}",
-                        ),
+        CardSeccion(
+          title: "Carrito",
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<ProductoEntity>(
+                      value: _productoAAgregar,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: "Agregar producto",
+                        border: OutlineInputBorder(),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
-                    );
-                  }
-                : null,
-            icon: const Icon(Icons.shopping_bag),
-            label:
-                const Text("Finalizar compra", style: TextStyle(fontSize: 16)),
+                      items: widget.productosDisponibles
+                          .map((p) => DropdownMenuItem<ProductoEntity>(
+                                value: p,
+                                child: Text(p.nombre,
+                                    overflow: TextOverflow.ellipsis),
+                              ))
+                          .toList(),
+                      onChanged: (v) => setState(() => _productoAAgregar = v),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: _agregarProductoSeleccionado,
+                    icon: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    label: const Text(""),
+                  )
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Lista de items del carrito
+              if (_carrito.isEmpty)
+                const Text("No hay productos en el carrito"),
+              ...List.generate(_carrito.length, (index) {
+                final item = _carrito[index];
+                final producto = item.producto;
+                final precioLinea = producto.precio * item.cantidad;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        MiniImagen(producto: producto),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(producto.nombre,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 4),
+                              Text("${producto.precio.toStringAsFixed(2)} c/u",
+                                  style: const TextStyle(color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => _disminuirCantidad(index),
+                              icon: const Icon(Icons.remove_circle_outline),
+                            ),
+                            Text('${item.cantidad}',
+                                style: const TextStyle(fontSize: 16)),
+                            IconButton(
+                              onPressed: () => _incrementarCantidad(index),
+                              icon: const Icon(Icons.add_circle_outline),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 12),
+                        Text('\$${precioLinea.toStringAsFixed(2)}',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        IconButton(
+                          onPressed: () => _eliminarItem(index),
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          tooltip: "Eliminar",
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              })
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        CardSeccion(
+          title: "Resumen",
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Subtotal"),
+                  Text('\$${_subtotal.toStringAsFixed(2)}'),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(children: [
+                    const Text("IVA 15%"),
+                    const SizedBox(width: 8),
+                    Switch(
+                      value: _aplicaIva,
+                      onChanged: (v) => setState(() => _aplicaIva = v),
+                    ),
+                    const Text("Aplica"),
+                  ]),
+                  Text('\$${_iva.toStringAsFixed(2)}'),
+                ],
+              ),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Total a pagar",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('\$${_total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: CustomButton(
+                    text: "Finalizar Compra",
+                    icon: Icons.monetization_on,
+                    onPressed: () {}),
+              ),
+            ],
           ),
         ),
       ],
@@ -177,41 +347,7 @@ class _DetalleCompraState extends State<_DetalleCompra> {
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(padding),
-      child: ResponsiveUtil.isSmall(context)
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildImage(producto),
-                const SizedBox(height: 16),
-                content,
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 2, child: _buildImage(producto)),
-                const SizedBox(width: 24),
-                Expanded(flex: 3, child: content),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildImage(ProductoEntity producto) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        producto.imagen ?? "",
-        width: double.infinity,
-        height: ResponsiveUtil.isSmall(context) ? 220 : 350,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          color: Colors.grey[300],
-          height: 220,
-          alignment: Alignment.center,
-          child: const Icon(Icons.image_not_supported, size: 48),
-        ),
-      ),
+      child: content,
     );
   }
 }
