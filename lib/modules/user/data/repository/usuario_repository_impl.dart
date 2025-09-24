@@ -20,8 +20,9 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
     DateTime? fechaHasta,
   }) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final usuarios = await remote.getUsuariosBySucursal(
@@ -39,13 +40,15 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
   @override
   Future<Either<Failure, TUsuariEntity>> getUsuarioById(int idUsuario) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final usuario = await remote.getUsuarioById(idUsuario);
-      if (usuario == null)
+      if (usuario == null) {
         return const Left(ServerFailure('Usuario no encontrado'));
+      }
       return Right(usuario);
     } catch (_) {
       return const Left(
@@ -57,13 +60,15 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
   Future<Either<Failure, TUsuariEntity>> getUsuarioByIdentificacion(
       String identificacion) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final usuario = await remote.getUsuarioByIdentificacion(identificacion);
-      if (usuario == null)
+      if (usuario == null) {
         return const Left(ServerFailure('Usuario no encontrado'));
+      }
       return Right(usuario);
     } catch (_) {
       return const Left(
@@ -75,8 +80,9 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
   Future<Either<Failure, TUsuariEntity>> createUsuario(
       TUsuariEntity usuario) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final created = await remote.createUsuario(usuario);
@@ -91,8 +97,9 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
   Future<Either<Failure, TUsuariEntity>> updateUsuario(
       int idUsuario, Map<String, dynamic> data) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final updated = await remote.updateUsuario(idUsuario, data);
@@ -107,8 +114,9 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
   Future<Either<Failure, bool>> changePassword(
       int idUsuario, String oldPassword, String newPassword) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final result =
@@ -124,8 +132,9 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
   Future<Either<Failure, bool>> resetPassword(
       int idUsuario, String newPassword) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final result = await remote.resetPassword(idUsuario, newPassword);
@@ -140,8 +149,9 @@ class UsuariosRepositoryImpl implements UsuariosRepository {
   Future<Either<Failure, TUsuariEntity>> toggleEstadoUsuario(int idUsuario,
       {bool activo = true}) async {
     final isConnected = await _connectivity.checkConnection();
-    if (!isConnected)
+    if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
+    }
 
     try {
       final updated =
