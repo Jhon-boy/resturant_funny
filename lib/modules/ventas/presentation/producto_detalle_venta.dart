@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/responsive_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/main/data/datasource/productos_remote_data_source.dart';
@@ -8,6 +7,7 @@ import 'package:resturant_funny/modules/main/data/repository/productos_repositor
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
 import 'package:resturant_funny/modules/main/domain/repository/productos_repository.dart';
 import 'package:resturant_funny/modules/main/presentation/widget/shimer_producto.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/card_item_model.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/cart_item.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -45,7 +45,6 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
     setState(() => _loadingProducto = true);
 
     try {
-      await Future.delayed(const Duration(milliseconds: 300));
       final result = await _productosRepository
           .getProductById(widget.producto.idProducto.toString());
       result.fold((failure) {
@@ -98,16 +97,9 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
       return const Center(child: Text("Producto no disponible"));
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(producto.nombre),
-        backgroundColor: ThemeApp.headerBackground,
-        foregroundColor: Colors.white,
-      ),
-      body: _DetalleCompra(
-        initialProducto: producto,
-        productosDisponibles: productosLista,
-      ),
+    return _DetalleCompra(
+      initialProducto: producto,
+      productosDisponibles: productosLista,
     );
   }
 }
@@ -123,14 +115,14 @@ class _DetalleCompra extends StatefulWidget {
 }
 
 class _DetalleCompraState extends State<_DetalleCompra> {
-  final List<CartItem> _carrito = [];
+  final List<CartProduct> _carrito = [];
   bool _aplicaIva = true;
   ProductoEntity? _productoAAgregar;
 
   @override
   void initState() {
     super.initState();
-    _carrito.add(CartItem(producto: widget.initialProducto, cantidad: 1));
+    _carrito.add(CartProduct(producto: widget.initialProducto, cantidad: 1));
   }
 
   double get _subtotal {
@@ -171,7 +163,7 @@ class _DetalleCompraState extends State<_DetalleCompra> {
       if (indexExistente >= 0) {
         _carrito[indexExistente].cantidad++;
       } else {
-        _carrito.add(CartItem(producto: seleccionado, cantidad: 1));
+        _carrito.add(CartProduct(producto: seleccionado, cantidad: 1));
       }
       _productoAAgregar = null;
       SnackHelper.show(context, message: 'Producto agregago', isSuccess: true);

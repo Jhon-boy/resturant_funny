@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
 
-class CartItem {
-  final ProductoEntity producto;
-  int cantidad;
-  CartItem({required this.producto, required this.cantidad});
-}
 
 class CardSeccion extends StatelessWidget {
   final String title;

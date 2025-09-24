@@ -67,7 +67,20 @@ class _PantallaBaseState extends State<PantallaBase> {
           Navigator.of(context).maybePop();
         },
       ),
-      body: current.builder(context),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          for (var i = 0; i < widget.items.length; i++)
+            Navigator(
+              key: widget.items[i].navigatorKey,
+              onGenerateRoute: (settings) {
+                return MaterialPageRoute(
+                  builder: (context) => widget.items[i].builder(context),
+                );
+              },
+            ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) {

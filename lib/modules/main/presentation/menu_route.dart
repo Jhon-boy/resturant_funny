@@ -9,18 +9,28 @@ class MenuRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const PantallaBase(
+    return PantallaBase(
       items: [
         PantallaBaseItem(
-            label: 'Inicio', icon: Icons.home_outlined, builder: _inicio),
+            label: 'Inicio',
+            icon: Icons.home_outlined,
+            builder: _inicio,
+            navigatorKey: GlobalKey<NavigatorState>()),
         PantallaBaseItem(
             label: 'Venta',
             icon: Icons.point_of_sale_outlined,
-            builder: _venta),
+            builder: _venta,
+            navigatorKey: GlobalKey<NavigatorState>()),
         PantallaBaseItem(
-            label: 'Mi Día', icon: Icons.insights_outlined, builder: _midia),
+            label: 'Mi Día',
+            icon: Icons.insights_outlined,
+            builder: _midia,
+            navigatorKey: GlobalKey<NavigatorState>()),
         PantallaBaseItem(
-            label: 'Más', icon: Icons.menu_open_outlined, builder: _mas),
+            label: 'Más',
+            icon: Icons.menu_open_outlined,
+            builder: _mas,
+            navigatorKey: GlobalKey<NavigatorState>()),
       ],
     );
   }

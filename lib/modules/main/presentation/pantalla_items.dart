@@ -8,11 +8,13 @@ class PantallaBaseItem {
     required this.label,
     required this.icon,
     required this.builder,
+    required this.navigatorKey,
   });
 
   final String label;
   final IconData icon;
   final WidgetBuilder builder;
+   final GlobalKey<NavigatorState> navigatorKey;
 }
 
 class AppDrawer extends StatelessWidget {
