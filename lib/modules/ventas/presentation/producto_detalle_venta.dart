@@ -18,11 +18,17 @@ import 'package:resturant_funny/modules/main/domain/entity/mesa_entity.dart';
 import 'package:resturant_funny/modules/main/data/datasource/mesa_remote_data_source.dart';
 import 'package:resturant_funny/modules/main/data/repository/mesa_repository_impl.dart';
 import 'package:resturant_funny/modules/main/domain/repository/mesa_repository.dart';
+import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 
 class ProductoDetallePage extends ConsumerStatefulWidget {
   final ProductoEntity producto;
+  final Function(int)? onSectionChange;
 
-  const ProductoDetallePage({super.key, required this.producto});
+  const ProductoDetallePage({
+    super.key,
+    required this.producto,
+    this.onSectionChange,
+  });
 
   @override
   ConsumerState<ProductoDetallePage> createState() =>
@@ -119,25 +125,14 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
 
     final producto = _productoActualizado ?? widget.producto;
 
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {
-        if (!didPop) {
-          Navigator.of(context).pop();
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        body: _DetalleCompra(
-          initialProducto: producto,
-          productosDisponibles: productosLista,
-          mesasDisponibles: mesasLista,
-        ),
+    return PantallaBase(
+      title: producto.nombre,
+      onBack: () => Navigator.of(context).pop(),
+      onSectionChange: widget.onSectionChange,
+      body: _DetalleCompra(
+        initialProducto: producto,
+        productosDisponibles: productosLista,
+        mesasDisponibles: mesasLista,
       ),
     );
   }

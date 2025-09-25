@@ -10,7 +10,7 @@ import 'package:resturant_funny/core/services/storage_service.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/presentation/login_page.dart';
-import 'package:resturant_funny/modules/main/presentation/menu_route.dart';
+import 'package:resturant_funny/modules/main/presentation/main_page.dart';
 import 'package:resturant_funny/modules/authentication/presentation/splash_page.dart';
 import 'package:resturant_funny/shared/enums/enviroment.dart';
 import 'package:resturant_funny/shared/widgets/global_loader.dart';
@@ -103,7 +103,7 @@ class _MyAppState extends ConsumerState<MyApp> {
       routes: {
         '/login': (context) => const LoginPage(),
         '/splash': (context) => const SplashPage(),
-        '/base': (context) => const MenuRoute(),
+        '/base': (context) => const MainPage(),
       },
 
       builder: (context, child) {

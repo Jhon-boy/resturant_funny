@@ -8,7 +8,7 @@ import 'package:resturant_funny/modules/main/data/datasource/productos_remote_da
 import 'package:resturant_funny/modules/main/data/repository/productos_repository_impl.dart';
 import 'package:resturant_funny/modules/main/domain/providers/dining_provider.dart';
 import 'package:resturant_funny/modules/main/domain/repository/productos_repository.dart';
-import 'package:resturant_funny/modules/main/presentation/menu_route.dart';
+import 'package:resturant_funny/modules/main/presentation/main_page.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
@@ -47,7 +47,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     final result = await _productosRepository.getProductos(idSucursal);
 
-      result.fold(
+    result.fold(
       (failure) {
         DialogHelper.error(context,
             message: 'Error al obtener los productos: ${failure.message}',
@@ -55,11 +55,11 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       },
       (productos) {
         ref.read(diningProvider.notifier).setProductos(productos);
-        
-    if (mounted) {
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const MenuRoute()));
-    }
+
+        if (mounted) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const MainPage()));
+        }
       },
     );
   }

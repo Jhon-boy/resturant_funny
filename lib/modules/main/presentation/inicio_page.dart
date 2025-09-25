@@ -16,7 +16,9 @@ import 'package:shimmer/shimmer.dart';
 import 'package:resturant_funny/core/utils/responsive_util.dart';
 
 class InicioPage extends ConsumerStatefulWidget {
-  const InicioPage({super.key});
+  final Function(int)? onSectionChange;
+
+  const InicioPage({super.key, this.onSectionChange});
 
   @override
   ConsumerState<InicioPage> createState() => _InicioPageState();
@@ -94,14 +96,21 @@ class _InicioPageState extends ConsumerState<InicioPage> {
 
     return RefreshIndicator(
       onRefresh: _refreshProductos,
-      child: _InicioContent(productos: _productos),
+      child: _InicioContent(
+        productos: _productos,
+        onSectionChange: widget.onSectionChange,
+      ),
     );
   }
 }
 
 class _InicioContent extends StatelessWidget {
   final List<ProductoEntity> productos;
-  const _InicioContent({required this.productos});
+  final Function(int)? onSectionChange;
+  const _InicioContent({
+    required this.productos,
+    this.onSectionChange,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,10 +128,12 @@ class _InicioContent extends StatelessWidget {
           ProductoCarouselWidget(
             productos: productos,
             onTap: (p) {
-              // Usar el Navigator anidado de PantallaBase
               Navigator.of(context, rootNavigator: false).push(
                 MaterialPageRoute(
-                  builder: (_) => ProductoDetallePage(producto: p),
+                  builder: (_) => ProductoDetallePage(
+                    producto: p,
+                    onSectionChange: onSectionChange,
+                  ),
                 ),
               );
             },
@@ -178,7 +189,10 @@ class _InicioContent extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context, rootNavigator: false).push(
                     MaterialPageRoute(
-                      builder: (_) => ProductoDetallePage(producto: producto),
+                      builder: (_) => ProductoDetallePage(
+                        producto: producto,
+                        onSectionChange: onSectionChange,
+                      ),
                     ),
                   );
                 },
