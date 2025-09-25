@@ -119,8 +119,8 @@ class _InicioContent extends StatelessWidget {
           ProductoCarouselWidget(
             productos: productos,
             onTap: (p) {
-              Navigator.push(
-                context,
+              // Usar el Navigator anidado de PantallaBase
+              Navigator.of(context, rootNavigator: false).push(
                 MaterialPageRoute(
                   builder: (_) => ProductoDetallePage(producto: p),
                 ),
@@ -176,8 +176,7 @@ class _InicioContent extends StatelessWidget {
               return ProductoCardWidget(
                 producto: producto,
                 onTap: () {
-                  Navigator.push(
-                    context,
+                  Navigator.of(context, rootNavigator: false).push(
                     MaterialPageRoute(
                       builder: (_) => ProductoDetallePage(producto: producto),
                     ),
