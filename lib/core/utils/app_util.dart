@@ -111,7 +111,44 @@ class AppUtils {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
-  static DateTime  generateTimeExpiration() {
-    return DateTime.now().add( Duration( hours:  AppConstants.TOKEN_EXPIRATION));
+  static DateTime generateTimeExpiration() {
+    return DateTime.now().add(Duration(hours: AppConstants.TOKEN_EXPIRATION));
+  }
+
+  static DateTime getFechaActual() {
+    final fecha = DateTime.now();
+    return DateTime(fecha.year, fecha.month, fecha.day, fecha.hour,
+        fecha.minute, fecha.second);
+  }
+
+  static bool validarCedula(String cedula) {
+    String patron = r'^\d{10}$';
+    RegExp regExp = RegExp(patron);
+    if (!regExp.hasMatch(cedula)) {
+      return false;
+    }
+
+    int digitoVerificador = int.parse(cedula.substring(9, 10));
+    int sumaPares = 0;
+    int sumaImpares = 0;
+
+    for (int i = 0; i < 9; i++) {
+      int digito = int.parse(cedula.substring(i, i + 1));
+      if (i % 2 == 0) {
+        digito *= 2;
+        if (digito > 9) {
+          digito -= 9;
+        }
+        sumaPares += digito;
+      } else {
+        sumaImpares += digito;
+      }
+    }
+
+    int total = sumaPares + sumaImpares;
+    int residuo = total % 10;
+    int digitoValidador = (residuo != 0) ? (10 - residuo) : 0;
+
+    return digitoValidador == digitoVerificador;
   }
 }

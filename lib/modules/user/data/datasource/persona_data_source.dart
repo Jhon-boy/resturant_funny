@@ -48,7 +48,7 @@ class PersonasRemoteDataSource {
     try {
       final result = await SupabaseService.selectSingle(
         table: Entities.TPERSONA.tableName,
-        filters: {'IDPERSONA': int.parse(idPersona)},
+        filters: {'IDENTIFICACION': idPersona},
       );
       if (result == null) return null;
       return PersonaEntity.fromJson(result);

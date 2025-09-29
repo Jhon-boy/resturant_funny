@@ -201,7 +201,7 @@ class EnhancedAuthService {
         throw ServerException(
             message: "getPersonaByIdentificacion Sesión no válida");
       }
-
+      debugPrint("identificacion: --> $identificacion");
       final response = await _supabase
           .from(Entities.TPERSONA.tableName)
           .select("*")

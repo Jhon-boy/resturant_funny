@@ -54,7 +54,7 @@ class CustomButton extends StatelessWidget {
           children: [
             if (isLoading == true) ...[
               Text(
-                "Cargando...",
+                '$text...',
                 style: TextStyle(
                   fontFamily: ThemeApp.fontFamily,
                   fontSize: 16,

@@ -14,11 +14,14 @@ class AppState extends ChangeNotifier {
   // Indica si se debe mostrar un loader global
   bool _isLoading = false;
 
+  bool _processLoading = false;
+
   // Getters
   bool get isDarkMode => _isDarkMode;
   Locale get currentLocale => _currentLocale;
   bool get isFirstTime => _isFirstTime;
   bool get isLoading => _isLoading;
+  bool get isProcessLoading => _processLoading;
 
   // Cambia entre modo claro y oscuro
   void toggleTheme() {
@@ -41,6 +44,12 @@ class AppState extends ChangeNotifier {
   // Activa o desactiva el loader global
   void setLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  // Activa o desactiva el loader del botón
+  void setProcessLoading(bool value) {
+    _processLoading = value;
     notifyListeners();
   }
 }
