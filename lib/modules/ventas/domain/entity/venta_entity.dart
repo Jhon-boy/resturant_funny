@@ -60,10 +60,9 @@ class VentaEntity {
     );
   }
 
-  /// Convierte la entidad a JSON para la base de datos
+  /// Convierte la entidad a JSON para la base de datos 
   Map<String, dynamic> toJson() {
-    return {
-      'IDVENTA': idVenta,
+    final data = <String, dynamic>{
       'IDMESA': idMesa,
       'CLIENTE': cliente,
       'IDEMPLEADO': idEmpleado,
@@ -80,6 +79,12 @@ class VentaEntity {
       'USUARIOINGRESO': usuarioIngreso,
       'USERMODIFICACION': userModificacion,
     };
+ 
+    if (idVenta != null) {
+      data['IDVENTA'] = idVenta;
+    }
+
+    return data;
   }
 
   /// Convierte la entidad a JSON para la UI (nombres en camelCase)

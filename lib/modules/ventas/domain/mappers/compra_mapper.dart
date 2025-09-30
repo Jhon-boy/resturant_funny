@@ -12,6 +12,7 @@ class CompraMapper {
       String comentario,
       String usuarioIngreso,
       int idMesa,
+      String tipo,
       String cliente) {
     return VentaEntity(
         subtotal: subtotal,
@@ -23,6 +24,7 @@ class CompraMapper {
         usuarioIngreso: usuarioIngreso,
         idMesa: idMesa,
         cliente: cliente,
+        tipoVenta: tipo ,
         idEmpleado: int.parse(usuarioIngreso),
         fecha: AppUtils.getFechaActual(),
         fCreacion: AppUtils.getFechaActual(),

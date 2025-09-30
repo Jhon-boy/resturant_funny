@@ -251,12 +251,17 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
                           ),
                           if (_clientesEncontrados.isNotEmpty ||
                               _sinResultados) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 3),
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 TextButton.icon(
                                   onPressed: _limpiarBusqueda,
-                                  icon: const Icon(Icons.clear, size: 18),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    size: 18,
+                                    color: ThemeApp.primary,
+                                  ),
                                   label: const Text("Limpiar"),
                                   style: TextButton.styleFrom(
                                     foregroundColor: Colors.grey.shade600,
@@ -269,7 +274,7 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 2),
 
                     // Resultados de búsqueda
                     if (ref.read(appStateProvider).isProcessLoading) ...[

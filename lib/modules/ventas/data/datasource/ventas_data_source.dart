@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/errors/exception.dart';
 import 'package:resturant_funny/core/network/http_client.dart';
@@ -98,6 +99,7 @@ class VentasRemoteDataSource {
       );
       return VentaEntity.fromJson(result);
     } catch (e) {
+      debugPrint("Error : $e");
       _handleError(e, 'createVenta');
     }
   }

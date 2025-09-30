@@ -9,12 +9,16 @@ import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
+import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
+import 'package:resturant_funny/modules/ventas/data/repository/ventas_repository_impl.dart';
 import 'package:resturant_funny/modules/ventas/domain/mappers/compra_mapper.dart';
 import 'package:resturant_funny/modules/ventas/domain/models/card_item_model.dart';
+import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/buscar_cliente_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/cart_item.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:resturant_funny/shared/widgets/input_dialog.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
@@ -44,10 +48,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
   bool _conDelivery = false;
   double _costoDelivery = 0.0;
   PersonaEntity? _clienteSeleccionado;
+  late final VentaRepository _ventaRepository;
 
   @override
   void initState() {
     super.initState();
+    _ventaRepository = VentaRepositoryImpl(VentasRemoteDataSource(ref: ref));
     _resetearEstado();
   }
 
@@ -148,28 +154,24 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       return false;
     }
 
-    // Validar que se haya seleccionado una mesa
     if (_mesaSeleccionada == null) {
       SnackHelper.show(context,
           message: "Debe seleccionar una mesa para la venta", isError: true);
       return false;
     }
 
-    // Validar que el subtotal sea mayor a 0
     if (_subtotal <= 0) {
       SnackHelper.show(context,
           message: "El subtotal debe ser mayor a 0", isError: true);
       return false;
     }
 
-    // Validar que el total sea mayor a 0
     if (_total <= 0) {
       SnackHelper.show(context,
           message: "El total debe ser mayor a 0", isError: true);
       return false;
     }
 
-    // Si es delivery, validar que se haya configurado el costo
     if (_conDelivery && _costoDelivery <= 0) {
       SnackHelper.show(context,
           message: "Debe configurar el costo de delivery", isError: true);
@@ -200,29 +202,33 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       SnackHelper.show(context,
           message: 'No se selecciono un cliente', isError: true);
       return;
+    } else {
+      setState(() {
+        _clienteSeleccionado = cliente;
+      });
     }
     ref.read(appStateProvider).setProcessLoading(true);
-    final idUsuario = ref.read(userProvider).user?.idUsuario;
+    final user = ref.read(userProvider).user;
 
-    final venta = CompraMapper.toVentaEntity(
-      _subtotal,
-      _costoDelivery,
-      _conFactura,
-      _conDelivery,
-      _aplicaIva,
-      _total,
-      'Venta de producto',
-      idUsuario?.toString() ?? EnhancedAuthService.currentUser?.usuario ?? '',
-      _mesaSeleccionada?.idMesa ?? 0,
+    final venta = CompraMapper.toVentaEntity(  
+      _subtotal, _costoDelivery, _conFactura, _conDelivery,
+      _aplicaIva,  _total, 'Venta de producto',
+      user?.idUsuario?.toString() ??
+          EnhancedAuthService.currentUser?.usuario ??
+          '', _mesaSeleccionada?.idMesa ?? 0,   'EFECTIVO',
       _clienteSeleccionado!.identificacion,
     );
-    debugPrint("venta: ${venta.toJson()}");
 
-    SnackHelper.show(context,
-        message: "Venta procesada exitosamente", isSuccess: true);
-
-    Future.delayed(const Duration(seconds: 2), () {
+    final ventaFinalizado = await _ventaRepository.createVenta(venta, user!);
+    ventaFinalizado.fold((error) {
       ref.read(appStateProvider).setProcessLoading(false);
+      DialogHelper.error(context,
+          message: "Error al procesar la venta: $error", onConfirmed: () {});
+    }, (venta) {
+      ref.read(appStateProvider).setProcessLoading(false);
+      DialogHelper.success(context,
+          message: "Su venta ha sido procesado correctamente",
+          onConfirmed: () {});
     });
   }
 

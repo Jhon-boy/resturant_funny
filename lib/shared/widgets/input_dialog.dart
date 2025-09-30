@@ -64,11 +64,12 @@ class InputDialog {
                     inputFormatters: inputFormatters,
                     validator: validator,
                     maxLines: maxLines ?? 1,
-                    maxLength: maxLength,
+                    maxLength: maxLength, 
                     obscureText: obscureText,
                     decoration: InputDecoration(
                       labelText: label,
                       hintText: hint,
+                      counterText: "",
                       prefixIcon: prefixIcon,
                       suffixIcon: suffixIcon,
                       border: OutlineInputBorder(

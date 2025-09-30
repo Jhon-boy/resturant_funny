@@ -276,6 +276,7 @@ class SupabaseService {
   // =====================================
   static void _handleDatabaseError(
       dynamic error, String operation, String resource) {
+    debugPrint("Error: $error  Operacion: $operation  Resource: $resource");
     if (error is PostgrestException) {
       throw DatabaseException(
           'Error Postgrest en $operation ($resource): ${error.message}');
