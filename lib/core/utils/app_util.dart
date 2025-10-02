@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/models/deviceInfo_model.dart';
+import 'package:resturant_funny/modules/main/presentation/main_page.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
 //CLASE Util dedicado a la desarrollo de metodos utiles en toda la aplicacion
 // JB
@@ -107,20 +109,24 @@ class AppUtils {
     return sha256.convert(utf8.encode(input)).toString();
   }
 
+  //METODO QUE GENERA UN TOKEN
   static String generateToken() {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
+  //METODO QUE GENERA UN TIEMPO DE EXPIRACION
   static DateTime generateTimeExpiration() {
     return DateTime.now().add(Duration(hours: AppConstants.TOKEN_EXPIRATION));
   }
 
+  //METODO QUE OBTIENE LA FECHA ACTUAL
   static DateTime getFechaActual() {
     final fecha = DateTime.now();
     return DateTime(fecha.year, fecha.month, fecha.day, fecha.hour,
         fecha.minute, fecha.second);
   }
 
+  //METODO QUE VALIDA UNA CEDULA
   static bool validarCedula(String cedula) {
     String patron = r'^\d{10}$';
     RegExp regExp = RegExp(patron);
@@ -150,5 +156,43 @@ class AppUtils {
     int digitoValidador = (residuo != 0) ? (10 - residuo) : 0;
 
     return digitoValidador == digitoVerificador;
+  }
+
+  /// Navega de vuelta a la página de inicio
+  static void backToHome() {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const MainPage(),
+        ),
+        (route) => false,
+      );
+    }
+  }
+
+  //METODO QUE FORMATEA LA FECHA
+  static String formatDate(DateTime? date) {
+    if (date == null) return 'N/A';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  // Formateador de Dinero conn dos decimales
+  static String formatMoney(double amount) {
+    return amount.toStringAsFixed(2);
+  }
+
+  // Metodo de cerrar sesion
+  static void logout(BuildContext context) {
+    final navigator = AppUtils.navigatorKey.currentState;
+
+    DialogHelper.confirm(
+      context,
+      message: '¿Estás seguro de querer cerrar sesión?',
+      onConfirm: () {
+        navigator?.pushNamedAndRemoveUntil('/login', (route) => false);
+      },
+      onCancel: () {},
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
 import 'package:resturant_funny/shared/baseApp/app_bottom_nav.dart';
 
@@ -12,6 +13,9 @@ class PantallaBase extends StatefulWidget {
   final Color? backgroundColor;
   final Color? appBarColor;
   final Function(int)? onSectionChange; // Callback para cambiar sección
+  final bool blockSystemBack; // Bloquear botón de retroceder del sistema
+  final VoidCallback?
+      onSystemBack; // Acción personalizada al presionar retroceder
 
   const PantallaBase({
     super.key,
@@ -23,6 +27,8 @@ class PantallaBase extends StatefulWidget {
     this.backgroundColor,
     this.appBarColor,
     this.onSectionChange,
+    this.blockSystemBack = false,
+    this.onSystemBack,
   });
 
   @override
@@ -34,7 +40,7 @@ class _PantallaBaseState extends State<PantallaBase> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    Widget scaffold = Scaffold(
       key: _scaffoldKey,
       backgroundColor:
           widget.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
@@ -99,5 +105,22 @@ class _PantallaBaseState extends State<PantallaBase> {
         onDrawerOpen: () => _scaffoldKey.currentState?.openDrawer(),
       ),
     );
+
+    if (widget.blockSystemBack) {
+      return WillPopScope(
+        // Bloquear el botón de retroceder del sistema
+        onWillPop: () async {
+          if (widget.onSystemBack != null) {
+            widget.onSystemBack!();
+          } else {
+            AppUtils.logout(context);
+          }
+          return false;
+        },
+        child: scaffold,
+      );
+    }
+    // Muestra la pantalla base
+    return scaffold;
   }
 }

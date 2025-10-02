@@ -10,7 +10,7 @@ import 'package:resturant_funny/modules/authentication/domain/providers/user_pro
 import 'package:resturant_funny/modules/main/presentation/widget/no_producto_widget.dart';
 import 'package:resturant_funny/modules/main/presentation/widget/producto_card_widget.dart';
 import 'package:resturant_funny/modules/main/presentation/widget/producto_carrusel_widget.dart';
-import 'package:resturant_funny/modules/ventas/presentation/producto_detalle_venta.dart';
+import 'package:resturant_funny/modules/ventas/presentation/producto_detalle_venta_page.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:resturant_funny/core/utils/responsive_util.dart';

@@ -9,11 +9,16 @@ import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
+import 'package:resturant_funny/modules/ventas/data/datasource/detalles_ventas_datasource.dart';
 import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
+import 'package:resturant_funny/modules/ventas/data/repository/detalles_venta_impl.dart';
 import 'package:resturant_funny/modules/ventas/data/repository/ventas_repository_impl.dart';
+import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
 import 'package:resturant_funny/modules/ventas/domain/mappers/compra_mapper.dart';
 import 'package:resturant_funny/modules/ventas/domain/models/card_item_model.dart';
+import 'package:resturant_funny/modules/ventas/domain/repository/detalle_venta_repository.dart';
 import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
+import 'package:resturant_funny/modules/ventas/presentation/factura_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/buscar_cliente_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/cart_item.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
@@ -49,11 +54,14 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
   double _costoDelivery = 0.0;
   PersonaEntity? _clienteSeleccionado;
   late final VentaRepository _ventaRepository;
+  late final DetalleVentaRepository _detalleVentaRepository;
 
   @override
   void initState() {
     super.initState();
     _ventaRepository = VentaRepositoryImpl(VentasRemoteDataSource(ref: ref));
+    _detalleVentaRepository =
+        DetalleVentaRepositoryImpl(DetalleVentaRemoteDataSource(ref: ref));
     _resetearEstado();
   }
 
@@ -66,10 +74,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     }
   }
 
-  void _resetearEstado() {
+  void _resetearEstado({resetProducto = false}) {
     _carrito.clear();
-    _carrito.add(CartProduct(producto: widget.initialProducto, cantidad: 1));
-    _aplicaIva = true;
+    if (!resetProducto) {
+      _carrito.add(CartProduct(producto: widget.initialProducto, cantidad: 1));
+    }
+    _aplicaIva = false;
     _productoAAgregar = null;
     _mesaSeleccionada = null;
     _conFactura = false;
@@ -210,12 +220,19 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     ref.read(appStateProvider).setProcessLoading(true);
     final user = ref.read(userProvider).user;
 
-    final venta = CompraMapper.toVentaEntity(  
-      _subtotal, _costoDelivery, _conFactura, _conDelivery,
-      _aplicaIva,  _total, 'Venta de producto',
+    final venta = CompraMapper.toVentaEntity(
+      _subtotal,
+      _costoDelivery,
+      _conFactura,
+      _conDelivery,
+      _aplicaIva,
+      _total,
+      'Venta de producto',
       user?.idUsuario?.toString() ??
           EnhancedAuthService.currentUser?.usuario ??
-          '', _mesaSeleccionada?.idMesa ?? 0,   'EFECTIVO',
+          '',
+      _mesaSeleccionada?.idMesa ?? 0,
+      'EFECTIVO',
       _clienteSeleccionado!.identificacion,
     );
 
@@ -224,12 +241,53 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       ref.read(appStateProvider).setProcessLoading(false);
       DialogHelper.error(context,
           message: "Error al procesar la venta: $error", onConfirmed: () {});
-    }, (venta) {
+    }, (ventaCreada) async {
+      final detallesGuardados =
+          await _guardarDetalleVenta(_carrito, ventaCreada);
+
       ref.read(appStateProvider).setProcessLoading(false);
-      DialogHelper.success(context,
-          message: "Su venta ha sido procesado correctamente",
-          onConfirmed: () {});
+
+      if (detallesGuardados) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+              builder: (context) => FacturaPage(
+                    venta: ventaCreada,
+                    carrito: _carrito,
+                  )),
+          (route) => false,
+        );
+      } else {
+        DialogHelper.error(context,
+            message:
+                "La venta se creó pero hubo errores al guardar algunos productos",
+            onConfirmed: () {});
+      }
     });
+  }
+
+  Future<bool> _guardarDetalleVenta(
+      List<CartProduct> carrito, VentaEntity venta) async {
+    ref.read(appStateProvider).setProcessLoading(true);
+    final user = ref.read(userProvider).user;
+    bool todosLosDetallesGuardados = true;
+
+    for (var item in carrito) {
+      final detalleVenta = CompraMapper.toDetalleVenta(
+          venta, item.cantidad, item.producto, user!.idUsuario.toString());
+
+      final detalleVentaFinalizado =
+          await _detalleVentaRepository.createDetalle(detalleVenta, user);
+
+      detalleVentaFinalizado.fold((error) {
+        debugPrint(
+            "Error al guardar detalle para producto ${item.producto.nombre}: $error");
+        todosLosDetallesGuardados = false;
+      }, (detalleVenta) {
+        debugPrint(
+            "Detalle guardado correctamente para producto ${item.producto.nombre}");
+      });
+    }
+    return todosLosDetallesGuardados;
   }
 
   @override

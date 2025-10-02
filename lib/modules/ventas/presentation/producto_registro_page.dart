@@ -189,8 +189,9 @@ class _ProductoRegistroPageState extends ConsumerState<ProductoRegistroPage> {
                           if (v == null || v.isEmpty) return 'Requerido';
                           final parsed =
                               double.tryParse(v.replaceAll(',', '.'));
-                          if (parsed == null || parsed < 0)
-                            return 'Ingrese un precio válido';
+                          if (parsed == null || parsed < 0){
+                            return "Ingrese un precio válido";
+                          }
                           return null;
                         },
                       ),

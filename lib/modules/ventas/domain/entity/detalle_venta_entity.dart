@@ -45,7 +45,7 @@ class DetalleVentaEntity {
       );
 
   Map<String, dynamic> toJson() => {
-        'IDDETALLE': idDetalle,
+        if (idDetalle != null) 'IDDETALLE': idDetalle,
         'IDVENTA': idVenta,
         'IDPRODUCTO': idProducto,
         'CANTIDAD': cantidad,
