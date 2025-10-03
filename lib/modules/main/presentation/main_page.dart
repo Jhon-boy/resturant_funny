@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/ventas_page.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
@@ -19,58 +21,66 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
-        title: Text(
-          'Restaurant Funny',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 8.0),
-            child: Icon(Icons.notifications_none_rounded),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          AppUtils.logout(context);
+        }
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
+          title: Text(
+            'Restaurant Funny',
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-        ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            thickness: 1,
-            color: ThemeApp.inputBorder,
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 8.0),
+              child: Icon(Icons.notifications_none_rounded),
+            ),
+          ],
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: ThemeApp.inputBorder,
+            ),
           ),
         ),
-      ),
-      drawer: AppDrawer(
-        currentIndex: _currentIndex,
-        userRole: _userRole,
-        onMainMenuTap: (index) {
-          setState(() => _currentIndex = index);
-          Navigator.of(context).maybePop();
-        },
-        onDrawerMenuTap: (index) {
-          _handleDrawerMenuTap(index);
-          Navigator.of(context).maybePop();
-        },
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          InicioPage(onSectionChange: (index) {
+        drawer: AppDrawer(
+          currentIndex: _currentIndex,
+          userRole: _userRole,
+          onMainMenuTap: (index) {
             setState(() => _currentIndex = index);
-          }),
-          const VentaPage(),
-          const MiDiaPage(),
-          const Center(child: Text('Más opciones')),
-        ],
-      ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        onDrawerOpen: () => _scaffoldKey.currentState?.openDrawer(),
+            Navigator.of(context).maybePop();
+          },
+          onDrawerMenuTap: (index) {
+            _handleDrawerMenuTap(index);
+            Navigator.of(context).maybePop();
+          },
+        ),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            InicioPage(onSectionChange: (index) {
+              setState(() => _currentIndex = index);
+            }),
+            const VentaPage(),
+            const MiDiaPage(),
+            const Center(child: Text('Más opciones')),
+          ],
+        ),
+        bottomNavigationBar: AppBottomNav(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          onDrawerOpen: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
       ),
     );
   }

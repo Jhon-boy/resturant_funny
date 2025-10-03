@@ -1,3 +1,5 @@
+// CLASE UTIL PARA LOS PARAMETROS DE LA APLICACION
+// JB
 class ParameterUtil {
   static int getTimeAutoReturn() {
     return 2;

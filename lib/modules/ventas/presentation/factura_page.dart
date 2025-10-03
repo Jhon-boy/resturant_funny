@@ -10,6 +10,7 @@ import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
 import 'package:resturant_funny/modules/ventas/domain/models/card_item_model.dart';
+import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
@@ -52,69 +53,48 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        AppUtils.backToHome();
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 10),
-                _buildCarritoSection(),
-                Screenshot(
-                  controller: screenshotController,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 10),
-                      _buildVentaSection(),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildButtons(),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return PantallaBase(
+      title: 'Factura',
+      onBack: () => AppUtils.backToHome(),
+      onSectionChange: (index) {},
+      body: body(context),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: ThemeApp.primary,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.receipt_long,
-            color: Colors.white,
-            size: 25,
-          ),
-          const SizedBox(width: 20),
-          Text(
-            AppConstants.APP_NAME,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+  Widget body(BuildContext context) {
+    return PopScope(
+        canPop: false,
+        onPopInvoked: (didPop) {
+          if (!didPop) {
+            AppUtils.backToHome();
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  _buildCarritoSection(),
+                  Screenshot(
+                    controller: screenshotController,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        _buildVentaSection(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildButtons(),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
-    );
+        ));
   }
 
   Widget _buildCarritoSection() {
@@ -327,6 +307,7 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
               ),
             ],
           ),
+          const Divider(height: 15),
           const SizedBox(height: 10),
           _buildVentaInfo('ID Venta', '#${widget.venta.idVenta ?? 'N/A'}'),
           _buildVentaInfo('RUC', ParameterUtil.getRucCompany()),
@@ -334,16 +315,16 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
           _buildVentaInfo('Fecha', AppUtils.formatDate(widget.venta.fecha)),
           _buildVentaInfo('Tipo de Venta', widget.venta.tipoVentaFormateado),
           _buildVentaInfo('Estado', widget.venta.estadoFormateado),
-          _buildVentaInfo('# Productos', widget.carrito.length.toString()),
+          _buildVentaInfo(
+              'Cantidad Productos', widget.carrito.length.toString()),
           _buildVentaInfo(
               'Usuario Venta', widget.venta.usuarioIngreso ?? 'N/A'),
           _buildVentaInfo('Sucursal', user?.idSucursal?.toString() ?? 'N/A'),
           if (widget.venta.comentario != null &&
               widget.venta.comentario!.isNotEmpty)
             _buildVentaInfo('Comentario', widget.venta.comentario!),
-          const SizedBox(height: 2),
           const Divider(height: 15),
-          const SizedBox(height: 15),
+          const SizedBox(height: 5),
           _buildVentaInfo(
               'Subtotal', AppUtils.formatMoney(widget.venta.subtotal ?? 0.00)),
           _buildVentaInfo(
