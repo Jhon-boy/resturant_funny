@@ -29,7 +29,7 @@ class CustomDropdown<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: const Color.fromARGB(255, 236, 234, 234),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
       ),
@@ -38,7 +38,7 @@ class CustomDropdown<T> extends StatelessWidget {
         hint: Text(hint),
         isExpanded: true,
         underline: const SizedBox(),
-        dropdownColor: Colors.white,
+        dropdownColor: const Color.fromARGB(255, 215, 214, 214),
         style: TextStyle(
           color: Colors.grey.shade800,
           fontSize: 16,

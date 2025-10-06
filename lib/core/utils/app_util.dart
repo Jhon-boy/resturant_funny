@@ -195,4 +195,16 @@ class AppUtils {
       onCancel: () {},
     );
   }
+
+  static String getGenero(String genero) {
+    String generoFormat = genero.toUpperCase();
+    switch (generoFormat) {
+      case 'MASCULINO':
+        return 'M';
+      case 'FEMENINO':
+        return 'F';
+      default:
+        return 'O';
+    }
+  }
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
@@ -9,6 +11,7 @@ import 'package:resturant_funny/modules/common/widgets/persona_card.dart';
 import 'package:resturant_funny/modules/user/data/datasource/persona_data_source.dart';
 import 'package:resturant_funny/modules/user/data/repository/persona_repository_impl.dart';
 import 'package:resturant_funny/modules/user/domain/repository/persona_repository.dart';
+import 'package:resturant_funny/modules/user/presentation/crear_persona_page.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/input_search_widget.dart';
 
@@ -114,7 +117,6 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
         _sinResultados = true;
       });
       SnackHelper.show(
-        // ignore: use_build_context_synchronously
         context,
         message: "Error al buscar cliente: $e",
         isError: true,
@@ -129,8 +131,26 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
     Navigator.of(context).pop(cliente);
   }
 
-  void _crearNuevoCliente() {
-    Navigator.of(context).pushNamed('/crear-cliente');
+  Future<void> _crearNuevoCliente() async {
+    final personaCreada = await CrearPersonaPage.navigate(
+      context: context,
+      titulo: "Registrar Nuevo Cliente",
+      identificacion: _identificacionController.text.trim(),
+    );
+
+    if (personaCreada != null) {
+      setState(() {
+        _clientesEncontrados.clear();
+        _clientesEncontrados.add(personaCreada);
+        _sinResultados = false;
+      });
+
+      SnackHelper.show(
+        context,
+        message: "Cliente registrado exitosamente",
+        isSuccess: true,
+      );
+    }
   }
 
   void _limpiarBusqueda() {
@@ -144,12 +164,30 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
   }
 
   void _validarCedulaEnTiempoReal(String value) {
-    if (value.isEmpty) {
-      _errorCedula = null;
-    } else if (value.length < 10) {
-      _errorCedula = 'La cédula debe tener 10 dígitos';
+    String cedulaLimpia = value.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (cedulaLimpia.isEmpty) {
+      setState(() {
+        _errorCedula = null;
+      });
+    } else if (cedulaLimpia.length < 10) {
+      setState(() {
+        _errorCedula = 'La cédula debe tener 10 dígitos';
+      });
+    } else if (cedulaLimpia.length == 10) {
+      if (!AppUtils.validarCedula(cedulaLimpia)) {
+        setState(() {
+          _errorCedula = 'Cédula inválida - Verifique los dígitos';
+        });
+      } else {
+        setState(() {
+          _errorCedula = null;
+        });
+      }
     } else {
-      _errorCedula = null;
+      setState(() {
+        _errorCedula = 'La cédula no puede tener más de 10 dígitos';
+      });
     }
   }
 
@@ -234,12 +272,14 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
                                     maxLength: 10,
                                     keyboardType: TextInputType.number,
                                     validator: (value) {
-                                      if (value == null || value.isEmpty) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
                                         return 'Ingrese un número de cédula';
                                       }
-                                      if (value.length < 10) {
+                                      if (value.length != 10) {
                                         return 'La cédula debe tener 10 dígitos';
                                       }
+
                                       if (!AppUtils.validarCedula(value)) {
                                         return 'Cédula inválida';
                                       }
@@ -308,7 +348,7 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
                             children: [
                               const Icon(
                                 Icons.person_search,
-                                size: 64,
+                                size: 45,
                                 color: Colors.grey,
                               ),
                               const SizedBox(height: 16),
@@ -330,7 +370,7 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
                               ),
                               const SizedBox(height: 24),
                               CustomButton(
-                                text: "Crear Nuevo Cliente",
+                                text: "Registrar",
                                 icon: Icons.person_add,
                                 onPressed: _crearNuevoCliente,
                               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ThemeApp {
   // === Colores principales ===
-  static const Color primary = Color(0xFFFF6B00); 
+  static const Color primary = Color(0xFFFF6B00);
   static const Color background = Color(0xFFF5F5F5);
   static const Color headerBackground = Color(0xFF0D0C22);
 
@@ -15,6 +15,7 @@ class ThemeApp {
   static const Color textPrimary = Color(0xFF212121);
   static const Color textSecondary = Color(0xFF757575);
   static const Color link = Color(0xFFFF6B00);
+  static const Color error = Color(0xFFD32F2F);
 
   // === Social Buttons ===
   static const Color apple = Color(0xFF000000);
@@ -60,6 +61,37 @@ class ThemeApp {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
       ),
+    );
+  }
+
+  static InputDecoration inputDecoration(
+    String title,
+    String hint,
+    IconData prefixIcon, {
+    String? Function(String?)? validator,
+    bool isRequired = false,
+  }) {
+    return InputDecoration(
+      labelText: title,
+      hintText: hint,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: ThemeApp.inputBorder,
+          width: 2,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: isRequired ? ThemeApp.error : ThemeApp.inputBorder,
+        ),
+      ),
+      counterText: '',
+      prefixIcon: Icon(prefixIcon),
     );
   }
 }

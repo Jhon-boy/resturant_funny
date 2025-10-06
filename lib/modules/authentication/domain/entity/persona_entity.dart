@@ -9,6 +9,7 @@ class PersonaEntity {
   final String? direccion;
   final String? tipoIdentificacion;
   final String? estado;
+  
 
   PersonaEntity({
     required this.identificacion,
