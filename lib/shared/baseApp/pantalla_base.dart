@@ -113,6 +113,7 @@ class _PantallaBaseState extends State<PantallaBase> {
           if (widget.onSystemBack != null) {
             widget.onSystemBack!();
           } else {
+            debugPrint("Bloqueado el botón de retroceder del sistema");
             AppUtils.logout(context);
           }
           return false;

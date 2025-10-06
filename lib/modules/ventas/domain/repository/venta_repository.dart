@@ -9,6 +9,12 @@ abstract class VentaRepository {
     DateTime? fechaDesde,
     DateTime? fechaHasta,
   });
+
+  /// Obtener ventas por sucursal
+  Future<Either<Failure, List<VentaEntity>>> getVentasBy(int idEmpleado,{
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  });
 //Ventas por el usuario de venta
   Future<Either<Failure, List<VentaEntity>>> getVentasBySucursal(
       int idSucursal);

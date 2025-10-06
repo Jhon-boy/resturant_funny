@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/theme_app.dart';
-import 'package:resturant_funny/core/models/menu_item.dart'; 
+import 'package:resturant_funny/core/models/menu_item.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -125,6 +125,7 @@ class AppDrawer extends StatelessWidget {
       leading: const Icon(Icons.logout_outlined),
       title: const Text('Cerrar Sesión'),
       onTap: () {
+        debugPrint("Cerrando sesión");
         AppUtils.logout(context);
       },
     );

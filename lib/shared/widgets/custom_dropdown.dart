@@ -38,9 +38,9 @@ class CustomDropdown<T> extends StatelessWidget {
         hint: Text(hint),
         isExpanded: true,
         underline: const SizedBox(),
-        dropdownColor: const Color.fromARGB(255, 215, 214, 214),
-        style: TextStyle(
-          color: Colors.grey.shade800,
+        dropdownColor: const Color.fromARGB(255, 230, 228, 228),
+        style: const TextStyle(
+          color: Colors.black,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),

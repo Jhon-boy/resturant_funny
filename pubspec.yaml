@@ -48,6 +48,7 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   lottie: ^3.3.1
+  calendar_date_picker2: ^1.0.8
   logger: ^2.6.1
   shared_preferences: ^2.5.3
   shimmer_animation: ^2.2.2
@@ -55,7 +56,7 @@ dependencies:
   network_info_plus: ^6.1.4
   crypto: ^3.0.6
   screenshot: ^3.0.0
-  share_plus: ^12.0.0
+  share_plus: ^12.0.0 
 
 dev_dependencies:
   flutter_test:

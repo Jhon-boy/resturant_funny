@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/services/conection_service.dart';
 import 'package:resturant_funny/core/utils/either.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
@@ -25,6 +26,7 @@ class PersonaRepositoryImpl implements PersonasRepository {
       final personaCreated = await remote.createPersona(persona, user);
       return Right(personaCreated);
     } catch (_) {
+      debugPrint('Error al crear persona: $_');
       return const Left(
           ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
     }

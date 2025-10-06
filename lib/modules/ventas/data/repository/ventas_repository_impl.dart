@@ -132,4 +132,24 @@ class VentaRepositoryImpl implements VentaRepository {
           ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<VentaEntity>>> getVentasBy(int idEmpleado,
+      {DateTime? fechaDesde, DateTime? fechaHasta}) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No hay conexión a internet'));
+    }
+    try {
+      final ventas = await remote.getVentasBy(
+        idEmpleado,
+        fechaDesde: fechaDesde,
+        fechaHasta: fechaHasta,
+      );
+      return Right(ventas);
+    } catch (_) {
+      return const Left(
+          ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
+    }
+  }
 }

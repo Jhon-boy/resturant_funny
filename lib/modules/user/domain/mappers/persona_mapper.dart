@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 
@@ -14,6 +15,7 @@ class PersonaMapper {
     String? tipoIdentificacion,
     String? estado,
   }) {
+    debugPrint('Genero: $genero');
     return PersonaEntity(
       identificacion: identificacion.trim(),
       nombres: nombres.trim(),
@@ -25,7 +27,7 @@ class PersonaMapper {
       direccion:
           direccion?.trim().isNotEmpty == true ? direccion!.trim() : null,
       tipoIdentificacion: tipoIdentificacion,
-      estado: estado, 
+      estado: estado,
     );
   }
 }

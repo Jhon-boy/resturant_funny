@@ -30,12 +30,12 @@ import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/modules/main/domain/entity/mesa_entity.dart';
 
 class DetalleCompra extends ConsumerStatefulWidget {
-  final ProductoEntity initialProducto;
+  final ProductoEntity? initialProducto;
   final List<ProductoEntity> productosDisponibles;
   final List<MesaEntity> mesasDisponibles;
   const DetalleCompra({
     super.key,
-    required this.initialProducto,
+    this.initialProducto,
     required this.productosDisponibles,
     required this.mesasDisponibles,
   });
@@ -68,16 +68,16 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
   @override
   void didUpdateWidget(DetalleCompra oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialProducto.idProducto !=
-        widget.initialProducto.idProducto) {
+    if (oldWidget.initialProducto?.idProducto !=
+        widget.initialProducto?.idProducto) {
       _resetearEstado();
     }
   }
 
   void _resetearEstado({resetProducto = false}) {
     _carrito.clear();
-    if (!resetProducto) {
-      _carrito.add(CartProduct(producto: widget.initialProducto, cantidad: 1));
+    if (!resetProducto && widget.initialProducto != null){
+      _carrito.add(CartProduct(producto: widget.initialProducto!, cantidad: 1));
     }
     _aplicaIva = false;
     _productoAAgregar = null;

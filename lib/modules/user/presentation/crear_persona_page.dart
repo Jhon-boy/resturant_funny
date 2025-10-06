@@ -75,7 +75,12 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
 
   bool _isLoading = false;
 
-  final List<String> _generos = ['Masculino', 'Femenino', 'Otro'];
+  final List<String> _generos = [
+    'No especificado',
+    'Masculino',
+    'Femenino',
+    'Otro'
+  ];
 
   final List<String> _estados = ['ACT', 'INA'];
 
@@ -164,14 +169,13 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
         nombres: _nombresController.text,
         apellidos: _apellidosController.text,
         fechaNacimiento: _fechaNacimiento,
-        genero: _generoSeleccionado,
+        genero: _generoSeleccionado ?? 'NO ESPECIFICADO',
         correo: _correoController.text,
         telefono: _telefonoController.text,
         direccion: _direccionController.text,
         tipoIdentificacion: _tipoIdentificacionSeleccionado,
-        estado: _estadoSeleccionado,
+        estado: _estadoSeleccionado ?? 'ACTIVO',
       );
-
       final result = await _personasRepository.createPersona(persona, user);
 
       result.fold(
@@ -265,7 +269,7 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
 
   String? _validarTelefono(String? value) {
     if (value != null && value.trim().isNotEmpty) {
-      if (AppUtils.isValidPhone(value.trim())) {
+      if (!AppUtils.isValidPhone(value.trim())) {
         return 'El teléfono no es válido';
       }
     }

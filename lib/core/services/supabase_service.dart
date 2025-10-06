@@ -64,7 +64,21 @@ class SupabaseService {
       // Aplicar filtros
       if (filters != null) {
         filters.forEach((column, value) {
-          query = query.eq(column, value);
+          if (column.endsWith('_gte')) {
+            final realColumn = column.replaceAll('_gte', '');
+            query = query.gte(realColumn, value);
+          } else if (column.endsWith('_lte')) {
+            final realColumn = column.replaceAll('_lte', '');
+            query = query.lte(realColumn, value);
+          } else if (column.endsWith('_gt')) {
+            final realColumn = column.replaceAll('_gt', '');
+            query = query.gt(realColumn, value);
+          } else if (column.endsWith('_lt')) {
+            final realColumn = column.replaceAll('_lt', '');
+            query = query.lt(realColumn, value);
+          } else {
+            query = query.eq(column, value);
+          }
         });
       }
 

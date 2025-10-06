@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
+import 'package:resturant_funny/modules/ventas/presentation/mi_dia_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/ventas_page.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
 import 'package:resturant_funny/shared/baseApp/app_bottom_nav.dart';
@@ -25,6 +26,11 @@ class _MainPageState extends State<MainPage> {
       canPop: false,
       onPopInvoked: (didPop) {
         if (!didPop) {
+          if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+            Navigator.of(context).pop();
+            return;
+          }
+          debugPrint("Bloqueado el botón de retroceder del sistema");
           AppUtils.logout(context);
         }
       },

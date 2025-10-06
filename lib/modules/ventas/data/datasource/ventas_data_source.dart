@@ -135,6 +135,37 @@ class VentasRemoteDataSource {
     }
   }
 
+  /// Obtener ventas por empleado con filtros de fecha
+
+  Future<List<VentaEntity>> getVentasBy(
+    int idEmpleado, {
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    try {
+      final filters = <String, dynamic>{
+        'IDEMPLEADO': idEmpleado,
+      };
+
+      if (fechaDesde != null) {
+        filters['FECHA_gte'] = fechaDesde.toIso8601String();
+      }
+      if (fechaHasta != null) {
+        filters['FECHA_lte'] = fechaHasta.toIso8601String();
+      }
+
+      final result = await SupabaseService.select(
+        table: Entities.TVENTA.tableName,
+        filters: filters,
+        orderBy: 'FECHA',
+        ascending: false,
+      );
+      return result.map((json) => VentaEntity.fromJson(json)).toList();
+    } catch (e) {
+      _handleError(e, 'getVentasBy');
+    }
+  }
+
   Never _handleError(dynamic error, String method) {
     if (error is SessionException) {
       throw SessionException('Error de sesión en $method: ${error.message}');

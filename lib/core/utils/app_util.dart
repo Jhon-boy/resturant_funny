@@ -204,7 +204,7 @@ class AppUtils {
       case 'FEMENINO':
         return 'F';
       default:
-        return 'O';
+        return 'N';
     }
   }
 }

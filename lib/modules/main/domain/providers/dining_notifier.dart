@@ -116,6 +116,10 @@ class DiningNotifier extends StateNotifier<DiningContext> {
     }).toList();
   }
 
+  Future<List<ProductoEntity>> getProductos(int idSucursal) async {
+    return state.productos;
+  }
+
   /// Productos agotados
   List<ProductoEntity> obtenerProductosAgotados() {
     return state.productos.where((producto) {
