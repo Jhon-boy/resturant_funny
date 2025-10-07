@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/theme_app.dart';
-import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
 
 class VentasRecientes extends StatelessWidget {
-  final List<VentaEntity> ventasHoy;
+  final List<VentaCardModel> ventas;
 
   const VentasRecientes({
     super.key,
-    required this.ventasHoy,
+    required this.ventas,
   });
 
   @override
   Widget build(BuildContext context) {
-    final ventasRecientes = ventasHoy.take(5).toList();
+    final ventasRecientes = ventas.take(20).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ventas Recientes',
+          'Ventas del día',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -52,10 +52,11 @@ class VentasRecientes extends StatelessWidget {
                       children: [
                         if (index > 0) const Divider(height: 20),
                         _buildSaleItem(
-                          'Mesa ${venta.idMesa}',
-                          _formatTime(venta.fecha),
-                          '\$${(venta.total ?? 0.0).toStringAsFixed(2)}',
+                          venta.nombreProducto ?? 'Producto',
+                          venta.nombreCliente,
+                          '\$${venta.total.toStringAsFixed(2)}',
                           venta.estado ?? 'Pendiente',
+                          cantidad: venta.cantidadProducto,
                         ),
                       ],
                     );
@@ -66,14 +67,16 @@ class VentasRecientes extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime? fecha) {
+  String _formatDate(DateTime? fecha) {
     if (fecha == null) return 'N/A';
-    return '${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
+    return '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
   }
 
-  Widget _buildSaleItem(String mesa, String time, String amount, String status) {
+  Widget _buildSaleItem(
+      String producto, String cliente, String amount, String status,
+      {int? cantidad}) {
     Color statusColor = status == 'COMPLETADA' ? Colors.green : Colors.orange;
-    
+
     return Row(
       children: [
         Container(
@@ -84,7 +87,7 @@ class VentasRecientes extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(
-            Icons.table_restaurant,
+            Icons.receipt_long,
             color: ThemeApp.primary,
             size: 20,
           ),
@@ -94,19 +97,10 @@ class VentasRecientes extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                mesa,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                time,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
+              Text(producto,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(cliente,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
             ],
           ),
         ),
@@ -120,6 +114,20 @@ class VentasRecientes extends StatelessWidget {
                 color: Colors.green,
               ),
             ),
+            if (cantidad != null)
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: ThemeApp.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('x$cantidad',
+                    style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: ThemeApp.primary)),
+              ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(

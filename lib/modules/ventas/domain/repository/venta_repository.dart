@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:resturant_funny/core/utils/either.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
 
 abstract class VentaRepository {
   //Obtiene todas las ventas
@@ -11,14 +12,15 @@ abstract class VentaRepository {
   });
 
   /// Obtener ventas por sucursal
-  Future<Either<Failure, List<VentaEntity>>> getVentasBy(int idEmpleado,{
+  Future<Either<Failure, List<VentaEntity>>> getVentasBy(
+    int idEmpleado, {
     DateTime? fechaDesde,
     DateTime? fechaHasta,
   });
 //Ventas por el usuario de venta
   Future<Either<Failure, List<VentaEntity>>> getVentasBySucursal(
       int idSucursal);
-  Future<Either<Failure, List<VentaEntity>>> getVentasByUsuario(
+  Future<Either<Failure, List<VentaCardModel>>> getVentasByUsuario(
       String identificacion);
 
   /// Obtener venta por ID
@@ -35,4 +37,11 @@ abstract class VentaRepository {
   /// Activar/Desactivar venta (por ejemplo cambiar estado)
   Future<Either<Failure, VentaEntity>> toggleEstadoVenta(int idVenta,
       {required String nuevoEstado});
+
+  /// Obtener tarjetas de ventas (para listas en UI) por empleado y fecha
+  Future<Either<Failure, List<VentaCardModel>>> getVentaCardsBy(
+    int idEmpleado, {
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  });
 }

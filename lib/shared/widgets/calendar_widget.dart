@@ -118,7 +118,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           child: Text(
             widget.title,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               color: ThemeApp.textPrimary,
               letterSpacing: 0.5,
@@ -139,7 +139,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: _selectedDate != null
                       ? LinearGradient(

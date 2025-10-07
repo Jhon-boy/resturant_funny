@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
 import 'package:resturant_funny/modules/ventas/data/repository/ventas_repository_impl.dart';
@@ -9,7 +11,11 @@ import 'package:resturant_funny/modules/ventas/presentation/widget/estadisticas_
 import 'package:resturant_funny/modules/ventas/presentation/widget/estadisticas_header.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/productos_mas_vendidos.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/ventas_recientes.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
+import 'package:resturant_funny/shared/widgets/input_search_widget.dart';
 
 class MiDiaPage extends ConsumerStatefulWidget {
   const MiDiaPage({super.key});
@@ -23,13 +29,19 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
   List<VentaEntity> _ventasHoy = [];
   List<VentaEntity> _ventasAyer = [];
   List<VentaEntity> _ventasAnteayer = [];
+  List<VentaCardModel> _ventasLista = [];
+  int _index = 0;
   late final VentaRepository _ventasRepository;
+  DateTime _selectedDate = DateTime.now();
+  final TextEditingController _identificacionController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _ventasRepository = VentaRepositoryImpl(VentasRemoteDataSource(ref: ref));
     _cargarEstadisticas();
+    _index = 0;
   }
 
   Future<void> _cargarEstadisticas() async {
@@ -39,7 +51,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
       final user = ref.read(userProvider).user;
       if (user?.idUsuario == null) return;
 
-      final hoy = DateTime.now();
+      final hoy = _selectedDate;
       final ayer = hoy.subtract(const Duration(days: 1));
       final anteayer = hoy.subtract(const Duration(days: 2));
 
@@ -76,11 +88,45 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
         (failure) => debugPrint('Error cargando ventas anteayer: $failure'),
         (ventas) => setState(() => _ventasAnteayer = ventas),
       );
+      final diaDesde = DateTime(hoy.year, hoy.month, hoy.day);
+      final diaHasta = DateTime(hoy.year, hoy.month, hoy.day, 23, 59, 59);
+
+      final cardsEither = await _ventasRepository.getVentaCardsBy(
+        user.idUsuario!,
+        fechaDesde: diaDesde,
+        fechaHasta: diaHasta,
+      );
+      cardsEither.fold(
+        (_) {},
+        (cards) => setState(() => _ventasLista = cards),
+      );
     } catch (e) {
       debugPrint('Error cargando estadísticas: $e');
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _buscarVentasPorCliente(String identificacion) async {
+    debugPrint('Filtro: $identificacion');
+    try {
+      final cards = await _ventasRepository.getVentasByUsuario(identificacion);
+      cards.fold(
+        (_) {
+          SnackHelper.show(context,
+              message: 'No se encontraron ventas', isError: true);
+        },
+        (cards) => setState(() => _ventasLista = cards),
+      );
+    } catch (e) {
+      debugPrint('Error buscando ventas por cliente: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _identificacionController.dispose();
+    super.dispose();
   }
 
   @override
@@ -104,19 +150,84 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
               onRefresh: _cargarEstadisticas,
             ),
             const SizedBox(height: 24),
-            EstadisticasCards(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                    child: CustomButton(
+                        colorButton: _index == 0
+                            ? ThemeApp.primary
+                            : ThemeApp.inputBorder,
+                        text: "Estadisticas",
+                        onPressed: () {
+                          setState(() => _index = 0);
+                        })),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: CustomButton(
+                        colorButton: _index == 1
+                            ? ThemeApp.primary
+                            : ThemeApp.inputBorder,
+                        text: "Ventas",
+                        onPressed: () {
+                          setState(() => _index = 1);
+                        })),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: CustomButton(
+                        colorButton: _index == 2
+                            ? ThemeApp.primary
+                            : ThemeApp.inputBorder,
+                        text: "Productos",
+                        onPressed: () {
+                          setState(() => _index = 2);
+                        }))
+              ],
+            ),
+            const SizedBox(height: 15),
+            CalendarWidget(
+              title: 'Fecha',
+              selectedDate: _selectedDate,
+              onDateSelected: (date) async {
+                if (date != null) {
+                  setState(() => _selectedDate = date);
+                  await _cargarEstadisticas();
+                }
+              },
+            ),
+            const SizedBox(height: 5),
+            if (_index == 0)
+              EstadisticasCards(
+                  ventasHoy: _ventasHoy,
+                  ventasAyer: _ventasAyer,
+                  ventasAnteayer: _ventasAnteayer),
+            const SizedBox(height: 5),
+            if (_index == 1)
+              ProductosMasVendidos(
                 ventasHoy: _ventasHoy,
-                ventasAyer: _ventasAyer,
-                ventasAnteayer: _ventasAnteayer),
-            const SizedBox(height: 24),
-            ProductosMasVendidos(
-              ventasHoy: _ventasHoy,
-            ),
-            const SizedBox(height: 24),
-            VentasRecientes(
-              ventasHoy: _ventasHoy,
-            ),
-            const SizedBox(height: 24),
+              ),
+            const SizedBox(height: 5),
+            if (_index == 2) ...[
+              InputSearchWidget(
+                label: 'Buscar',
+                hint: 'Ej: 0102030405',
+                showSuffixButton: false,
+                onSubmitted: (value) async {
+                  _identificacionController.text = value;
+                  _buscarVentasPorCliente(_identificacionController.text);
+                },
+                onChanged: (value) {
+                  setState(() {
+                    _identificacionController.text = value;
+                    _buscarVentasPorCliente(_identificacionController.text);
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              VentasRecientes(
+                ventas: _ventasLista,
+              ),
+            ],
           ],
         ),
       ),

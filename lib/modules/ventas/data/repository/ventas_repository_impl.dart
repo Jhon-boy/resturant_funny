@@ -5,6 +5,7 @@ import 'package:resturant_funny/modules/authentication/domain/model/user_model.d
 import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
 import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
 import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
 
 class VentaRepositoryImpl implements VentaRepository {
   final VentasRemoteDataSource remote;
@@ -86,14 +87,14 @@ class VentaRepositoryImpl implements VentaRepository {
   }
 
   @override
-  Future<Either<Failure, List<VentaEntity>>> getVentasByUsuario(
+  Future<Either<Failure, List<VentaCardModel>>> getVentasByUsuario(
       String identificacion) async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
       return const Left(NetworkFailure('No hay conexión a internet'));
     }
     try {
-      final ventas = await remote.getVentasByUsuario(identificacion);
+      final ventas = await remote.getVentaByCliente(identificacion);
       return Right(ventas);
     } catch (_) {
       return const Left(
@@ -147,6 +148,59 @@ class VentaRepositoryImpl implements VentaRepository {
         fechaHasta: fechaHasta,
       );
       return Right(ventas);
+    } catch (_) {
+      return const Left(
+          ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<VentaCardModel>>> getVentaCardsBy(
+    int idEmpleado, {
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No hay conexión a internet'));
+    }
+    try {
+      final rows = await remote.getVentasConDetalles(
+        idEmpleado,
+        fechaDesde: fechaDesde,
+        fechaHasta: fechaHasta,
+      );
+      final cards = rows.map<VentaCardModel>((v) {
+        final persona = v['TPERSONA'] as Map<String, dynamic>?;
+        final nombreCliente = [
+          (persona?['NOMBRES'] ?? '').toString(),
+          (persona?['APELLIDOS'] ?? '').toString(),
+        ].where((e) => e.isNotEmpty).join(' ');
+        String? nombreProducto;
+        int? cantidad;
+        if (v['TDETALLEVENTA'] is List &&
+            (v['TDETALLEVENTA'] as List).isNotEmpty) {
+          final det =
+              (v['TDETALLEVENTA'] as List).first as Map<String, dynamic>;
+          final prod = det['TPRODUCTO'] as Map<String, dynamic>?;
+          nombreProducto = (prod?['NOMBRE'])?.toString();
+          cantidad = (det['CANTIDAD'] as num?)?.toInt();
+        }
+        return VentaCardModel(
+          idVenta: (v['IDVENTA'] as num).toInt(),
+          idMesa: (v['IDMESA'] as num).toInt(),
+          nombreCliente: nombreCliente,
+          identificacionCliente: (v['CLIENTE'])?.toString(),
+          nombreProducto: nombreProducto,
+          cantidadProducto: cantidad,
+          total: (v['TOTAL'] as num?)?.toDouble() ?? 0,
+          fecha: v['FECHA'] != null
+              ? DateTime.tryParse(v['FECHA'].toString())
+              : null,
+          estado: v['ESTADO']?.toString(),
+        );
+      }).toList();
+      return Right(cards);
     } catch (_) {
       return const Left(
           ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
