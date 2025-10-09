@@ -4,10 +4,12 @@ import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.da
 
 class VentasRecientes extends StatelessWidget {
   final List<VentaCardModel> ventas;
+  final bool isClientes;
 
   const VentasRecientes({
     super.key,
     required this.ventas,
+    this.isClientes = false,
   });
 
   @override
@@ -17,8 +19,12 @@ class VentasRecientes extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (isClientes)
+          const SizedBox(
+            height: 10,
+          ),
         Text(
-          'Ventas del día',
+          isClientes ? 'Historial de ventas del cliente' : 'Ventas del día',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -65,11 +71,6 @@ class VentasRecientes extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _formatDate(DateTime? fecha) {
-    if (fecha == null) return 'N/A';
-    return '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
   }
 
   Widget _buildSaleItem(

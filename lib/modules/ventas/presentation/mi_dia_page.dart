@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
@@ -12,7 +13,7 @@ import 'package:resturant_funny/modules/ventas/presentation/widget/estadisticas_
 import 'package:resturant_funny/modules/ventas/presentation/widget/productos_mas_vendidos.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/ventas_recientes.dart';
 import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
-import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
 import 'package:resturant_funny/shared/widgets/input_search_widget.dart';
@@ -30,6 +31,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
   List<VentaEntity> _ventasAyer = [];
   List<VentaEntity> _ventasAnteayer = [];
   List<VentaCardModel> _ventasLista = [];
+  List<VentaCardModel> _ventasClientes = [];
   int _index = 0;
   late final VentaRepository _ventasRepository;
   DateTime _selectedDate = DateTime.now();
@@ -44,8 +46,27 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
     _index = 0;
   }
 
+  final List<String> _botones = [
+    'Estadísticas',
+    'Ventas',
+    'Productos',
+    'Clientes',
+  ];
+
+  clearData() {
+    _ventasHoy = [];
+    _ventasAyer = [];
+    _ventasAnteayer = [];
+    _ventasLista = [];
+    _ventasClientes = [];
+    setState(() {});
+    debugPrint('Datos limpiados');
+  }
+
   Future<void> _cargarEstadisticas() async {
-    setState(() => _isLoading = true);
+    final appState = ref.watch(appStateProvider);
+    appState.setLoading(true);
+    clearData();
 
     try {
       final user = ref.read(userProvider).user;
@@ -75,19 +96,29 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
       );
 
       ventasHoyResult.fold(
-        (failure) => debugPrint('Error cargando ventas hoy: $failure'),
+        (failure) {
+          debugPrint('Error cargando ventas hoy: $failure');
+          setState(() => _ventasHoy = []);
+        },
         (ventas) => setState(() => _ventasHoy = ventas),
       );
 
       ventasAyerResult.fold(
-        (failure) => debugPrint('Error cargando ventas ayer: $failure'),
+        (failure) {
+          debugPrint('Error cargando ventas ayer: $failure');
+          setState(() => _ventasAyer = []);
+        },
         (ventas) => setState(() => _ventasAyer = ventas),
       );
 
       ventasAnteayerResult.fold(
-        (failure) => debugPrint('Error cargando ventas anteayer: $failure'),
+        (failure) {
+          debugPrint('Error cargando ventas anteayer: $failure');
+          setState(() => _ventasAnteayer = []);
+        },
         (ventas) => setState(() => _ventasAnteayer = ventas),
       );
+
       final diaDesde = DateTime(hoy.year, hoy.month, hoy.day);
       final diaHasta = DateTime(hoy.year, hoy.month, hoy.day, 23, 59, 59);
 
@@ -97,29 +128,47 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
         fechaHasta: diaHasta,
       );
       cardsEither.fold(
-        (_) {},
+        (_) => setState(() => _ventasLista = []),
         (cards) => setState(() => _ventasLista = cards),
       );
     } catch (e) {
       debugPrint('Error cargando estadísticas: $e');
     } finally {
-      setState(() => _isLoading = false);
+      appState.setLoading(false);
     }
   }
 
   Future<void> _buscarVentasPorCliente(String identificacion) async {
     debugPrint('Filtro: $identificacion');
+    final appState = ref.watch(appStateProvider);
     try {
+      appState.setLoading(true);
       final cards = await _ventasRepository.getVentasByUsuario(identificacion);
       cards.fold(
         (_) {
           SnackHelper.show(context,
               message: 'No se encontraron ventas', isError: true);
         },
-        (cards) => setState(() => _ventasLista = cards),
+        (cards) => {
+          if (cards.isNotEmpty)
+            {
+              _identificacionController.clear(),
+              setState(() => _ventasClientes = cards),
+            }
+          else
+            {
+              DialogHelper.error(context, message: 'No se encontraron ventas',
+                  onConfirmed: () {
+                _identificacionController.clear();
+                setState(() => _ventasClientes = []);
+              })
+            }
+        },
       );
     } catch (e) {
       debugPrint('Error buscando ventas por cliente: $e');
+    } finally {
+      appState.setLoading(false);
     }
   }
 
@@ -150,64 +199,72 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
               onRefresh: _cargarEstadisticas,
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                    child: CustomButton(
-                        colorButton: _index == 0
-                            ? ThemeApp.primary
-                            : ThemeApp.inputBorder,
-                        text: "Estadisticas",
-                        onPressed: () {
-                          setState(() => _index = 0);
-                        })),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: CustomButton(
-                        colorButton: _index == 1
-                            ? ThemeApp.primary
-                            : ThemeApp.inputBorder,
-                        text: "Ventas",
-                        onPressed: () {
-                          setState(() => _index = 1);
-                        })),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: CustomButton(
-                        colorButton: _index == 2
-                            ? ThemeApp.primary
-                            : ThemeApp.inputBorder,
-                        text: "Productos",
-                        onPressed: () {
-                          setState(() => _index = 2);
-                        }))
-              ],
+            SizedBox(
+              height: 40,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(_botones.length, (i) {
+                    final bool isSelected = _index == i;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ChoiceChip(
+                        label: Text(
+                          _botones[i],
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        selected: isSelected,
+                        showCheckmark: false,
+                        selectedColor: ThemeApp.primary,
+                        backgroundColor: ThemeApp.inputBorder,
+                        onSelected: (_) => setState(() => _index = i),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        labelPadding:
+                            const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
             const SizedBox(height: 15),
-            CalendarWidget(
-              title: 'Fecha',
-              selectedDate: _selectedDate,
-              onDateSelected: (date) async {
-                if (date != null) {
-                  setState(() => _selectedDate = date);
-                  await _cargarEstadisticas();
-                }
-              },
-            ),
+            if (_index != 3) ...[
+              CalendarWidget(
+                title: 'Fecha',
+                selectedDate: _selectedDate,
+                onDateSelected: (date) async {
+                  if (date != null) {
+                    setState(() => _selectedDate = date);
+                    await _cargarEstadisticas();
+                  }
+                },
+              ),
+            ],
             const SizedBox(height: 5),
-            if (_index == 0)
+            if (_index == 0) ...[
               EstadisticasCards(
                   ventasHoy: _ventasHoy,
                   ventasAyer: _ventasAyer,
                   ventasAnteayer: _ventasAnteayer),
-            const SizedBox(height: 5),
-            if (_index == 1)
+              const SizedBox(height: 5),
               ProductosMasVendidos(
                 ventasHoy: _ventasHoy,
               ),
+            ],
             const SizedBox(height: 5),
             if (_index == 2) ...[
+              const SizedBox(height: 8),
+              VentasRecientes(
+                ventas: _ventasLista,
+                isClientes: false,
+              ),
+            ],
+            if (_index == 3) ...[
               InputSearchWidget(
                 label: 'Buscar',
                 hint: 'Ej: 0102030405',
@@ -219,13 +276,13 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
                 onChanged: (value) {
                   setState(() {
                     _identificacionController.text = value;
-                    _buscarVentasPorCliente(_identificacionController.text);
+                    //  _buscarVentasPorCliente(_identificacionController.text);
                   });
                 },
               ),
-              const SizedBox(height: 8),
               VentasRecientes(
-                ventas: _ventasLista,
+                ventas: _ventasClientes,
+                isClientes: true,
               ),
             ],
           ],
