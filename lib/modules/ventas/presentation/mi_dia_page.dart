@@ -10,7 +10,8 @@ import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
 import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/estadisticas_cards.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/estadisticas_header.dart';
-import 'package:resturant_funny/modules/ventas/presentation/widget/productos_mas_vendidos.dart';
+import 'package:resturant_funny/modules/ventas/presentation/widget/productos_mas_vendidos_card.dart';
+import 'package:resturant_funny/modules/ventas/presentation/widget/ventas_detail_card.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/ventas_recientes.dart';
 import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -37,20 +38,25 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
   DateTime _selectedDate = DateTime.now();
   final TextEditingController _identificacionController =
       TextEditingController();
+  final TextEditingController _identificadorController =
+      TextEditingController();
+  List<VentaEntity> _ventasIdentificador = [];
 
   @override
   void initState() {
     super.initState();
     _ventasRepository = VentaRepositoryImpl(VentasRemoteDataSource(ref: ref));
-    _cargarEstadisticas();
-    _index = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _cargarEstadisticas();
+      _index = 0;
+    });
   }
 
   final List<String> _botones = [
     'Estadísticas',
     'Ventas',
-    'Productos',
     'Clientes',
+    'Buscar',
   ];
 
   clearData() {
@@ -59,6 +65,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
     _ventasAnteayer = [];
     _ventasLista = [];
     _ventasClientes = [];
+    _ventasIdentificador = [];
     setState(() {});
     debugPrint('Datos limpiados');
   }
@@ -108,7 +115,10 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
           debugPrint('Error cargando ventas ayer: $failure');
           setState(() => _ventasAyer = []);
         },
-        (ventas) => setState(() => _ventasAyer = ventas),
+        (ventas) {
+          setState(() => _ventasAyer = ventas);
+          debugPrint('Ventas ayer cargadas: ${ventas.length}');
+        },
       );
 
       ventasAnteayerResult.fold(
@@ -129,12 +139,16 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
       );
       cardsEither.fold(
         (_) => setState(() => _ventasLista = []),
-        (cards) => setState(() => _ventasLista = cards),
+        (cards) {
+          setState(() => _ventasLista = cards);
+          debugPrint('Ventas cargadas: ${cards.length}');
+        },
       );
     } catch (e) {
       debugPrint('Error cargando estadísticas: $e');
     } finally {
       appState.setLoading(false);
+      setState(() => _isLoading = false);
     }
   }
 
@@ -172,9 +186,38 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
     }
   }
 
+  Future<void> _buscarVentasPorIdentificador(String identificacion) async {
+    debugPrint('Filtro: $identificacion');
+    final appState = ref.watch(appStateProvider);
+    try {
+      appState.setLoading(true);
+      final cards =
+          await _ventasRepository.getVentaById(int.parse(identificacion));
+      cards.fold(
+        (_) {
+          DialogHelper.error(context,
+              message: 'No se encontraron ventas con ese identificador',
+              onConfirmed: () {});
+          setState(() => _ventasIdentificador = []);
+        },
+        (cards) => {
+          {
+            _identificadorController.clear(),
+            setState(() => _ventasIdentificador = [cards]),
+          }
+        },
+      );
+    } catch (e) {
+      debugPrint('Error buscando ventas por cliente: $e');
+    } finally {
+      appState.setLoading(false);
+    }
+  }
+
   @override
   void dispose() {
     _identificacionController.dispose();
+    _identificadorController.dispose();
     super.dispose();
   }
 
@@ -233,7 +276,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
               ),
             ),
             const SizedBox(height: 15),
-            if (_index != 3) ...[
+            if (_index != 2 && _index != 3) ...[
               CalendarWidget(
                 title: 'Fecha',
                 selectedDate: _selectedDate,
@@ -257,14 +300,15 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
               ),
             ],
             const SizedBox(height: 5),
-            if (_index == 2) ...[
+            if (_index == 1) ...[
               const SizedBox(height: 8),
               VentasRecientes(
                 ventas: _ventasLista,
                 isClientes: false,
+                title: 'Historial de ventas',
               ),
             ],
-            if (_index == 3) ...[
+            if (_index == 2) ...[
               InputSearchWidget(
                 label: 'Buscar',
                 hint: 'Ej: 0102030405',
@@ -280,10 +324,38 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
                   });
                 },
               ),
+              const SizedBox(height: 8),
               VentasRecientes(
                 ventas: _ventasClientes,
                 isClientes: true,
+                title: 'Ventas por cliente',
               ),
+            ],
+            if (_index == 3) ...[
+              InputSearchWidget(
+                label: 'Buscar por Identificador',
+                hint: 'Ej: 1220',
+                showSuffixButton: false,
+                onSubmitted: (value) async {
+                  _identificadorController.text = value;
+                  _buscarVentasPorIdentificador(_identificadorController.text);
+                },
+                onChanged: (value) {
+                  setState(() {
+                    _identificadorController.text = value;
+                    //  _buscarVentasPorCliente(_identificacionController.text);
+                  });
+                },
+              ),
+              if (_ventasIdentificador.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                VentaDetailCard(
+                  venta: _ventasIdentificador.first,
+                  initiallyExpanded: true,
+                  showInDialog: false,
+                  onTap: () {},
+                )
+              ]
             ],
           ],
         ),

@@ -207,4 +207,34 @@ class AppUtils {
         return 'N';
     }
   }
+    static Color getStatusColor(String? estado) {
+    switch (estado?.toUpperCase()) {
+      case 'FINALIZADA':
+      case 'COMPLETADA':
+        return Colors.green;
+      case 'PENDIENTE':
+        return Colors.orange;
+      case 'CANCELADA':
+        return Colors.red;
+      case 'EN_PROCESO':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+    static IconData getStatusIcon(String? estado) {
+    switch (estado?.toUpperCase()) {
+      case 'FINALIZADA':
+      case 'COMPLETADA':
+        return Icons.check_circle;
+      case 'PENDIENTE':
+        return Icons.schedule;
+      case 'CANCELADA':
+        return Icons.cancel;
+      case 'EN_PROCESO':
+        return Icons.play_circle;
+      default:
+        return Icons.help_outline;
+    }
+  }
 }

@@ -22,7 +22,7 @@ class EstadisticasCards extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Resumen del Día',
+          'Resumen de los últimos 3 días',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

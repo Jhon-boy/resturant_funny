@@ -25,7 +25,7 @@ class ProductosMasVendidos extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
@@ -46,17 +46,26 @@ class ProductosMasVendidos extends StatelessWidget {
                 )
               : Column(
                   children: productosVendidos.take(3).map((producto) {
-                    final index = productosVendidos.indexOf(producto);
-                    return Column(
-                      children: [
-                        if (index > 0) const Divider(height: 20),
-                        _buildProductItem(
-                          'Producto ${producto['id']}',
-                          '${producto['cantidad']} vendidos',
-                          '\$${producto['ingresos'].toStringAsFixed(2)}',
+                    return Card(
+                        color: ThemeApp.background.withOpacity(0.9),
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    );
+                        child: Column(
+                          spacing: 2,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5.0, vertical: 3),
+                              child: _buildProductItem(
+                                'Producto ${producto['id']}',
+                                '${producto['cantidad']} vendidos',
+                                '\$${producto['ingresos'].toStringAsFixed(2)}',
+                              ),
+                            )
+                          ],
+                        ));
                   }).toList(),
                 ),
         ),
@@ -68,7 +77,7 @@ class ProductosMasVendidos extends StatelessWidget {
     // Simulación de productos vendidos basado en las ventas
     // En una implementación real, necesitarías hacer JOIN con TDETALLEVENTA
     final productos = <Map<String, dynamic>>[];
-    
+
     for (int i = 1; i <= 5; i++) {
       productos.add({
         'id': i,
@@ -76,7 +85,7 @@ class ProductosMasVendidos extends StatelessWidget {
         'ingresos': (ventasHoy.length + i) * 15.0,
       });
     }
-    
+
     productos.sort((a, b) => b['cantidad'].compareTo(a['cantidad']));
     return productos;
   }
@@ -86,12 +95,12 @@ class ProductosMasVendidos extends StatelessWidget {
       children: [
         Container(
           width: 40,
-          height: 40,
+          height: 50,
           decoration: BoxDecoration(
             color: ThemeApp.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child:const Icon(
+          child: const Icon(
             Icons.restaurant,
             color: ThemeApp.primary,
             size: 20,
