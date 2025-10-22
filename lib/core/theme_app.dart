@@ -16,6 +16,7 @@ class ThemeApp {
   static const Color textSecondary = Color(0xFF757575);
   static const Color link = Color(0xFFFF6B00);
   static const Color error = Color(0xFFD32F2F);
+  static const Color cardColors = Color.fromARGB(255, 235, 233, 233);
 
   // === Social Buttons ===
   static const Color apple = Color(0xFF000000);

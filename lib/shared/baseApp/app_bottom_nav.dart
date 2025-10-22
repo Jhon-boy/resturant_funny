@@ -21,11 +21,6 @@ class AppBottomNav extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: (i) {
-        final lastIndex = mainMenus.length - 1;
-        if (i == lastIndex) {
-          onDrawerOpen?.call();
-          return;
-        }
         onTap(i);
       },
       type: BottomNavigationBarType.fixed,

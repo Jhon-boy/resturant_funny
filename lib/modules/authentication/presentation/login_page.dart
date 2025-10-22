@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/app_constants.dart';
+import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
@@ -63,6 +64,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               await _authRepository.getRolesByUser(user.idUsuario!);
           final roles = rolesResult.getOrElse(() => []);
           ref.read(userProvider.notifier).setUser(user, roles: roles);
+          SingletonApp.setUserData(
+            user: user,
+            roles: roles,
+            rolPrincipal: roles.isNotEmpty ? roles.first.nombre : null,
+          );
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const SplashPage()),
@@ -81,9 +87,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> checkDevice() async {
-    final deviceInfo =await  AppUtils.getInfoDevice();
-    final trusDevice =
-        await _authRepository.isTrustedDevice(deviceInfo);
+    final deviceInfo = await AppUtils.getInfoDevice();
+    final trusDevice = await _authRepository.isTrustedDevice(deviceInfo);
     trusDevice.fold((failure) {
       debugPrint("Dispositivo no Registrado");
     }, (user) async {

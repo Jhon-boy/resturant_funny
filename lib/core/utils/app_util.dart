@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/models/deviceInfo_model.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/main/presentation/main_page.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
@@ -207,7 +208,8 @@ class AppUtils {
         return 'N';
     }
   }
-    static Color getStatusColor(String? estado) {
+
+  static Color getStatusColor(String? estado) {
     switch (estado?.toUpperCase()) {
       case 'FINALIZADA':
       case 'COMPLETADA':
@@ -222,7 +224,8 @@ class AppUtils {
         return Colors.grey;
     }
   }
-    static IconData getStatusIcon(String? estado) {
+
+  static IconData getStatusIcon(String? estado) {
     switch (estado?.toUpperCase()) {
       case 'FINALIZADA':
       case 'COMPLETADA':
@@ -236,5 +239,12 @@ class AppUtils {
       default:
         return Icons.help_outline;
     }
+  }
+
+  // Obtiene las iniciales de la persona
+  static String getInitialsName(UserModel user) {
+    String firtsName = user.nombres[0];
+    String lasName = user.apellidos[0];
+    return firtsName + lasName;
   }
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
 import 'package:resturant_funny/shared/baseApp/app_bottom_nav.dart';
 
-class PantallaBase extends StatefulWidget {
+class PantallaBase extends ConsumerStatefulWidget {
   final String title;
   final Widget body;
   final VoidCallback? onBack;
@@ -32,11 +34,18 @@ class PantallaBase extends StatefulWidget {
   });
 
   @override
-  State<PantallaBase> createState() => _PantallaBaseState();
+  ConsumerState<PantallaBase> createState() => _PantallaBaseState();
 }
 
-class _PantallaBaseState extends State<PantallaBase> {
+class _PantallaBaseState extends ConsumerState<PantallaBase> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String? rol;
+  @override
+  void initState() {
+    super.initState();
+    rol = SingletonApp.getRolPrincipal();
+    debugPrint('Rol: $rol');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +90,7 @@ class _PantallaBaseState extends State<PantallaBase> {
       ),
       drawer: AppDrawer(
         currentIndex: 0,
-        userRole: null,
+        userRole: rol,
         onMainMenuTap: (index) {
           if (widget.onSectionChange != null) {
             widget.onSectionChange!(index);

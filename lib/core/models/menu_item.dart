@@ -42,8 +42,8 @@ class MenuItem {
       isMainMenu: true,
     ),
     MenuItem(
-      label: 'Más',
-      icon: Icons.menu_open_outlined,
+      label: 'Perfil',
+      icon: Icons.person_outline,
       index: 3,
       isMainMenu: true,
     ),
