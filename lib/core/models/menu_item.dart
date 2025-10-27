@@ -52,9 +52,17 @@ class MenuItem {
   // Menús del drawer (dependientes del rol)
   static const List<MenuItem> drawerMenus = [
     MenuItem(
+      label: 'Clientes',
+      icon: Icons.people_outline,
+      index: 4,
+      isMainMenu: true,
+      requiresRole: false,
+      allowedRoles: ['admin', 'manager'],
+    ),
+    MenuItem(
       label: 'Configuración',
       icon: Icons.settings_outlined,
-      index: 4,
+      index: 5,
       isMainMenu: false,
       requiresRole: true,
       allowedRoles: ['admin', 'manager'],
@@ -62,7 +70,7 @@ class MenuItem {
     MenuItem(
       label: 'Inventario',
       icon: Icons.inventory_outlined,
-      index: 5,
+      index: 6,
       isMainMenu: false,
       requiresRole: true,
       allowedRoles: ['admin', 'manager', 'inventory'],
@@ -70,7 +78,7 @@ class MenuItem {
     MenuItem(
       label: 'Reportes',
       icon: Icons.analytics_outlined,
-      index: 6,
+      index: 7,
       isMainMenu: false,
       requiresRole: true,
       allowedRoles: ['admin', 'manager'],
@@ -78,7 +86,7 @@ class MenuItem {
     MenuItem(
       label: 'Usuarios',
       icon: Icons.people_outlined,
-      index: 7,
+      index: 8,
       isMainMenu: false,
       requiresRole: true,
       allowedRoles: ['admin'],
@@ -86,13 +94,13 @@ class MenuItem {
     MenuItem(
       label: 'Ayuda',
       icon: Icons.help_outline,
-      index: 8,
+      index: 9,
       isMainMenu: false,
     ),
     MenuItem(
       label: 'Acerca de',
       icon: Icons.info_outline,
-      index: 9,
+      index: 10,
       isMainMenu: false,
     ),
   ];

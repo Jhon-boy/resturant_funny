@@ -24,6 +24,7 @@ class CrearPersonaPage extends ConsumerStatefulWidget {
   final PersonaEntity? personaInicial;
   final bool esEdicion;
   final String? identificacion;
+  final bool onlyCreate;
 
   const CrearPersonaPage({
     super.key,
@@ -31,6 +32,7 @@ class CrearPersonaPage extends ConsumerStatefulWidget {
     this.personaInicial,
     this.esEdicion = false,
     this.identificacion,
+    this.onlyCreate = false,
   });
 
   /// Método estático para navegar a la página de crear persona
@@ -48,6 +50,7 @@ class CrearPersonaPage extends ConsumerStatefulWidget {
           personaInicial: personaInicial,
           esEdicion: esEdicion,
           identificacion: identificacion,
+          onlyCreate: true,
         ),
       ),
     );
@@ -72,8 +75,13 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
   String? _generoSeleccionado;
   String? _tipoIdentificacionSeleccionado;
   String? _estadoSeleccionado;
+  int _index = 0;
 
   bool _isLoading = false;
+  final List<String> _botones = [
+    'Crear Cliente',
+    'Gestionar Cliente',
+  ];
 
   final List<String> _generos = [
     'No especificado',
@@ -98,6 +106,7 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
       PersonasRemoteDataSource(ref: ref),
     );
     _inicializarFormulario();
+    _index = 0;
   }
 
   void _inicializarFormulario() {
@@ -283,178 +292,219 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
           (widget.esEdicion ? 'Editar Persona' : 'Crear Persona'),
       onBack: () => Navigator.of(context).pop(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle('Información Básica'),
-              const Divider(),
-              const SizedBox(height: 16),
-              CustomDropdown<String>(
-                value: _tipoIdentificacionSeleccionado,
-                label: 'Tipo de Identificación',
-                hint: 'Seleccione el tipo de identificación',
-                items: _tipoIdentificaciones,
-                displayText: (item) => item,
-                onChanged: (value) {
-                  setState(() {
-                    _tipoIdentificacionSeleccionado = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
-              // Identificación
-              TextFormField(
-                controller: _identificacionController,
-                enabled: !widget.esEdicion,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 13,
-                decoration: ThemeApp.inputDecoration(
-                    'Identificación', '1234567890', Icons.wallet,
-                    isRequired: true),
-                validator: _validarIdentificacion,
-              ),
-              const SizedBox(height: 16),
-
-              // Nombres
-              TextFormField(
-                controller: _nombresController,
-                textCapitalization: TextCapitalization.words,
-                maxLength: 30,
-                inputFormatters: [
-                  UpperCaseTextFormatter(),
-                ],
-                decoration: ThemeApp.inputDecoration(
-                    'Nombres', 'Nombres', Icons.person,
-                    isRequired: true),
-                validator: _validarNombres,
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _apellidosController,
-                textCapitalization: TextCapitalization.words,
-                maxLength: 30,
-                decoration: ThemeApp.inputDecoration(
-                    'Apellidos', 'Apellidos', Icons.person,
-                    isRequired: true),
-                inputFormatters: [
-                  UpperCaseTextFormatter(),
-                ],
-                validator: _validarApellidos,
-              ),
-              const SizedBox(height: 24),
-
-              _buildSectionTitle('Información Adicional'),
-              const Divider(),
-              const SizedBox(height: 16),
-
-              CalendarWidget(
-                title: 'Fecha de Nacimiento',
-                hint: 'Seleccionar fecha de nacimiento',
-                selectedDate: _fechaNacimiento,
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-                initialDate: DateTime(2000),
-                icon: Icons.calendar_today,
-                onDateSelected: _onFechaSeleccionada,
-              ),
-              const SizedBox(height: 16),
-
-              // Género
-              CustomDropdown<String>(
-                value: _generoSeleccionado,
-                label: 'Género',
-                hint: 'Seleccione el género',
-                items: _generos,
-                displayText: (item) => item,
-                onChanged: (value) {
-                  setState(() {
-                    _generoSeleccionado = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
-
-              TextFormField(
-                controller: _correoController,
-                keyboardType: TextInputType.emailAddress,
-                maxLength: 30,
-                decoration: ThemeApp.inputDecoration(
-                    'Correo Electrónico', 'correo@ejemplo.com', Icons.email),
-                validator: _validarCorreo,
-              ),
-              const SizedBox(height: 16),
-
-              // Teléfono
-              TextFormField(
-                controller: _telefonoController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 10,
-                decoration: ThemeApp.inputDecoration(
-                    'Teléfono', '0987654321', Icons.phone),
-                validator: _validarTelefono,
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _direccionController,
-                textCapitalization: TextCapitalization.words,
-                maxLines: 2,
-                maxLength: 100,
-                inputFormatters: [UpperCaseTextFormatter()],
-                decoration: ThemeApp.inputDecoration('Dirección',
-                    'Calle principal y secundaria', Icons.location_on),
-              ),
-              const SizedBox(height: 16),
-              if (widget.esEdicion) ...[
-                CustomDropdown<String>(
-                  value: _estadoSeleccionado,
-                  label: 'Estado',
-                  hint: 'Seleccione el estado',
-                  items: _estados,
-                  displayText: (item) => item,
-                  onChanged: (value) {
-                    setState(() {
-                      _estadoSeleccionado = value;
-                    });
-                  },
+          padding: const EdgeInsets.all(20),
+          child: Column(children: [
+            if (!widget.onlyCreate)
+              SizedBox(
+                height: 40,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(_botones.length, (i) {
+                      final bool isSelected = _index == i;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(
+                            _botones[i],
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          selected: isSelected,
+                          showCheckmark: false,
+                          selectedColor: ThemeApp.primary,
+                          backgroundColor: ThemeApp.inputBorder,
+                          onSelected: (_) => setState(() => _index = i),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          labelPadding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                      );
+                    }),
+                  ),
                 ),
-                const SizedBox(height: 24),
-              ],
-
-              // Botones de acción
-              Row(
+              ),
+            const SizedBox(
+              height: 10,
+            ),
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    flex: 1,
-                    child: CustomButton(
-                        isLoading: _isLoading,
-                        colorButton: ThemeApp.textSecondary,
-                        text: 'Cancelar',
-                        onPressed: () => Navigator.of(context).pop()),
+                  _buildSectionTitle('Información Básica'),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  CustomDropdown<String>(
+                    value: _tipoIdentificacionSeleccionado,
+                    label: 'Tipo de Identificación',
+                    hint: 'Seleccione el tipo de identificación',
+                    items: _tipoIdentificaciones,
+                    displayText: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _tipoIdentificacionSeleccionado = value;
+                      });
+                    },
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 1,
-                    child: CustomButton(
-                      text: widget.esEdicion ? 'Actualizar' : 'Crear Persona',
-                      icon: widget.esEdicion ? Icons.edit : Icons.person_add,
-                      onPressed: _isLoading ? () {} : () => _guardarPersona(),
-                      isLoading: _isLoading,
-                      enable: !_isLoading,
+                  const SizedBox(height: 10),
+                  // Identificación
+                  TextFormField(
+                    controller: _identificacionController,
+                    enabled: !widget.esEdicion,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    maxLength: 13,
+                    decoration: ThemeApp.inputDecoration(
+                        'Identificación', '1234567890', Icons.wallet,
+                        isRequired: true),
+                    validator: _validarIdentificacion,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Nombres
+                  TextFormField(
+                    controller: _nombresController,
+                    textCapitalization: TextCapitalization.words,
+                    maxLength: 30,
+                    inputFormatters: [
+                      UpperCaseTextFormatter(),
+                    ],
+                    decoration: ThemeApp.inputDecoration(
+                        'Nombres', 'Nombres', Icons.person,
+                        isRequired: true),
+                    validator: _validarNombres,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _apellidosController,
+                    textCapitalization: TextCapitalization.words,
+                    maxLength: 30,
+                    decoration: ThemeApp.inputDecoration(
+                        'Apellidos', 'Apellidos', Icons.person,
+                        isRequired: true),
+                    inputFormatters: [
+                      UpperCaseTextFormatter(),
+                    ],
+                    validator: _validarApellidos,
+                  ),
+                  const SizedBox(height: 24),
+
+                  _buildSectionTitle('Información Adicional'),
+                  const Divider(),
+                  const SizedBox(height: 16),
+
+                  CalendarWidget(
+                    title: 'Fecha de Nacimiento',
+                    hint: 'Seleccionar fecha de nacimiento',
+                    selectedDate: _fechaNacimiento,
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                    initialDate: DateTime(2000),
+                    icon: Icons.calendar_today,
+                    onDateSelected: _onFechaSeleccionada,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Género
+                  CustomDropdown<String>(
+                    value: _generoSeleccionado,
+                    label: 'Género',
+                    hint: 'Seleccione el género',
+                    items: _generos,
+                    displayText: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _generoSeleccionado = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  TextFormField(
+                    controller: _correoController,
+                    keyboardType: TextInputType.emailAddress,
+                    maxLength: 30,
+                    decoration: ThemeApp.inputDecoration('Correo Electrónico',
+                        'correo@ejemplo.com', Icons.email),
+                    validator: _validarCorreo,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Teléfono
+                  TextFormField(
+                    controller: _telefonoController,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    maxLength: 10,
+                    decoration: ThemeApp.inputDecoration(
+                        'Teléfono', '0987654321', Icons.phone),
+                    validator: _validarTelefono,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _direccionController,
+                    textCapitalization: TextCapitalization.words,
+                    maxLines: 2,
+                    maxLength: 100,
+                    inputFormatters: [UpperCaseTextFormatter()],
+                    decoration: ThemeApp.inputDecoration('Dirección',
+                        'Calle principal y secundaria', Icons.location_on),
+                  ),
+                  const SizedBox(height: 16),
+                  if (widget.esEdicion) ...[
+                    CustomDropdown<String>(
+                      value: _estadoSeleccionado,
+                      label: 'Estado',
+                      hint: 'Seleccione el estado',
+                      items: _estados,
+                      displayText: (item) => item,
+                      onChanged: (value) {
+                        setState(() {
+                          _estadoSeleccionado = value;
+                        });
+                      },
                     ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Botones de acción
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: CustomButton(
+                            isLoading: _isLoading,
+                            colorButton: ThemeApp.textSecondary,
+                            text: 'Cancelar',
+                            onPressed: () => Navigator.of(context).pop()),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 1,
+                        child: CustomButton(
+                          text:
+                              widget.esEdicion ? 'Actualizar' : 'Crear Persona',
+                          icon:
+                              widget.esEdicion ? Icons.edit : Icons.person_add,
+                          onPressed:
+                              _isLoading ? () {} : () => _guardarPersona(),
+                          isLoading: _isLoading,
+                          enable: !_isLoading,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
+          ])),
     );
   }
 

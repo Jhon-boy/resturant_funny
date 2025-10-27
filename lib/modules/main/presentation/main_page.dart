@@ -4,6 +4,7 @@ import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
 import 'package:resturant_funny/modules/user/presentation/perfil_page.dart';
+import 'package:resturant_funny/modules/user/presentation/crear_persona_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/mi_dia_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/ventas_page.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
@@ -69,7 +70,6 @@ class _MainPageState extends State<MainPage> {
           },
           onDrawerMenuTap: (index) {
             _handleDrawerMenuTap(index);
-            Navigator.of(context).maybePop();
           },
         ),
         body: IndexedStack(
@@ -94,10 +94,19 @@ class _MainPageState extends State<MainPage> {
 
   // Manejar menús del drawer según el índice
   void _handleDrawerMenuTap(int index) {
+    // Cerrar el drawer primero para todos los casos
+    Navigator.of(context).pop();
+
     // Manejar menús del drawer según el índice
     switch (index) {
       case 4: // Configuración
-        //  Navegar a configuración
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const CrearPersonaPage(
+              titulo: 'Gestión de Clientes',
+            ),
+          ),
+        );
         break;
       case 5: // Inventario
         //  Navegar a inventario
