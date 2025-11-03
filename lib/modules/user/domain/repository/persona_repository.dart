@@ -8,6 +8,7 @@ abstract class PersonasRepository {
   Future<Either<Failure, List<PersonaEntity>>> getAllPersonas({
     DateTime? fechaDesde,
     DateTime? fechaHasta,
+    bool includeDeletes = false,
   });
 
   /// Obtener persona por identificación

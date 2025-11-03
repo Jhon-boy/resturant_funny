@@ -253,18 +253,7 @@ class _VentaDetailCardState extends State<VentaDetailCard> {
         ...info.entries.map(
           (e) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              children: [
-                Expanded(child: Text(e.key, style: labelStyle)),
-                Text(
-                  e.value,
-                  style: e.key == 'Total'
-                      ? textStyle?.copyWith(
-                          fontWeight: FontWeight.bold, color: Colors.green)
-                      : textStyle,
-                ),
-              ],
-            ),
+            child: _buildInfoRow(e.key, e.value, labelStyle, textStyle),
           ),
         ),
         const SizedBox(height: 16),
@@ -277,6 +266,56 @@ class _VentaDetailCardState extends State<VentaDetailCard> {
                 text: 'Cerrar',
                 onPressed: () => Navigator.of(context).pop()),
           )
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    TextStyle? labelStyle,
+    TextStyle? textStyle,
+  ) {
+    // Determinar si el valor es largo (más de 30 caracteres)
+    // Si es largo, se muestra en columna (multilínea) automáticamente
+    final isLongText = value.length > 30;
+
+    if (isLongText) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: labelStyle),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: textStyle,
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(label, style: labelStyle),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: label == 'Total'
+                ? textStyle?.copyWith(
+                    fontWeight: FontWeight.bold, color: Colors.green)
+                : textStyle,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }

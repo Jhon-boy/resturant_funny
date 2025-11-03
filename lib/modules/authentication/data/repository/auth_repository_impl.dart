@@ -83,6 +83,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     try {
+      // ignore: non_constant_identifier_names
       final UserModel = await remoteDataSource.isTrustedDevice(deviceInfo);
       if (UserModel == null) {
         return const Left(DatabaseFailure('Dispositivo no autorizado'));

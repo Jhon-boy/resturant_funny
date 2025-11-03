@@ -56,7 +56,9 @@ class CustomDropdown<T> extends StatelessWidget {
                     children: [
                       Text(
                         displayText(item),
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            overflow: TextOverflow.ellipsis),
                       ),
                       if (subtitleText != null) ...[
                         const SizedBox(height: 2),

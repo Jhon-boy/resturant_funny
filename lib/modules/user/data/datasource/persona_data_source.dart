@@ -6,6 +6,7 @@ import 'package:resturant_funny/core/services/supabase_service.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
+import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PersonasRemoteDataSource {
@@ -18,12 +19,20 @@ class PersonasRemoteDataSource {
   final SupabaseClient supabase = Supabase.instance.client;
 
   /// Obtener todas las personas
+  /// [includeDeletes] Si es true, incluye personas inactivas. Por defecto solo trae activas (ACT)
   Future<List<PersonaEntity>> getPersonas({
     DateTime? fechaDesde,
     DateTime? fechaHasta,
+    bool includeDeletes = false,
   }) async {
     try {
       final filters = <String, dynamic>{};
+
+      // Solo filtrar por estado activo si includeDeletes es false
+      if (!includeDeletes) {
+        filters['ESTADO'] = EstadosPersona.ACTIVO.state;
+      }
+
       if (fechaDesde != null) {
         filters['FCREACION_gte'] = fechaDesde.toIso8601String();
       }
@@ -43,12 +52,15 @@ class PersonasRemoteDataSource {
     }
   }
 
-  /// Obtener persona por ID
+  /// Obtener persona por ID (solo trae personas activas - estado ACT)
   Future<PersonaEntity?> getPersonaById(String idPersona) async {
     try {
       final result = await SupabaseService.selectSingle(
         table: Entities.TPERSONA.tableName,
-        filters: {'IDENTIFICACION': idPersona},
+        filters: {
+          'IDENTIFICACION': idPersona,
+          'ESTADO': EstadosPersona.ACTIVO.state,
+        },
       );
       if (result == null) return null;
       return PersonaEntity.fromJson(result);
@@ -74,14 +86,14 @@ class PersonasRemoteDataSource {
     }
   }
 
-  /// Actualizar persona por ID
+  /// Actualizar persona por IDENTIFICACION
   Future<PersonaEntity> updatePersonaById(
       String idPersona, Map<String, dynamic>? data) async {
     try {
       final result = await SupabaseService.update(
         table: Entities.TPERSONA.tableName,
         data: data ?? {},
-        filters: {'IDPERSONA': int.parse(idPersona)},
+        filters: {'IDENTIFICACION': idPersona},
         returnData: true,
       );
       return PersonaEntity.fromJson(result.first);
@@ -90,12 +102,23 @@ class PersonasRemoteDataSource {
     }
   }
 
-  /// Eliminar persona
+  /// Eliminar persona (eliminación lógica - cambia estado a INACTIVO)
   Future<bool> deletePersona(String idPersona, UserModel? user) async {
     try {
-      await SupabaseService.delete(
+      final data = {
+        'ESTADO': EstadosPersona.INACTIVO.state,
+        'FMODIFICACION': DateTime.now().toIso8601String(),
+      };
+
+      if (user != null) {
+        data['USERMODIFICACION'] = user.idUsuario.toString();
+      }
+
+      await SupabaseService.update(
         table: Entities.TPERSONA.tableName,
-        filters: {'IDPERSONA': int.parse(idPersona)},
+        data: data,
+        filters: {'IDENTIFICACION': idPersona},
+        returnData: false,
       );
       return true;
     } catch (e) {

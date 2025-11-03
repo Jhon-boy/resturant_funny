@@ -9,7 +9,8 @@ class PersonaEntity {
   final String? direccion;
   final String? tipoIdentificacion;
   final String? estado;
-  
+  final DateTime? fCreacion;
+  final DateTime? fModificacion;
 
   PersonaEntity({
     required this.identificacion,
@@ -22,6 +23,8 @@ class PersonaEntity {
     this.direccion,
     this.tipoIdentificacion,
     this.estado,
+    this.fCreacion,
+    this.fModificacion,
   });
 
   // Método de deserialización
@@ -39,6 +42,12 @@ class PersonaEntity {
       direccion: json['DIRECCION'],
       tipoIdentificacion: json['TIPOIDENTIFICACION'],
       estado: json['ESTADO'],
+      fCreacion: json['FCREACION'] != null
+          ? DateTime.parse(json['FCREACION'])
+          : null,
+      fModificacion: json['FMODIFICACION'] != null
+          ? DateTime.parse(json['FMODIFICACION'])
+          : null,
     );
   }
 
@@ -55,6 +64,8 @@ class PersonaEntity {
       'DIRECCION': direccion,
       'TIPOIDENTIFICACION': tipoIdentificacion,
       'ESTADO': estado,
+      'FCREACION': fCreacion?.toIso8601String(),
+      'FMODIFICACION': fModificacion?.toIso8601String(),
     };
   }
 }

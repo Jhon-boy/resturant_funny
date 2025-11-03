@@ -20,6 +20,7 @@ class ThemeApp {
 
   // === Social Buttons ===
   static const Color apple = Color(0xFF000000);
+  static const Color success = Color(0xFF00C853);
 
   // === TIPO DE LETRA PARA TODA LA APP
   static const String fontFamily = 'Poppins';
@@ -74,6 +75,7 @@ class ThemeApp {
   }) {
     return InputDecoration(
       labelText: title,
+      labelStyle: const TextStyle(color: ThemeApp.textPrimary),
       hintText: hint,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -92,7 +94,10 @@ class ThemeApp {
         ),
       ),
       counterText: '',
-      prefixIcon: Icon(prefixIcon),
+      prefixIcon: Icon(
+        prefixIcon,
+        color: ThemeApp.primary.withOpacity(0.5),
+      ),
     );
   }
 }

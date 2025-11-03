@@ -8,6 +8,7 @@ class DialogHelper {
     required String message,
     String? title,
     required VoidCallback onConfirmed,
+    bool dismissible = false,
   }) {
     _showBottomDialog(
       context,
@@ -16,7 +17,7 @@ class DialogHelper {
       icon: Icons.check_circle_outline,
       iconColor: Colors.green,
       onConfirmed: onConfirmed,
-      dismissible: false,
+      dismissible: dismissible,
     );
   }
 

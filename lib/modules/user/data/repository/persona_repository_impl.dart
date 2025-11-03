@@ -52,6 +52,7 @@ class PersonaRepositoryImpl implements PersonasRepository {
   Future<Either<Failure, List<PersonaEntity>>> getAllPersonas({
     DateTime? fechaDesde,
     DateTime? fechaHasta,
+    bool includeDeletes = false,
   }) async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
@@ -61,6 +62,7 @@ class PersonaRepositoryImpl implements PersonasRepository {
       final personas = await remote.getPersonas(
         fechaDesde: fechaDesde,
         fechaHasta: fechaHasta,
+        includeDeletes: includeDeletes,
       );
       return Right(personas);
     } catch (_) {

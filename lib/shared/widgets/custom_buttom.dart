@@ -33,7 +33,7 @@ class CustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: height ?? 50,
-      width: width ?? double.infinity,
+      width: width,
       child: ElevatedButton(
         onPressed: enable
             ? isLoading == true

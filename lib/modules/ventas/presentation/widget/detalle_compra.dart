@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/services/enhanced_auth_service.dart';
+import 'package:resturant_funny/core/utils/formatters.dart';
 import 'package:resturant_funny/core/utils/responsive_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
@@ -28,6 +30,7 @@ import 'package:resturant_funny/shared/widgets/input_dialog.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/modules/main/domain/entity/mesa_entity.dart';
+import 'package:resturant_funny/shared/enums/metodo_pago.dart';
 
 class DetalleCompra extends ConsumerStatefulWidget {
   final ProductoEntity? initialProducto;
@@ -53,8 +56,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
   bool _conDelivery = false;
   double _costoDelivery = 0.0;
   PersonaEntity? _clienteSeleccionado;
+  MetodoPago _metodoPago = MetodoPago.EFECTIVO;
+  double _montoRecibido = 0.0;
   late final VentaRepository _ventaRepository;
   late final DetalleVentaRepository _detalleVentaRepository;
+  final TextEditingController comentarioController = TextEditingController();
+  final TextEditingController montoRecibidoController = TextEditingController();
 
   @override
   void initState() {
@@ -76,7 +83,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
 
   void _resetearEstado({resetProducto = false}) {
     _carrito.clear();
-    if (!resetProducto && widget.initialProducto != null){
+    if (!resetProducto && widget.initialProducto != null) {
       _carrito.add(CartProduct(producto: widget.initialProducto!, cantidad: 1));
     }
     _aplicaIva = false;
@@ -85,6 +92,10 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     _conFactura = false;
     _conDelivery = false;
     _costoDelivery = 0.0;
+    _metodoPago = MetodoPago.EFECTIVO;
+    _montoRecibido = 0.0;
+    comentarioController.text = '';
+    montoRecibidoController.text = '';
   }
 
   double get _subtotal {
@@ -94,6 +105,9 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
 
   double get _iva => _aplicaIva ? _subtotal * 0.15 : 0.0;
   double get _total => _subtotal + _iva + (_conDelivery ? _costoDelivery : 0.0);
+  double get _cambio => _montoRecibido > 0 && _metodoPago == MetodoPago.EFECTIVO
+      ? _montoRecibido - _total
+      : 0.0;
 
   void _incrementarCantidad(int index) {
     setState(() {
@@ -188,6 +202,21 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       return false;
     }
 
+    if (_metodoPago == MetodoPago.EFECTIVO && _montoRecibido <= 0) {
+      SnackHelper.show(context,
+          message: "Debe ingresar el monto recibido para pago en efectivo",
+          isError: true);
+      return false;
+    }
+
+    if (_metodoPago == MetodoPago.EFECTIVO && _montoRecibido < _total) {
+      SnackHelper.show(context,
+          message:
+              "El monto recibido (\$${_montoRecibido.toStringAsFixed(2)}) debe ser mayor o igual al total (\$${_total.toStringAsFixed(2)})",
+          isError: true);
+      return false;
+    }
+
     final idUsuario = ref.read(userProvider).user?.idUsuario;
     if (idUsuario == null) {
       SnackHelper.show(context,
@@ -227,12 +256,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       _conDelivery,
       _aplicaIva,
       _total,
-      'Venta de producto',
+      '${comentarioController.text} | Venta de producto | ${_metodoPago.label}${_metodoPago == MetodoPago.EFECTIVO ? ' - Recibido: \$${_montoRecibido.toStringAsFixed(2)} - Cambio: \$${_cambio.toStringAsFixed(2)}' : ''}',
       user?.idUsuario?.toString() ??
           EnhancedAuthService.currentUser?.usuario ??
           '',
       _mesaSeleccionada?.idMesa ?? 0,
-      'EFECTIVO',
+      _metodoPago.value,
       _clienteSeleccionado!.identificacion,
     );
 
@@ -272,8 +301,8 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     bool todosLosDetallesGuardados = true;
 
     for (var item in carrito) {
-      final detalleVenta = CompraMapper.toDetalleVenta(
-          venta, item.cantidad, item.producto, user!.idUsuario.toString());
+      final detalleVenta = CompraMapper.toDetalleVenta(venta, item.cantidad,
+          item.producto, user!.idUsuario.toString(), _metodoPago.value);
 
       final detalleVentaFinalizado =
           await _detalleVentaRepository.createDetalle(detalleVenta, user);
@@ -568,6 +597,62 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                               fontWeight: FontWeight.bold, fontSize: 18)),
                     ],
                   ),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  // Método de pago
+                  Row(
+                    children: [
+                      const Icon(Icons.payment,
+                          color: ThemeApp.primary, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        "Método de Pago",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  CustomDropdown<MetodoPago>(
+                    value: _metodoPago,
+                    label: "Método de Pago",
+                    hint: "Selecciona el método de pago",
+                    items: MetodoPago.all,
+                    displayText: (metodo) => metodo.label,
+                    onChanged: (metodo) {
+                      setState(() {
+                        final metodoSeleccionado =
+                            metodo ?? MetodoPago.EFECTIVO;
+                        _metodoPago = metodoSeleccionado;
+                        if (!metodoSeleccionado.requiereMontoRecibido) {
+                          _montoRecibido = 0.0;
+                          montoRecibidoController.text = '';
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(
+                      child: TextFormField(
+                        maxLength: AppConstants.MAX_CARACTERES_TITULOS,
+                        inputFormatters: [
+                          UpperCaseTextFormatter(),
+                          LetterOnlyTextFormatter()
+                        ],
+                        controller: comentarioController,
+                        decoration: ThemeApp.inputDecoration(
+                          "Comentario",
+                          "Ingrese un comentario",
+                          Icons.comment_bank,
+                          isRequired: false,
+                        ),
+                      ),
+                    )
+                  ]),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,

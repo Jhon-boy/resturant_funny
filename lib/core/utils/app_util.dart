@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/models/deviceInfo_model.dart';
+import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/main/presentation/main_page.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -208,6 +209,31 @@ class AppUtils {
         return 'N';
     }
   }
+  
+   static String? mapearGeneroDesdeBD(String? generoBD) {
+    if (generoBD == null || generoBD.trim().isEmpty) return null;
+    switch (generoBD.toUpperCase().trim()) {
+      case 'M':
+        return 'Masculino';
+      case 'F':
+        return 'Femenino';
+      case 'N':
+        return 'No especificado';
+      case 'O':
+        return 'Otro';
+      case 'MASCULINO':
+        return 'Masculino';
+      case 'FEMENINO':
+        return 'Femenino';
+      case 'NO ESPECIFICADO':
+      case 'NOESPECIFICADO':
+        return 'No especificado';
+      case 'OTRO':
+        return 'Otro';
+      default:
+        return 'No especificado';
+    }
+  }
 
   static Color getStatusColor(String? estado) {
     switch (estado?.toUpperCase()) {
@@ -246,5 +272,15 @@ class AppUtils {
     String firtsName = user.nombres[0];
     String lasName = user.apellidos[0];
     return firtsName + lasName;
+  }
+
+  static IconData getIconoGenero(PersonaEntity persona) {
+    final genero = persona.genero?.toUpperCase() ?? '';
+    if (genero.contains('FEMENINO') || genero == 'F') {
+      return Icons.woman;
+    } else if (genero.contains('MASCULINO') || genero == 'M') {
+      return Icons.man;
+    }
+    return Icons.person;
   }
 }

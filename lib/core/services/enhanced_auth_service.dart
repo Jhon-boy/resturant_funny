@@ -6,6 +6,7 @@ import 'package:resturant_funny/modules/authentication/domain/entity/persona_ent
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
+import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -185,7 +186,24 @@ class EnhancedAuthService {
         );
       }
 
-      return PersonaEntity.fromJson(response);
+      final persona = PersonaEntity.fromJson(response);
+      if (persona.estado == EstadosPersona.INACTIVO.state) {
+        throw ServerException(
+            message: "Inicio de sesión no permitido: Estado inactivo");
+      }
+      if (persona.estado == EstadosPersona.BLOQUEADO.state) {
+        throw ServerException(
+            message: "Inicio de sesión no permitido: Estado bloqueado");
+      }
+      if (persona.estado == EstadosPersona.SUSPENDIDO.state) {
+        throw ServerException(
+            message: "Inicio de sesión no permitido: Estado suspendido");
+      }
+      if (persona.estado == EstadosPersona.PENDIENTE.state) {
+        throw ServerException(
+            message: "Inicio de sesión no permitido: Estado pendiente");
+      }
+      return persona;
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(
