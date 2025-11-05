@@ -34,6 +34,7 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
   ProductoEntity? _productoActualizado;
   List<ProductoEntity> productosLista = [];
   List<MesaEntity> mesasLista = [];
+  List<ProductoEntity> porcionesLista = [];
   late final ProductosRepository _productosRepository;
   late final MesaRepository _mesaRepository;
 
@@ -51,6 +52,7 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
       _cargarProducto();
       _cargarProductos();
       _cargarMesas();
+      _cargarPorciones();
     });
   }
 
@@ -113,6 +115,20 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
     }
   }
 
+  Future<void> _cargarPorciones() async {
+    try {
+      final result = await _productosRepository.getPorciones(widget.producto.idSucursal);
+      result.fold((failure) {
+      }, (porciones) {
+        setState(() {
+          porcionesLista = porciones;
+        });
+      });
+    } catch (e) {
+      debugPrint("Error al obtener porciones");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = ref.watch(appStateProvider);
@@ -131,6 +147,7 @@ class _ProductoDetallePageState extends ConsumerState<ProductoDetallePage> {
         initialProducto: producto,
         productosDisponibles: productosLista,
         mesasDisponibles: mesasLista,
+        porcionesDisponibles: porcionesLista,
       ),
     );
   }

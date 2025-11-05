@@ -21,6 +21,12 @@ class DiningNotifier extends StateNotifier<DiningContext> {
       ultimaActualizacion: DateTime.now(),
     );
   }
+  void setPorciones(List<ProductoEntity> porciones) {
+    state = state.copyWith(
+      porciones: List<ProductoEntity>.from(porciones),
+      ultimaActualizacion: DateTime.now(),
+    );
+  }
 
   void agregarProducto(ProductoEntity producto) {
     final productos = List<ProductoEntity>.from(state.productos)..add(producto);
@@ -118,6 +124,10 @@ class DiningNotifier extends StateNotifier<DiningContext> {
 
   Future<List<ProductoEntity>> getProductos(int idSucursal) async {
     return state.productos;
+  }
+
+  Future<List<ProductoEntity>> getPorciones(int idSucursal) async {
+    return state.getPorciones();
   }
 
   /// Productos agotados

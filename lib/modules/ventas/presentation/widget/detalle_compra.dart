@@ -21,8 +21,10 @@ import 'package:resturant_funny/modules/ventas/domain/models/card_item_model.dar
 import 'package:resturant_funny/modules/ventas/domain/repository/detalle_venta_repository.dart';
 import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
 import 'package:resturant_funny/modules/ventas/presentation/factura_page.dart';
-import 'package:resturant_funny/modules/ventas/presentation/widget/buscar_cliente_page.dart';
+import 'package:resturant_funny/modules/ventas/presentation/pages/buscar_cliente_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/cart_item.dart';
+import 'package:resturant_funny/modules/ventas/presentation/widget/porciones_widget.dart';
+import 'package:resturant_funny/shared/enums/categorias_producto.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -35,12 +37,14 @@ import 'package:resturant_funny/shared/enums/metodo_pago.dart';
 class DetalleCompra extends ConsumerStatefulWidget {
   final ProductoEntity? initialProducto;
   final List<ProductoEntity> productosDisponibles;
+  final List<ProductoEntity> porcionesDisponibles;
   final List<MesaEntity> mesasDisponibles;
   const DetalleCompra({
     super.key,
     this.initialProducto,
     required this.productosDisponibles,
     required this.mesasDisponibles,
+    required this.porcionesDisponibles,
   });
 
   @override
@@ -57,7 +61,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
   double _costoDelivery = 0.0;
   PersonaEntity? _clienteSeleccionado;
   MetodoPago _metodoPago = MetodoPago.EFECTIVO;
-  double _montoRecibido = 0.0;
+
   late final VentaRepository _ventaRepository;
   late final DetalleVentaRepository _detalleVentaRepository;
   final TextEditingController comentarioController = TextEditingController();
@@ -93,7 +97,6 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     _conDelivery = false;
     _costoDelivery = 0.0;
     _metodoPago = MetodoPago.EFECTIVO;
-    _montoRecibido = 0.0;
     comentarioController.text = '';
     montoRecibidoController.text = '';
   }
@@ -105,9 +108,6 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
 
   double get _iva => _aplicaIva ? _subtotal * 0.15 : 0.0;
   double get _total => _subtotal + _iva + (_conDelivery ? _costoDelivery : 0.0);
-  double get _cambio => _montoRecibido > 0 && _metodoPago == MetodoPago.EFECTIVO
-      ? _montoRecibido - _total
-      : 0.0;
 
   void _incrementarCantidad(int index) {
     setState(() {
@@ -169,6 +169,62 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     }
   }
 
+  Future<void> _showPorcionesDialog() async {
+    final porcionesSeleccionadas = await showDialog<Map<int, int>>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return PorcionesWidget(
+          porciones: widget.porcionesDisponibles,
+          onSelected: (porciones) {
+            Navigator.of(dialogContext).pop(porciones);
+          },
+        );
+      },
+    );
+
+    if (porcionesSeleccionadas != null && porcionesSeleccionadas.isNotEmpty) {
+      _agregarPorcionesAlCarrito(porcionesSeleccionadas);
+    }
+  }
+
+  void _agregarPorcionesAlCarrito(Map<int, int> porcionesSeleccionadas) {
+    int totalAgregadas = 0;
+    setState(() {
+      porcionesSeleccionadas.forEach((porcionId, cantidad) {
+        if (cantidad > 0) {
+          try {
+            final porcion = widget.porcionesDisponibles.firstWhere(
+              (p) => p.idProducto == porcionId,
+            );
+
+            final indexExistente = _carrito.indexWhere(
+              (item) => item.producto.idProducto == porcionId,
+            );
+
+            if (indexExistente >= 0) {
+              _carrito[indexExistente].cantidad += cantidad;
+            } else {
+              _carrito.add(CartProduct(producto: porcion, cantidad: cantidad));
+            }
+            totalAgregadas += cantidad;
+          } catch (e) {
+            debugPrint('Error al agregar porción $porcionId: $e');
+          }
+        }
+      });
+    });
+
+    if (totalAgregadas > 0) {
+      SnackHelper.show(
+        context,
+        message:
+            '$totalAgregadas ${totalAgregadas == 1 ? 'porción agregada' : 'porciones agregadas'} al carrito',
+        isSuccess: true,
+      );
+    }
+  }
+
   ///Validar datos obligatorios antes de finalizar compra
   bool _validarDatosObligatorios() {
     if (_carrito.isEmpty) {
@@ -199,21 +255,6 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     if (_conDelivery && _costoDelivery <= 0) {
       SnackHelper.show(context,
           message: "Debe configurar el costo de delivery", isError: true);
-      return false;
-    }
-
-    if (_metodoPago == MetodoPago.EFECTIVO && _montoRecibido <= 0) {
-      SnackHelper.show(context,
-          message: "Debe ingresar el monto recibido para pago en efectivo",
-          isError: true);
-      return false;
-    }
-
-    if (_metodoPago == MetodoPago.EFECTIVO && _montoRecibido < _total) {
-      SnackHelper.show(context,
-          message:
-              "El monto recibido (\$${_montoRecibido.toStringAsFixed(2)}) debe ser mayor o igual al total (\$${_total.toStringAsFixed(2)})",
-          isError: true);
       return false;
     }
 
@@ -256,7 +297,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       _conDelivery,
       _aplicaIva,
       _total,
-      '${comentarioController.text} | Venta de producto | ${_metodoPago.label}${_metodoPago == MetodoPago.EFECTIVO ? ' - Recibido: \$${_montoRecibido.toStringAsFixed(2)} - Cambio: \$${_cambio.toStringAsFixed(2)}' : ''}',
+      '${comentarioController.text} | Venta de producto | ${_metodoPago.label}',
       user?.idUsuario?.toString() ??
           EnhancedAuthService.currentUser?.usuario ??
           '',
@@ -388,78 +429,261 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                     )
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                        child: CustomButton(
+                            colorButton: ThemeApp.success.withOpacity(0.7),
+                            colorText: ThemeApp.baseText,
+                            text: "Añadir Porciones",
+                            icon: Icons.restaurant,
+                            onPressed: () {
+                              _showPorcionesDialog();
+                            }))
+                  ],
+                ),
                 const SizedBox(height: 16),
                 // Lista de items del carrito
                 if (_carrito.isEmpty)
                   const Text("No hay productos en el carrito"),
-                ...List.generate(_carrito.length, (index) {
-                  final item = _carrito[index];
-                  final producto = item.producto;
-                  final precioLinea = producto.precio * item.cantidad;
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    elevation: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                MiniImagen(producto: producto),
-                                const SizedBox(height: 8),
-                                Text(
-                                  producto.nombre,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
+                Builder(
+                  builder: (context) {
+                    final productosNormales = <int>[];
+                    final indicesPorciones = <int>[];
+
+                    for (int i = 0; i < _carrito.length; i++) {
+                      if (_carrito[i].producto.categoria.toUpperCase() ==
+                          ProductosCategorias.PORCION.code) {
+                        indicesPorciones.add(i);
+                      } else {
+                        productosNormales.add(i);
+                      }
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Productos normales
+                        ...productosNormales.map((index) {
+                          final item = _carrito[index];
+                          final producto = item.producto;
+                          final precioLinea = producto.precio * item.cantidad;
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        MiniImagen(producto: producto),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          producto.nombre,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "${producto.precio.toStringAsFixed(2)} c/u",
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 10,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "${producto.precio.toStringAsFixed(2)} c/u",
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 10,
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () =>
+                                            _disminuirCantidad(index),
+                                        icon: const Icon(
+                                            Icons.remove_circle_outline),
+                                      ),
+                                      Text('${item.cantidad}',
+                                          style: const TextStyle(fontSize: 16)),
+                                      IconButton(
+                                        onPressed: () =>
+                                            _incrementarCantidad(index),
+                                        icon: const Icon(
+                                            Icons.add_circle_outline),
+                                      ),
+                                    ],
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                                  const SizedBox(width: 12),
+                                  Text('\$${precioLinea.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  IconButton(
+                                    onPressed: () => _eliminarItem(index),
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    tooltip: "Eliminar",
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          );
+                        }),
+                        // Separador para porciones
+                        if (indicesPorciones.isNotEmpty) ...[
+                          const SizedBox(height: 16),
                           Row(
                             children: [
-                              IconButton(
-                                onPressed: () => _disminuirCantidad(index),
-                                icon: const Icon(Icons.remove_circle_outline),
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.grey.shade400,
+                                  thickness: 1,
+                                ),
                               ),
-                              Text('${item.cantidad}',
-                                  style: const TextStyle(fontSize: 16)),
-                              IconButton(
-                                onPressed: () => _incrementarCantidad(index),
-                                icon: const Icon(Icons.add_circle_outline),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'OTROS',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.grey.shade400,
+                                  thickness: 1,
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(width: 12),
-                          Text('\$${precioLinea.toStringAsFixed(2)}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                          IconButton(
-                            onPressed: () => _eliminarItem(index),
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            tooltip: "Eliminar",
-                          ),
+                          const SizedBox(height: 12),
+                          ...indicesPorciones.map((index) {
+                            final item = _carrito[index];
+                            final producto = item.producto;
+                            final precioLinea = producto.precio * item.cantidad;
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              elevation: 1,
+                              color: Colors.grey.shade50,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  color: ThemeApp.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // Nombre y cantidad
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            producto.nombre,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Cantidad: ${item.cantidad}',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Total
+                                    Text(
+                                      '\$${precioLinea.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: ThemeApp.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Controles de cantidad
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          onPressed: () =>
+                                              _disminuirCantidad(index),
+                                          icon: const Icon(
+                                              Icons.remove_circle_outline,
+                                              size: 20),
+                                          color: ThemeApp.primary,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8),
+                                          child: Text(
+                                            '${item.cantidad}',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          onPressed: () =>
+                                              _incrementarCantidad(index),
+                                          icon: const Icon(
+                                              Icons.add_circle_outline,
+                                              size: 20),
+                                          color: ThemeApp.primary,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 4),
+                                    // Botón eliminar
+                                    IconButton(
+                                      onPressed: () => _eliminarItem(index),
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red, size: 20),
+                                      tooltip: "Eliminar",
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
                         ],
-                      ),
-                    ),
-                  );
-                })
+                      ],
+                    );
+                  },
+                )
               ],
             ),
           ),
@@ -627,10 +851,6 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                         final metodoSeleccionado =
                             metodo ?? MetodoPago.EFECTIVO;
                         _metodoPago = metodoSeleccionado;
-                        if (!metodoSeleccionado.requiereMontoRecibido) {
-                          _montoRecibido = 0.0;
-                          montoRecibidoController.text = '';
-                        }
                       });
                     },
                   ),

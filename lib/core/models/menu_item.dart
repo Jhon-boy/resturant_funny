@@ -60,11 +60,11 @@ class MenuItem {
       allowedRoles: ['admin', 'manager'],
     ),
     MenuItem(
-      label: 'Configuración',
-      icon: Icons.settings_outlined,
+      label: 'Empleados',
+      icon: Icons.person_pin_outlined,
       index: 5,
-      isMainMenu: false,
-      requiresRole: true,
+      isMainMenu: true,
+      requiresRole: false,
       allowedRoles: ['admin', 'manager'],
     ),
     MenuItem(
@@ -82,14 +82,6 @@ class MenuItem {
       isMainMenu: false,
       requiresRole: true,
       allowedRoles: ['admin', 'manager'],
-    ),
-    MenuItem(
-      label: 'Usuarios',
-      icon: Icons.people_outlined,
-      index: 8,
-      isMainMenu: false,
-      requiresRole: true,
-      allowedRoles: ['admin'],
     ),
     MenuItem(
       label: 'Ayuda',

@@ -193,4 +193,22 @@ class ProductosRepositoryImpl implements ProductosRepository {
           ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<ProductoEntity>>> getPorciones(
+      int idSucursal) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No hay conexión a internet'));
+    }
+    try {
+      final productos = await remote.getProductos(idSucursal, includePorciones: true);
+      return Right(productos);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(
+          ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
+    }
+  }
 }

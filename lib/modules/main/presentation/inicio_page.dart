@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
 import 'package:resturant_funny/modules/main/domain/providers/dining_provider.dart';
@@ -69,9 +70,27 @@ class _InicioPageState extends ConsumerState<InicioPage> {
             _productos = productos.where((p) => p.isDisponible).toList();
             _isLoading = false;
           });
+          _refreshPorciones();
         }
       },
     );
+  }
+
+  Future<void> _refreshPorciones() async {
+    final idSucursal = SingletonApp.getUser()?.idSucursal ?? 1;
+    setState(() => _isLoading = true);
+    final result = await _productosRepository.getPorciones(idSucursal);
+    result.fold((error) {
+      debugPrint("Error al obtener las porciones: ${error.message}");
+      setState(() {
+        _isLoading = false;
+      });
+    }, (porciones) {
+      ref.read(diningProvider.notifier).setPorciones(porciones);
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   @override

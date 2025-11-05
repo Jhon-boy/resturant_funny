@@ -159,8 +159,8 @@ class AuthRemoteDataSourceImpl {
         await SupabaseService.update(
           table: Entities.TDISPOSITIVO.tableName,
           data: {
-            'ULTIMOACCESO': DateTime.now().toIso8601String(),
-            'FMODIFICACION': DateTime.now().toIso8601String(),
+            'ULTIMOACCESO': AppUtils.getFechaActual().toIso8601String(),
+            'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
           },
           filters: {
             'IMEI': deviceInfo.idUnico,
@@ -178,9 +178,8 @@ class AuthRemoteDataSourceImpl {
           'MARCA': deviceInfo.fabricante ?? 'Desconocida',
           'MODELO': deviceInfo.modelo ?? 'Desconocido',
           'SISTEMAOPERATIVO': deviceInfo.sistemaOperativo ?? 'Desconocido',
-          'ULTIMOACCESO': DateTime.now().toIso8601String(),
-          'FCREACION': DateTime.now().toIso8601String(),
-          'FMODIFICACION': DateTime.now().toIso8601String(),
+          'ULTIMOACCESO': AppUtils.getFechaActual().toIso8601String(),
+          'FCREACION': AppUtils.getFechaActual().toIso8601String(), 
           'USUARIOINGRESO': entity.usuario,
           'USERMODIFICACION': '',
         },

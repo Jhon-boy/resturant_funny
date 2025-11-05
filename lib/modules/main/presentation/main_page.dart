@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
+import 'package:resturant_funny/modules/user/presentation/empleados_page.dart';
 import 'package:resturant_funny/modules/user/presentation/perfil_page.dart';
 import 'package:resturant_funny/modules/user/presentation/crear_persona_page.dart';
 import 'package:resturant_funny/modules/ventas/presentation/pages/mi_dia_page.dart';
@@ -10,20 +13,29 @@ import 'package:resturant_funny/modules/ventas/presentation/ventas_page.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
 import 'package:resturant_funny/shared/baseApp/app_bottom_nav.dart';
 
-class MainPage extends StatefulWidget {
+class MainPage extends ConsumerStatefulWidget {
   const MainPage({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  ConsumerState<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
-  int _currentIndex = 0;
+class _MainPageState extends ConsumerState<MainPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? _userRole;
 
   @override
+  void initState() {
+    super.initState();
+    // El índice se maneja a través del provider, no necesitamos resetearlo aquí
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Escuchar cambios en el índice de navegación desde páginas secundarias
+    final navigationIndex = ref.watch(navigationIndexProvider);
+    final currentIndex = navigationIndex;
+
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
@@ -62,10 +74,10 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
         drawer: AppDrawer(
-          currentIndex: _currentIndex,
+          currentIndex: currentIndex,
           userRole: _userRole,
           onMainMenuTap: (index) {
-            setState(() => _currentIndex = index);
+            ref.read(navigationIndexProvider.notifier).state = index;
             Navigator.of(context).maybePop();
           },
           onDrawerMenuTap: (index) {
@@ -73,10 +85,10 @@ class _MainPageState extends State<MainPage> {
           },
         ),
         body: IndexedStack(
-          index: _currentIndex,
+          index: currentIndex,
           children: [
             InicioPage(onSectionChange: (index) {
-              setState(() => _currentIndex = index);
+              ref.read(navigationIndexProvider.notifier).state = index;
             }),
             const VentaPage(),
             const MiDiaPage(),
@@ -84,8 +96,9 @@ class _MainPageState extends State<MainPage> {
           ],
         ),
         bottomNavigationBar: AppBottomNav(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          currentIndex: currentIndex,
+          onTap: (index) =>
+              ref.read(navigationIndexProvider.notifier).state = index,
           onDrawerOpen: () => _scaffoldKey.currentState?.openDrawer(),
         ),
       ),
@@ -108,8 +121,14 @@ class _MainPageState extends State<MainPage> {
           ),
         );
         break;
-      case 5: // Inventario
-        //  Navegar a inventario
+      case 5: // empleados
+      Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const EmpleadosPage(
+              titulo: 'Gestión de Clientes',
+            ),
+          ),
+        );
         break;
       case 6: // Reportes
         //  Navegar a reportes

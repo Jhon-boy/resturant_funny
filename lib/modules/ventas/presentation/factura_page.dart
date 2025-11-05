@@ -217,6 +217,7 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 4,
@@ -226,8 +227,9 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
                 fontSize: letterWidth,
                 fontWeight: FontWeight.w600,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 3,
+              overflow: TextOverflow.visible,
+              softWrap: true,
             ),
           ),
           const SizedBox(width: 4),
@@ -240,6 +242,8 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 4),
@@ -253,6 +257,8 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
                 fontWeight: FontWeight.w500,
                 color: Colors.grey,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 4),
@@ -265,6 +271,8 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -341,8 +349,10 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
+            flex: 2,
             child: Text(
               label,
               style: TextStyle(
@@ -350,14 +360,24 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
                 fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
                 color: Colors.black87,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? letterWidth : letterWidth2,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: Colors.black87,
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: isTotal ? letterWidth : letterWidth2,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.right,
+              maxLines: 5,
+              overflow: TextOverflow.visible,
+              softWrap: true,
             ),
           ),
         ],
@@ -415,7 +435,7 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
         final XFile file = XFile.fromData(
           image,
           name:
-              'factura_${widget.venta.idVenta}_${DateTime.now().millisecondsSinceEpoch}.png',
+              'factura_${widget.venta.idVenta}_${AppUtils.getFechaActual().millisecondsSinceEpoch}.png',
           mimeType: 'image/png',
         );
 

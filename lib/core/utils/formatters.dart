@@ -6,9 +6,15 @@ class UpperCaseTextFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
+    final newText = newValue.text.toUpperCase();
+    final selection = TextSelection.collapsed(
+      offset: newText.length < newValue.selection.start
+          ? newText.length
+          : newValue.selection.start,
+    );
     return TextEditingValue(
-      text: newValue.text.toUpperCase(),
-      selection: newValue.selection,
+      text: newText,
+      selection: selection,
     );
   }
 }
@@ -19,9 +25,15 @@ class LowerCaseTextFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
+    final newText = newValue.text.toLowerCase();
+    final selection = TextSelection.collapsed(
+      offset: newText.length < newValue.selection.start
+          ? newText.length
+          : newValue.selection.start,
+    );
     return TextEditingValue(
-      text: newValue.text.toLowerCase(),
-      selection: newValue.selection,
+      text: newText,
+      selection: selection,
     );
   }
 }
@@ -33,9 +45,36 @@ class LetterOnlyTextFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final filtered = newValue.text.replaceAll(RegExp(r'[^a-zA-Z0-9 ]'), '');
+
+    int removedBeforeBase = 0;
+    int removedBeforeExtent = 0;
+
+    for (int i = 0; i < newValue.text.length; i++) {
+      final char = newValue.text[i];
+      final isRemoved = !RegExp(r'[a-zA-Z0-9 ]').hasMatch(char);
+
+      if (isRemoved) {
+        if (i < newValue.selection.baseOffset) {
+          removedBeforeBase++;
+        }
+        if (i < newValue.selection.extentOffset) {
+          removedBeforeExtent++;
+        }
+      }
+    }
+
+    final newBaseOffset = (newValue.selection.baseOffset - removedBeforeBase)
+        .clamp(0, filtered.length);
+    final newExtentOffset =
+        (newValue.selection.extentOffset - removedBeforeExtent)
+            .clamp(0, filtered.length);
+
     return TextEditingValue(
       text: filtered,
-      selection: newValue.selection,
+      selection: TextSelection(
+        baseOffset: newBaseOffset,
+        extentOffset: newExtentOffset,
+      ),
     );
   }
 }

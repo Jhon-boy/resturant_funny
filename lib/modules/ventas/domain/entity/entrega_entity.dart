@@ -1,3 +1,5 @@
+import 'package:resturant_funny/core/utils/app_util.dart';
+
 class EntregaEntity {
   final int? idEntrega;
   final int idVenta;
@@ -205,7 +207,7 @@ class EntregaEntity {
   /// Calcula el tiempo transcurrido desde la asignación
   Duration? get tiempoTranscurrido {
     if (fechaAsignacion == null) return null;
-    final ahora = DateTime.now();
+    final ahora = AppUtils.getFechaActual();
     return ahora.difference(fechaAsignacion!);
   }
 

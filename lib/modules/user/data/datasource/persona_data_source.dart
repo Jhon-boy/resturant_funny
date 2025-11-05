@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/errors/exception.dart';
 import 'package:resturant_funny/core/network/http_client.dart';
 import 'package:resturant_funny/core/services/supabase_service.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
@@ -107,7 +108,7 @@ class PersonasRemoteDataSource {
     try {
       final data = {
         'ESTADO': EstadosPersona.INACTIVO.state,
-        'FMODIFICACION': DateTime.now().toIso8601String(),
+        'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
       };
 
       if (user != null) {

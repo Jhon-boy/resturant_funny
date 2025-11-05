@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:resturant_funny/core/theme_app.dart'; 
+import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/app_util.dart'; 
 class EstadisticasHeader extends StatelessWidget {
   final VoidCallback onRefresh;
 
@@ -10,7 +11,7 @@ class EstadisticasHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final now = AppUtils.getFechaActual();
     final dayName = _getDayName(now.weekday);
     final dateStr = '${now.day}/${now.month}/${now.year}';
 

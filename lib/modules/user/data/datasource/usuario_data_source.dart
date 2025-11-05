@@ -72,6 +72,9 @@ class UsuariosRemoteDataSource {
   Future<TUsuariEntity> createUsuario(TUsuariEntity usuario) async {
     try {
       final data = usuario.toJson();
+      if (data.containsKey('IDUSUARIO') && data['IDUSUARIO'] == 0) {
+        data.remove('IDUSUARIO');
+      }
       final result = await SupabaseService.insert(
         table: Entities.TUSUARIO.tableName,
         data: data,

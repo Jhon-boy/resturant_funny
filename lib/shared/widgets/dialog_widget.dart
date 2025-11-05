@@ -76,7 +76,7 @@ class DialogHelper {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => WillPopScope(
+      builder: (dialogContext) => WillPopScope(
         onWillPop: () async => false,
         child: Dialog(
           shape: RoundedRectangleBorder(
@@ -122,7 +122,10 @@ class DialogHelper {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          if (Navigator.canPop(context)) Navigator.pop(context);
+                          final navigator = Navigator.of(dialogContext);
+                          if (navigator.canPop()) {
+                            navigator.pop();
+                          }
                           onCancel();
                         },
                         style: ElevatedButton.styleFrom(
@@ -147,7 +150,10 @@ class DialogHelper {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          if (Navigator.canPop(context)) Navigator.pop(context);
+                          final navigator = Navigator.of(dialogContext);
+                          if (navigator.canPop()) {
+                            navigator.pop();
+                          }
                           onConfirm();
                         },
                         style: ElevatedButton.styleFrom(
@@ -223,7 +229,7 @@ class DialogHelper {
                         color: ThemeApp.textPrimary,
                         fontFamily: ThemeApp.fontFamily,
                       ),
-                      textAlign: TextAlign.right, 
+                      textAlign: TextAlign.right,
                     ),
                     const SizedBox(height: 2),
                     Center(

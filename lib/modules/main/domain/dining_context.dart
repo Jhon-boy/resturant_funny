@@ -5,6 +5,7 @@ import 'entity/sucursal_entity.dart';
 class DiningContext {
   final SucursalEntity sucursal;
   final List<ProductoEntity> productos;
+  final List<ProductoEntity> porciones;
   final DateTime ultimaActualizacion;
   final bool isLoading;
   final String? error;
@@ -15,6 +16,7 @@ class DiningContext {
     required this.ultimaActualizacion,
     this.isLoading = false,
     this.error,
+    required this.porciones,
   });
 
   /// Factory constructor para estado inicial
@@ -24,6 +26,7 @@ class DiningContext {
       productos: [],
       ultimaActualizacion: DateTime.now(),
       isLoading: true,
+      porciones: [],
     );
   }
 
@@ -35,6 +38,7 @@ class DiningContext {
       ultimaActualizacion: DateTime.now(),
       isLoading: false,
       error: error,
+      porciones: [],
     );
   }
 
@@ -42,6 +46,7 @@ class DiningContext {
   factory DiningContext.success({
     required SucursalEntity sucursal,
     required List<ProductoEntity> productos,
+    required List<ProductoEntity> porciones,
   }) {
     return DiningContext(
       sucursal: sucursal,
@@ -49,6 +54,7 @@ class DiningContext {
       ultimaActualizacion: DateTime.now(),
       isLoading: false,
       error: null,
+      porciones: porciones,
     );
   }
 
@@ -59,6 +65,7 @@ class DiningContext {
     DateTime? ultimaActualizacion,
     bool? isLoading,
     String? error,
+    List<ProductoEntity>? porciones,
   }) {
     return DiningContext(
       sucursal: sucursal ?? this.sucursal,
@@ -66,6 +73,7 @@ class DiningContext {
       ultimaActualizacion: ultimaActualizacion ?? this.ultimaActualizacion,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
+      porciones: porciones ?? this.porciones,
     );
   }
 
@@ -75,7 +83,10 @@ class DiningContext {
         .where((producto) => producto.categoria == categoria)
         .toList();
   }
-
+  /// Obtiene porciones 
+  List<ProductoEntity> getPorciones() {
+    return porciones.where((producto) => producto.disponible == true).toList();
+  }
   /// Obtiene todas las categorías disponibles
   List<String> get categorias {
     return productos.map((producto) => producto.categoria).toSet().toList()
@@ -135,6 +146,7 @@ class DiningContext {
       'productosNoDisponibles': totalProductos - totalProductosDisponibles,
       'categorias': categorias.length, 
       'ultimaActualizacion': ultimaActualizacion.toIso8601String(),
+      'porciones': porciones.length,
     };
   }
 

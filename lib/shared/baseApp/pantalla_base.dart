@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
+import 'package:resturant_funny/modules/main/presentation/main_page.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
 import 'package:resturant_funny/shared/baseApp/app_bottom_nav.dart';
 
@@ -106,9 +108,40 @@ class _PantallaBaseState extends ConsumerState<PantallaBase> {
       bottomNavigationBar: AppBottomNav(
         currentIndex: 0,
         onTap: (index) {
+          debugPrint(' IDE: index: $index');
           if (widget.onSectionChange != null) {
+            // Si hay callback, usarlo (páginas que están dentro de MainPage)
             widget.onSectionChange!(index);
+            debugPrint(' IDE: onSectionChange: ${widget.onSectionChange}');
             Navigator.of(context).pop();
+          } else {
+            ref.read(navigationIndexProvider.notifier).state = index;
+            // Hacer pop hasta encontrar MainPage o llegar a la raíz
+            // Buscar si MainPage está en la pila de navegación
+            bool foundMainPage = false;
+            Navigator.of(context).popUntil((route) {
+              // Verificar si la ruta es MainPage por el nombre de la ruta
+              if (route.settings.name == '/base') {
+                foundMainPage = true;
+                return true;  
+              }
+              // Si es la primera ruta (raíz), parar
+              if (route.isFirst) {
+                return true;
+              }
+              // Continuar haciendo pop
+              return false;
+            });
+            // Si no encontramos MainPage en la pila, navegar a él
+            if (!foundMainPage) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (context) => const MainPage(),
+                  settings: const RouteSettings(name: '/base'),
+                ),
+                (route) => false,
+              );
+            }
           }
         },
         onDrawerOpen: () => _scaffoldKey.currentState?.openDrawer(),

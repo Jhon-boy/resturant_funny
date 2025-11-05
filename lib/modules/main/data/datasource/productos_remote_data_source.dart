@@ -5,6 +5,7 @@ import 'package:resturant_funny/core/network/http_client.dart';
 import 'package:resturant_funny/core/services/supabase_service.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
+import 'package:resturant_funny/shared/enums/categorias_producto.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,11 +17,22 @@ class ProductosRemoteDataSource {
       : client = client ?? HttpClient(ref);
   final SupabaseClient supabase = Supabase.instance.client;
 
-  Future<List<ProductoEntity>> getProductos(int idSucursal) async {
+  Future<List<ProductoEntity>> getProductos(int idSucursal,
+      {bool includePorciones = false}) async {
     try {
+      final filters = <String, dynamic>{'IDSUCURSAL': idSucursal};
+
+      if (includePorciones) {
+        // Si includePorciones es true, solo traer productos de categoría PORCION
+        filters['CATEGORIA'] = ProductosCategorias.PORCION.code;
+      } else {
+        // Si includePorciones es false, traer todos los productos EXCEPTO los de categoría PORCION
+        filters['CATEGORIA_neq'] = ProductosCategorias.PORCION.code;
+      }
+
       final result = await SupabaseService.select(
         table: Entities.TPRODUCTO.tableName,
-        filters: {'IDSUCURSAL': idSucursal},
+        filters: filters,
         orderBy: 'FCREACION',
         ascending: false,
       );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 
 class CalendarWidget extends ConsumerStatefulWidget {
   final String title;
@@ -41,9 +42,9 @@ class CalendarWidget extends ConsumerStatefulWidget {
       context: context,
       builder: (context) => _DatePickerDialog(
         title: title,
-        initialDate: initialDate ?? DateTime.now(),
+        initialDate: initialDate ?? AppUtils.getFechaActual(),
         firstDate: firstDate ?? DateTime(1900),
-        lastDate: lastDate ?? DateTime.now().add(const Duration(days: 365)),
+        lastDate: lastDate ?? AppUtils.getFechaActual().add(const Duration(days: 365)),
       ),
     );
   }

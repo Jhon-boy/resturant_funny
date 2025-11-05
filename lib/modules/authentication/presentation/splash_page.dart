@@ -53,15 +53,27 @@ class _SplashPageState extends ConsumerState<SplashPage> {
             message: 'Error al obtener los productos: ${failure.message}',
             onConfirmed: () {});
       },
-      (productos) {
+      (productos) async {
         ref.read(diningProvider.notifier).setProductos(productos);
-
+        await _refreshPorciones();
         if (mounted) {
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (_) => const MainPage()));
         }
       },
     );
+  }
+
+  Future<void> _refreshPorciones() async {
+    final idSucursal =
+        ref.read(userProvider.notifier).getUser()?.idSucursal ?? 1;
+    final result = await _productosRepository.getPorciones(idSucursal);
+    result.fold((error) {
+      debugPrint("Error al obtener las porciones: ${error.message}");
+    }, (porciones) {
+      debugPrint("Porciones obtenidas: ${porciones.length}");
+      ref.read(diningProvider.notifier).setPorciones(porciones);
+    });
   }
 
   @override

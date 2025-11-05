@@ -7,6 +7,8 @@ import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart'
 abstract class ProductosRepository {
   /// Obtener todos los productos de una sucursal.
   Future<Either<Failure, List<ProductoEntity>>> getProductos(int idSucursal);
+    /// Obtener todos los productos de una sucursal.
+  Future<Either<Failure, List<ProductoEntity>>> getPorciones(int idSucursal);
 
   /// Obtener un producto específico por su ID.
   Future<Either<Failure, ProductoEntity>> getProductById(String idProduct);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
@@ -35,7 +36,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
   List<VentaCardModel> _ventasClientes = [];
   int _index = 0;
   late final VentaRepository _ventasRepository;
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = AppUtils.getFechaActual();
   final TextEditingController _identificacionController =
       TextEditingController();
   final TextEditingController _identificadorController =

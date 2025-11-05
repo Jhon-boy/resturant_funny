@@ -76,6 +76,9 @@ class SupabaseService {
           } else if (column.endsWith('_lt')) {
             final realColumn = column.replaceAll('_lt', '');
             query = query.lt(realColumn, value);
+          } else if (column.endsWith('_neq')) {
+            final realColumn = column.replaceAll('_neq', '');
+            query = query.neq(realColumn, value);
           } else {
             query = query.eq(column, value);
           }

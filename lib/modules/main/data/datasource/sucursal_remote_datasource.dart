@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/errors/exception.dart';
 import 'package:resturant_funny/core/network/http_client.dart';
 import 'package:resturant_funny/core/services/supabase_service.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -67,7 +68,7 @@ class SucursalRemoteDataSource {
         'NOMBRE': sucursal.nombre,
         'DIRECCION': sucursal.direccion,
         'ESTADO': sucursal.estado ?? true,
-        'FCREACION': DateTime.now().toIso8601String(),
+        'FCREACION': AppUtils.getFechaActual().toIso8601String(),
         'USUARIOINGRESO': sucursal.usuarioIngreso,
       };
 
@@ -89,7 +90,7 @@ class SucursalRemoteDataSource {
         'NOMBRE': sucursal.nombre,
         'DIRECCION': sucursal.direccion,
         'ESTADO': sucursal.estado,
-        'FMODIFICACION': DateTime.now().toIso8601String(),
+        'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
         'USERMODIFICACION': sucursal.userModificacion,
       };
 
@@ -112,7 +113,7 @@ class SucursalRemoteDataSource {
         table: Entities.TSUCURSAL.tableName,
         data: {
           'ESTADO': false,
-          'FMODIFICACION': DateTime.now().toIso8601String(),
+          'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
           'USERMODIFICACION': userModificacion,
         },
         filters: {'IDSUCURSAL': idSucursal},
@@ -164,7 +165,7 @@ class SucursalRemoteDataSource {
         table: Entities.TSUCURSAL.tableName,
         data: {
           'ESTADO': estado,
-          'FMODIFICACION': DateTime.now().toIso8601String(),
+          'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
           'USERMODIFICACION': userModificacion,
         },
         filters: {'IDSUCURSAL': idSucursal},
@@ -187,7 +188,7 @@ class SucursalRemoteDataSource {
         'total': allSucursales.length,
         'activas': activas,
         'inactivas': inactivas,
-        'ultimaActualizacion': DateTime.now().toIso8601String(),
+        'ultimaActualizacion': AppUtils.getFechaActual().toIso8601String(),
       };
     } catch (e) {
       _handleError(e, 'getSucursalesEstadisticas');
