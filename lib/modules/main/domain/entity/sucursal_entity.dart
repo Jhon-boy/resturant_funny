@@ -2,8 +2,6 @@ class SucursalEntity {
   final int? idSucursal;
   final String nombre;
   final String? direccion;
-  final String? telefono;
-  final String? email;
   final bool? estado;
   final DateTime? fCreacion;
   final DateTime? fModificacion;
@@ -14,8 +12,6 @@ class SucursalEntity {
     this.idSucursal,
     required this.nombre,
     this.direccion,
-    this.telefono,
-    this.email,
     this.estado,
     this.fCreacion,
     this.fModificacion,
@@ -40,8 +36,6 @@ class SucursalEntity {
       idSucursal: json['IDSUCURSAL'],
       nombre: json['NOMBRE'] ?? '',
       direccion: json['DIRECCION'],
-      telefono: json['TELEFONO'],
-      email: json['EMAIL'],
       estado: estado,
       fCreacion:
           json['FCREACION'] != null ? DateTime.parse(json['FCREACION']) : null,
@@ -59,8 +53,6 @@ class SucursalEntity {
       'IDSUCURSAL': idSucursal,
       'NOMBRE': nombre,
       'DIRECCION': direccion,
-      'TELEFONO': telefono,
-      'EMAIL': email,
       'ESTADO': estado,
       'FCREACION': fCreacion?.toIso8601String(),
       'FMODIFICACION': fModificacion?.toIso8601String(),
@@ -75,8 +67,6 @@ class SucursalEntity {
       'idSucursal': idSucursal,
       'nombre': nombre,
       'direccion': direccion,
-      'telefono': telefono,
-      'email': email,
       'estado': estado,
       'fCreacion': fCreacion?.toIso8601String(),
       'fModificacion': fModificacion?.toIso8601String(),
@@ -102,8 +92,6 @@ class SucursalEntity {
       idSucursal: idSucursal ?? this.idSucursal,
       nombre: nombre ?? this.nombre,
       direccion: direccion ?? this.direccion,
-      telefono: telefono ?? this.telefono,
-      email: email ?? this.email,
       estado: estado ?? this.estado,
       fCreacion: fCreacion ?? this.fCreacion,
       fModificacion: fModificacion ?? this.fModificacion,
@@ -115,17 +103,7 @@ class SucursalEntity {
   /// Verifica si la sucursal está activa
   bool get isActiva => estado == true;
 
-  /// Obtiene la información de contacto formateada
-  String get contactoFormateado {
-    List<String> contactos = [];
-    if (telefono != null && telefono!.isNotEmpty) {
-      contactos.add('Tel: $telefono');
-    }
-    if (email != null && email!.isNotEmpty) {
-      contactos.add('Email: $email');
-    }
-    return contactos.join(' | ');
-  }
+
 
   @override
   String toString() {
@@ -139,8 +117,6 @@ class SucursalEntity {
         other.idSucursal == idSucursal &&
         other.nombre == nombre &&
         other.direccion == direccion &&
-        other.telefono == telefono &&
-        other.email == email &&
         other.estado == estado;
   }
 
@@ -150,8 +126,6 @@ class SucursalEntity {
       idSucursal,
       nombre,
       direccion,
-      telefono,
-      email,
       estado,
     );
   }

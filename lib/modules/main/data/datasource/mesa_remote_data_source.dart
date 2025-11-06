@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/errors/exception.dart';
 import 'package:resturant_funny/core/network/http_client.dart';
 import 'package:resturant_funny/core/services/supabase_service.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/main/domain/entity/mesa_entity.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
+import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MesasRemoteDataSource {
@@ -47,6 +49,8 @@ class MesasRemoteDataSource {
   Future<MesaEntity> createMesa(MesaEntity mesa, UserModel? user) async {
     try {
       final data = mesa.toJson();
+      // No incluir IDMESA en el INSERT ya que es GENERATED ALWAYS AS IDENTITY
+      data.remove('IDMESA');
       if (user != null) data['USUARIOINGRESO'] = user.idUsuario;
       final result = await SupabaseService.insert(
         table: Entities.TMESA.tableName,
@@ -99,8 +103,15 @@ class MesasRemoteDataSource {
 
   Future<bool> deleteMesa(String idMesa, UserModel? user) async {
     try {
-      await SupabaseService.delete(
+      final data = {
+        'ESTADO': EstadosPersona.INACTIVO.state,
+        'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
+        'USERMODIFICACION': user?.idUsuario?.toString(),
+      };
+
+      await SupabaseService.update(
         table: Entities.TMESA.tableName,
+        data: data,
         filters: {'IDMESA': int.parse(idMesa)},
       );
       return true;

@@ -5,6 +5,7 @@ import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
+import 'package:resturant_funny/modules/sucursales/presentation/sucursales_page.dart';
 import 'package:resturant_funny/modules/user/presentation/empleados_page.dart';
 import 'package:resturant_funny/modules/user/presentation/perfil_page.dart';
 import 'package:resturant_funny/modules/user/presentation/crear_persona_page.dart';
@@ -130,9 +131,14 @@ class _MainPageState extends ConsumerState<MainPage> {
           ),
         );
         break;
-      case 6: // Reportes
-        //  Navegar a reportes
-        break;
+      case 6: // Sucursales
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const SucursalesPage(
+              titulo: 'Gestión de Sucursales',
+            ),
+          ),
+        );
       case 7: // Usuarios
         //  Navegar a usuarios
         break;

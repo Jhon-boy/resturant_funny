@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:resturant_funny/core/utils/responsive_util.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ThemeApp {
   // === Colores principales ===
@@ -21,6 +23,7 @@ class ThemeApp {
   // === Social Buttons ===
   static const Color apple = Color(0xFF000000);
   static const Color success = Color(0xFF00C853);
+  static const Color white = Color(0xFFFFFFFF);
 
   // === TIPO DE LETRA PARA TODA LA APP
   static const String fontFamily = 'Poppins';
@@ -72,11 +75,14 @@ class ThemeApp {
     IconData prefixIcon, {
     String? Function(String?)? validator,
     bool isRequired = false,
+    Color? fillColor,
   }) {
     return InputDecoration(
       labelText: title,
       labelStyle: const TextStyle(color: ThemeApp.textPrimary),
       hintText: hint,
+      filled: true,
+      fillColor: fillColor ?? ThemeApp.inputBackground,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -98,6 +104,92 @@ class ThemeApp {
         prefixIcon,
         color: ThemeApp.primary.withOpacity(0.5),
       ),
+    );
+  }
+
+  static Widget buildShimmerLoading({int itemCount = 3}) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              height: ResponsiveUtil.byWidth<double>(
+                context,
+                small: 150,
+                medium: 200,
+                large: 300,
+                xl: 350,
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.grey.shade300,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 16,
+                              width: 150,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 12,
+                              width: 200,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 12,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 12,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

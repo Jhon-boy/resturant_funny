@@ -73,7 +73,8 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget _buildMainMenus(List<MenuItem> mainMenus) {
-    return Column(
+    return SingleChildScrollView(
+        child: Column(
       children: mainMenus.map((menu) {
         final isSelected = currentIndex == menu.index;
         return ListTile(
@@ -86,7 +87,7 @@ class AppDrawer extends StatelessWidget {
           onTap: () => onMainMenuTap(menu.index),
         );
       }).toList(),
-    );
+    ));
   }
 
   Widget _buildDrawerMenus(List<MenuItem> drawerMenus) {

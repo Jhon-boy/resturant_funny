@@ -68,11 +68,11 @@ class MenuItem {
       allowedRoles: ['admin', 'manager'],
     ),
     MenuItem(
-      label: 'Inventario',
+      label: 'Sucursales',
       icon: Icons.inventory_outlined,
       index: 6,
-      isMainMenu: false,
-      requiresRole: true,
+      isMainMenu: true,
+      requiresRole: false,
       allowedRoles: ['admin', 'manager', 'inventory'],
     ),
     MenuItem(

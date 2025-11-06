@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:resturant_funny/core/services/conection_service.dart';
 import 'package:resturant_funny/core/utils/either.dart';
-import 'package:resturant_funny/modules/main/data/datasource/sucursal_remote_datasource.dart';
+import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
-import 'package:resturant_funny/modules/main/domain/repository/sucursal_repository.dart';
+import 'package:resturant_funny/modules/sucursales/domain/sucursal_repository.dart';
 
 class SucursalRemoteRepository implements SucursalRepository {
   final SucursalRemoteDataSource remote;
