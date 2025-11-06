@@ -1,18 +1,21 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
-import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source.dart';
 import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
+import 'package:resturant_funny/modules/user/domain/mappers/usuario_mapper.dart';
 import 'package:resturant_funny/modules/user/domain/repository/usuario_repository.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
 class CrearUsuarioPage extends ConsumerStatefulWidget {
   final String identificacion;
@@ -57,14 +60,33 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
   late UsuariosRepository _usuariosRepository;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isLoading = false;
-
+  bool _isTemporal = true;
   @override
   void initState() {
     super.initState();
     _usuariosRepository = UsuariosRepositoryImpl(
       UsuariosRemoteDataSource(ref: ref),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _usuarioController.text = '';
+      _passwordController.text = '';
+      _confirmPasswordController.text = '';
+      _usuarioController.text = widget.identificacion;
+      _passwordController.text = widget.identificacion;
+      setState(() {
+        _isTemporal = false;
+      });
+      DialogHelper.info(context,
+          message: '¿Desea auto completar la información del usuario?',
+          onConfirmed: () {
+        setState(() {
+          _isTemporal = true;
+          _obscurePassword = false;
+          _usuarioController.text = widget.identificacion;
+          _passwordController.text = widget.identificacion;
+        });
+      });
+    });
   }
 
   @override
@@ -89,32 +111,21 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
       );
       return;
     }
-
-    setState(() {
-      _isLoading = true;
-    });
+    final appState = ref.watch(appStateProvider);
 
     try {
-      // Crear el usuario
-      final nuevoUsuario = TUsuariEntity(
-        idUsuario: 0, // Se generará automáticamente por la BD
-        idSucursal: user.idSucursal!,
-        identificacion: widget.identificacion,
-        usuario: _usuarioController.text.trim().isEmpty
-            ? null
-            : _usuarioController.text.trim(),
-        password: _passwordController.text.trim().isEmpty
-            ? null
-            : _passwordController.text.trim(),
-        temporal: false,
-        fCreacion: AppUtils.getFechaActual(),
-        usuarioIngreso: user.idUsuario?.toString(),
-      );
+      appState.setLoading(true);
+      final nuevoUsuario = UsuarioMapper.fromFormData(
+          identificacion: widget.identificacion,
+          user: _usuarioController.text.trim(),
+          password: _passwordController.text.trim(),
+          isTemporal: _isTemporal);
 
       final result = await _usuariosRepository.createUsuario(nuevoUsuario);
 
       result.fold(
         (failure) {
+          appState.setLoading(false);
           SnackHelper.show(
             context,
             message: 'Error al crear usuario: ${failure.message}',
@@ -122,6 +133,7 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
           );
         },
         (usuarioCreado) {
+          appState.setLoading(false);
           SnackHelper.show(
             context,
             message: 'Usuario creado correctamente',
@@ -131,17 +143,14 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
         },
       );
     } catch (e) {
+      appState.setLoading(false);
       SnackHelper.show(
         context,
         message: 'Error inesperado: $e',
         isError: true,
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      appState.setLoading(false);
     }
   }
 
@@ -174,7 +183,7 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
                     children: [
                       Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.person_outline,
                             color: ThemeApp.primary,
                             size: 24,
@@ -221,25 +230,20 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
               // Campo Usuario
               TextFormField(
                 controller: _usuarioController,
-                decoration: InputDecoration(
-                  labelText: 'Nombre de Usuario',
-                  hintText: 'Ingrese el nombre de usuario (opcional)',
-                  prefixIcon: const Icon(Icons.person),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                ),
+                decoration: ThemeApp.inputDecoration('Nombre de Usuario',
+                    'Ingrese el nombre de usuario (opcional)', Icons.person),
                 textCapitalization: TextCapitalization.none,
                 autocorrect: false,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                ],
                 validator: (value) {
                   if (value != null && value.trim().isNotEmpty) {
                     if (value.trim().length < 3) {
                       return 'El nombre de usuario debe tener al menos 3 caracteres';
                     }
-                    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value.trim())) {
-                      return 'Solo se permiten letras, números y guión bajo';
+                    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
+                      return 'Solo se permiten letras y números (sin espacios)';
                     }
                   }
                   return null;
@@ -273,10 +277,28 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
                   filled: true,
                   fillColor: Colors.grey.shade50,
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                ],
                 validator: (value) {
                   if (value != null && value.trim().isNotEmpty) {
-                    if (value.trim().length < 6) {
+                    final trimmedValue = value.trim();
+                    if (trimmedValue.length < 6) {
                       return 'La contraseña debe tener al menos 6 caracteres';
+                    }
+                    if (_isTemporal) {
+                      return null;
+                    }
+                    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmedValue)) {
+                      return 'Solo se permiten letras y números';
+                    }
+                    // Verificar que tenga al menos un número
+                    if (!RegExp(r'[0-9]').hasMatch(trimmedValue)) {
+                      return 'La contraseña debe contener al menos un número';
+                    }
+                    // Verificar que tenga al menos una letra
+                    if (!RegExp(r'[a-zA-Z]').hasMatch(trimmedValue)) {
+                      return 'La contraseña debe contener al menos una letra';
                     }
                   }
                   return null;
@@ -310,6 +332,9 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
                   filled: true,
                   fillColor: Colors.grey.shade50,
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                ],
                 validator: (value) {
                   if (_passwordController.text.trim().isNotEmpty) {
                     if (value == null || value.trim().isEmpty) {
@@ -324,6 +349,16 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
               ),
               const SizedBox(height: 24),
 
+              Row(children: [
+                const Text("Usuario Temporal"),
+                const SizedBox(width: 8),
+                Switch(
+                  value: _isTemporal,
+                  onChanged: (v) => setState(() => _isTemporal = v),
+                ),
+              ]),
+
+              const SizedBox(height: 16),
               // Información adicional
               Container(
                 padding: const EdgeInsets.all(12),
@@ -342,7 +377,9 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Nota: Los campos son opcionales. Si no se proporciona un nombre de usuario o contraseña, el usuario podrá ser creado y los roles pueden asignarse después.',
+                        _isTemporal
+                            ? ' Atención: Este usuario es temporal por lo que el usuario tendra que ser actualizado por el titular al iniciar sesión '
+                            : 'Nota: Los campos son opcionales. Si no se proporciona un nombre de usuario o contraseña, el usuario podrá ser creado y los roles pueden asignarse después.',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.blue.shade900,
@@ -358,34 +395,19 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      onPressed:
-                          _isLoading ? null : () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(color: ThemeApp.primary),
-                      ),
-                      child: const Text(
-                        'Cancelar',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    child: CustomButton(
+                        colorButton: ThemeApp.textSecondary,
+                        text: 'Cancelar',
+                        onPressed: () => Navigator.of(context).pop()),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    flex: 2,
-                    child: CustomButton(
-                      text: _isLoading ? 'Creando...' : 'Crear Usuario',
-                      onPressed: _isLoading ? () {} : _crearUsuario,
-                      isLoading: _isLoading,
-                    ),
-                  ),
+                      child: CustomButton(
+                          text: 'Crear Usuario',
+                          isLoading: ref.watch(appStateProvider).isLoading,
+                          onPressed: () {
+                            _crearUsuario();
+                          }))
                 ],
               ),
             ],

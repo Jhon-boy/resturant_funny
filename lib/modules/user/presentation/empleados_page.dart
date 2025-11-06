@@ -9,6 +9,10 @@ import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
+import 'package:resturant_funny/modules/main/data/datasource/sucursal_remote_datasource.dart';
+import 'package:resturant_funny/modules/main/data/repository/sucursal_repository.dart';
+import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
+import 'package:resturant_funny/modules/main/domain/repository/sucursal_repository.dart';
 import 'package:resturant_funny/modules/user/data/datasource/persona_data_source.dart';
 import 'package:resturant_funny/modules/user/data/datasource/rol_usuario_data_source.dart';
 import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source.dart';
@@ -41,9 +45,11 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
   late RolUsuarioRepository _rolUsuarioRepository;
   late PersonasRepository _personasRepository;
   late UsuariosRepository _usuariosRepository;
+  late SucursalRepository _sucursalRepository;
   List<EmpleadoModel> _empleados = [];
   List<EmpleadoModel> _empleadosFiltrados = [];
   List<RolEntity> _roles = [];
+  List<SucursalEntity> _sucursales = [];
   final TextEditingController _searchController = TextEditingController();
   int _index = 0;
   bool _haRealizadoBusqueda = false;
@@ -66,6 +72,10 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
       _usuariosRepository = UsuariosRepositoryImpl(
         UsuariosRemoteDataSource(ref: ref),
       );
+      _sucursalRepository = SucursalRemoteRepository(
+        SucursalRemoteDataSource(ref: ref),
+      );
+      //_cargarSucursales();
       _cargarRoles();
       if (_index == 0) {
         _cargarEmpleados();
@@ -88,7 +98,6 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
         },
         (roles) {
           setState(() {
-            // Filtrar roles: excluir CLIENTE usando el enum
             _roles = roles.where((rol) {
               final codigoCliente = Rol.CLIENTE.code;
               return rol.codigo.toUpperCase() != codigoCliente;
@@ -105,7 +114,6 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
     final appState = ref.watch(appStateProvider);
     appState.setLoading(true);
     try {
-      // Obtener todos los usuarios que NO son CLIENTE en una sola consulta
       final usuariosResult =
           await _rolUsuarioRepository.getUsuariosSinRolCliente();
 
@@ -133,7 +141,6 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
         return;
       }
 
-      // Eliminar duplicados
       final usuariosUnicos = <int, TUsuariEntity>{};
       for (final usuario in todosUsuarios) {
         usuariosUnicos[usuario.idUsuario] = usuario;
@@ -210,13 +217,11 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
           });
         },
         (persona) async {
-          // Buscar usuario por identificación (puede no existir)
           final usuarioResult = await _usuariosRepository
               .getUsuarioByIdentificacion(persona.identificacion);
 
           usuarioResult.fold(
             (failure) {
-              // Si no se encuentra usuario, simplemente mostrar persona sin usuario
               setState(() {
                 _empleadosFiltrados = [
                   EmpleadoModel(
@@ -228,8 +233,6 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
               });
             },
             (usuario) async {
-              debugPrint('Usuario encontrado: ${usuario.idUsuario}');
-              // Si tiene usuario, obtener sus roles (puede estar vacío)
               final rolesResult = await _rolUsuarioRepository
                   .getRolesUsuario(usuario.idUsuario);
 
@@ -264,6 +267,74 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
     } finally {
       appState.setLoading(false);
     }
+  }
+
+  Future<void> _actualizarEmpleadoConUsuario(
+      EmpleadoModel empleado, TUsuariEntity usuarioCreado) async {
+    final appState = ref.watch(appStateProvider);
+    appState.setLoading(true);
+
+    try {
+      final rolesResult =
+          await _rolUsuarioRepository.getRolesUsuario(usuarioCreado.idUsuario);
+
+      rolesResult.fold(
+        (failure) {
+          _actualizarEmpleadoEnLista(
+            empleado,
+            EmpleadoModel(
+              usuario: usuarioCreado,
+              persona: empleado.persona,
+              roles: [],
+            ),
+          );
+        },
+        (roles) {
+          final empleadoActualizado = EmpleadoModel(
+            usuario: usuarioCreado,
+            persona: empleado.persona,
+            roles: roles,
+          );
+          _actualizarEmpleadoEnLista(empleado, empleadoActualizado);
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _gestionarRoles(empleadoActualizado);
+            }
+          });
+        },
+      );
+    } catch (e) {
+      SnackHelper.show(
+        context,
+        message: 'Error al actualizar empleado: $e',
+        isError: true,
+      );
+    } finally {
+      appState.setLoading(false);
+    }
+  }
+
+  /// Actualiza un empleado específico en las listas sin recargar todo
+  void _actualizarEmpleadoEnLista(
+      EmpleadoModel empleadoViejo, EmpleadoModel empleadoNuevo) {
+    setState(() {
+      // Actualizar en _empleados
+      final indexEmpleados = _empleados.indexWhere(
+        (e) => e.persona.identificacion == empleadoViejo.persona.identificacion,
+      );
+      if (indexEmpleados != -1) {
+        _empleados[indexEmpleados] = empleadoNuevo;
+      }
+
+      // Actualizar en _empleadosFiltrados
+      final indexFiltrados = _empleadosFiltrados.indexWhere(
+        (e) => e.persona.identificacion == empleadoViejo.persona.identificacion,
+      );
+      if (indexFiltrados != -1) {
+        _empleadosFiltrados[indexFiltrados] = empleadoNuevo;
+      }
+    });
   }
 
   Future<void> _gestionarRoles(EmpleadoModel empleado) async {
@@ -367,7 +438,6 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
             },
             onCancel: () {
               debugPrint('Cancelado');
-              // Volver a abrir el diálogo de gestión de roles después de un frame
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
                   _gestionarRoles(empleado);
@@ -525,11 +595,12 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                             titulo: 'Crear Usuario',
                           );
                           if (usuarioCreado != null && mounted) {
-                            // Recargar empleados para mostrar el nuevo usuario
-                            _cargarEmpleados();
+                            setState(() {
+                              _index = 0;
+                              _cargarEmpleados();
+                            });
                           }
                         } else {
-                          // Si tiene usuario, gestionar roles
                           _gestionarRoles(empleado);
                         }
                       },
@@ -579,7 +650,6 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                       roles: _roles,
                       onEdit: () async {
                         if (empleado.usuario == null) {
-                          // Si no tiene usuario, crear uno
                           final usuarioCreado = await CrearUsuarioPage.navigate(
                             context: context,
                             identificacion: empleado.persona.identificacion,
@@ -587,11 +657,10 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                             titulo: 'Crear Usuario',
                           );
                           if (usuarioCreado != null && mounted) {
-                            // Recargar empleados para mostrar el nuevo usuario
-                            _cargarEmpleados();
+                            await _actualizarEmpleadoConUsuario(
+                                empleado, usuarioCreado);
                           }
                         } else {
-                          // Si tiene usuario, gestionar roles
                           _gestionarRoles(empleado);
                         }
                       },

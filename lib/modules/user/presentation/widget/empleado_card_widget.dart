@@ -181,11 +181,75 @@ class EmpleadoCardWidget extends StatelessWidget {
                       valueColor: EstadosPersona.getColorFromState(
                           empleado.persona.estado!),
                     ),
-                    const SizedBox(height: 16),
                   ],
-                  const Divider(height: 1),
                   const SizedBox(height: 12),
-                  // Botones de acción
+                  const Divider(height: 1),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const SizedBox(width: 4),
+                          Icon(Icons.location_on,
+                              size: 20, color: Colors.grey.shade600),
+                          const SizedBox(width: 8),
+                          Text(
+                              'Sucursal: ${empleado.usuario?.idSucursal.toString() ?? 'N/A'}',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600)),
+                        ],
+                      ),
+                      IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.assistant_direction_sharp,
+                              size: 30, color: ThemeApp.error)),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const SizedBox(width: 4),
+                          Icon(Icons.bar_chart,
+                              size: 20, color: Colors.grey.shade600),
+                          const SizedBox(width: 8),
+                          Text('Ver Estadisticas',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600)),
+                        ],
+                      ),
+                      IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.bar_chart_rounded,
+                              size: 30, color: ThemeApp.error)),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const SizedBox(width: 4),
+                          Icon(Icons.rule_outlined,
+                              size: 20, color: Colors.grey.shade600),
+                          const SizedBox(width: 8),
+                          Text('Gestionar Roles (${empleado.roles.length})',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600)),
+                        ],
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            if (onEdit != null) {
+                              onEdit!();
+                            }
+                          },
+                          icon: const Icon(Icons.edit_square,
+                              size: 30, color: ThemeApp.error)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   if (empleado.usuario == null) ...[
                     const SizedBox(height: 8),
                     CustomButton(
@@ -198,19 +262,6 @@ class EmpleadoCardWidget extends StatelessWidget {
                   ] else ...[
                     Row(
                       children: [
-                        Expanded(
-                          child: CustomButton(
-                            text: 'Gestionar Roles',
-                            colorButton: ThemeApp.primary,
-                            colorText: Colors.white,
-                            icon: Icons.edit,
-                            onPressed: () {
-                              if (onEdit != null) {
-                                onEdit!();
-                              }
-                            },
-                          ),
-                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: CustomButton(
