@@ -4,7 +4,7 @@ class SucursalEntity {
   final String? direccion;
   final String? telefono;
   final String? email;
-  final String? estado;
+  final bool? estado;
   final DateTime? fCreacion;
   final DateTime? fModificacion;
   final String? usuarioIngreso;
@@ -25,13 +25,24 @@ class SucursalEntity {
 
   /// Factory constructor desde JSON de la base de datos
   factory SucursalEntity.fromJson(Map<String, dynamic> json) {
+    // Manejar estado como booleano o string (para compatibilidad)
+    bool? estado;
+    if (json['ESTADO'] != null) {
+      if (json['ESTADO'] is bool) {
+        estado = json['ESTADO'] as bool;
+      } else if (json['ESTADO'] is String) {
+        estado = json['ESTADO'].toString().toUpperCase() == 'ACTIVO' ||
+            json['ESTADO'].toString().toUpperCase() == 'TRUE';
+      }
+    }
+
     return SucursalEntity(
       idSucursal: json['IDSUCURSAL'],
       nombre: json['NOMBRE'] ?? '',
       direccion: json['DIRECCION'],
       telefono: json['TELEFONO'],
       email: json['EMAIL'],
-      estado: json['ESTADO'],
+      estado: estado,
       fCreacion:
           json['FCREACION'] != null ? DateTime.parse(json['FCREACION']) : null,
       fModificacion: json['FMODIFICACION'] != null
@@ -81,7 +92,7 @@ class SucursalEntity {
     String? direccion,
     String? telefono,
     String? email,
-    String? estado,
+    bool? estado,
     DateTime? fCreacion,
     DateTime? fModificacion,
     String? usuarioIngreso,
@@ -102,7 +113,7 @@ class SucursalEntity {
   }
 
   /// Verifica si la sucursal está activa
-  bool get isActiva => estado == 'ACTIVO' || estado == null;
+  bool get isActiva => estado == true;
 
   /// Obtiene la información de contacto formateada
   String get contactoFormateado {

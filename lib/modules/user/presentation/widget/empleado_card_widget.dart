@@ -13,6 +13,7 @@ class EmpleadoCardWidget extends StatelessWidget {
   final List<RolEntity> roles;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onChangeSucursal;
 
   const EmpleadoCardWidget({
     super.key,
@@ -20,6 +21,7 @@ class EmpleadoCardWidget extends StatelessWidget {
     required this.roles,
     this.onEdit,
     this.onDelete,
+    this.onChangeSucursal,
   });
 
   @override
@@ -200,7 +202,11 @@ class EmpleadoCardWidget extends StatelessWidget {
                         ],
                       ),
                       IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (onChangeSucursal != null) {
+                              onChangeSucursal!();
+                            }
+                          },
                           icon: const Icon(Icons.assistant_direction_sharp,
                               size: 30, color: ThemeApp.error)),
                     ],

@@ -9,6 +9,7 @@ import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
+import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
 import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source.dart';
 import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
 import 'package:resturant_funny/modules/user/domain/mappers/usuario_mapper.dart';
@@ -21,12 +22,14 @@ class CrearUsuarioPage extends ConsumerStatefulWidget {
   final String identificacion;
   final PersonaEntity? persona;
   final String? titulo;
+  final List<SucursalEntity> sucursales;
 
   const CrearUsuarioPage({
     super.key,
     required this.identificacion,
     this.persona,
     this.titulo,
+    required this.sucursales,
   });
 
   /// Método estático para navegar a la página de crear usuario
@@ -35,6 +38,7 @@ class CrearUsuarioPage extends ConsumerStatefulWidget {
     required String identificacion,
     PersonaEntity? persona,
     String? titulo,
+    required List<SucursalEntity> sucursales,
   }) {
     return Navigator.of(context).push<TUsuariEntity>(
       MaterialPageRoute(
@@ -42,6 +46,7 @@ class CrearUsuarioPage extends ConsumerStatefulWidget {
           identificacion: identificacion,
           persona: persona,
           titulo: titulo,
+          sucursales: sucursales,
         ),
       ),
     );
@@ -61,12 +66,22 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isTemporal = true;
+  SucursalEntity? _sucursalSeleccionada;
+
   @override
   void initState() {
     super.initState();
     _usuariosRepository = UsuariosRepositoryImpl(
       UsuariosRemoteDataSource(ref: ref),
     );
+
+    // Establecer la primera sucursal activa por defecto
+    final sucursalesActivas =
+        widget.sucursales.where((s) => s.isActiva).toList();
+    if (sucursalesActivas.isNotEmpty) {
+      _sucursalSeleccionada = sucursalesActivas.first;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _usuarioController.text = '';
       _passwordController.text = '';
@@ -113,13 +128,23 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
     }
     final appState = ref.watch(appStateProvider);
 
+    if (_sucursalSeleccionada == null) {
+      SnackHelper.show(
+        context,
+        message: 'Por favor seleccione una sucursal',
+        isError: true,
+      );
+      return;
+    }
+
     try {
       appState.setLoading(true);
       final nuevoUsuario = UsuarioMapper.fromFormData(
           identificacion: widget.identificacion,
           user: _usuarioController.text.trim(),
           password: _passwordController.text.trim(),
-          isTemporal: _isTemporal);
+          isTemporal: _isTemporal,
+          idSucursal: _sucursalSeleccionada!.idSucursal);
 
       final result = await _usuariosRepository.createUsuario(nuevoUsuario);
 
@@ -225,7 +250,7 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Campo Usuario
               TextFormField(
@@ -343,6 +368,39 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
                     if (value.trim() != _passwordController.text.trim()) {
                       return 'Las contraseñas no coinciden';
                     }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+              // Campo Sucursal
+              DropdownButtonFormField<SucursalEntity>(
+                value: _sucursalSeleccionada,
+                decoration: ThemeApp.inputDecoration(
+                  'Seleccione la Sucursal',
+                  'Seleccione la sucursal',
+                  Icons.store,
+                ),
+                isExpanded: true,
+                items: widget.sucursales
+                    .where((s) => s.isActiva)
+                    .map((sucursal) => DropdownMenuItem<SucursalEntity>(
+                          value: sucursal,
+                          child: Text(
+                            sucursal.nombre,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (sucursal) {
+                  setState(() {
+                    _sucursalSeleccionada = sucursal;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Por favor seleccione una sucursal';
                   }
                   return null;
                 },

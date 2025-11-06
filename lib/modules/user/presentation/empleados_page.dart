@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
-import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
@@ -19,16 +18,20 @@ import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source
 import 'package:resturant_funny/modules/user/data/repository/persona_repository_impl.dart';
 import 'package:resturant_funny/modules/user/data/repository/rol_usuario_impl.dart';
 import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
+import 'package:resturant_funny/modules/user/domain/mappers/persona_mapper.dart';
+import 'package:resturant_funny/modules/user/domain/mappers/usuario_mapper.dart';
 import 'package:resturant_funny/modules/user/domain/models/empleados_model.dart';
 import 'package:resturant_funny/modules/user/domain/repository/persona_repository.dart';
 import 'package:resturant_funny/modules/user/domain/repository/rol_usuario.dart';
 import 'package:resturant_funny/modules/user/domain/repository/usuario_repository.dart';
+import 'package:resturant_funny/modules/user/presentation/crear_persona_page.dart';
 import 'package:resturant_funny/modules/user/presentation/crear_usuario_page.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/dialogo_gestionar_widget.dart';
+import 'package:resturant_funny/modules/user/presentation/widget/dialogo_sucursales_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/empleado_card_widget.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
-import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:resturant_funny/shared/enums/roles.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:resturant_funny/shared/widgets/input_search_widget.dart';
 import 'package:shimmer/shimmer.dart';
@@ -56,7 +59,7 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
 
   final List<String> _botones = [
     'Listar Empleados',
-    'Crear Empleado',
+    'Adm. Empleado',
   ];
 
   @override
@@ -77,6 +80,7 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
       );
       //_cargarSucursales();
       _cargarRoles();
+      _cargarSucursales();
       if (_index == 0) {
         _cargarEmpleados();
       }
@@ -107,6 +111,21 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
       );
     } catch (e) {
       debugPrint('Error al cargar roles: $e');
+    }
+  }
+
+  Future<void> _cargarSucursales() async {
+    try {
+      final result = await _sucursalRepository.getSucursalesEntity();
+      result.fold((left) {
+        debugPrint('Error al cargar las sucursales: ${left.message}');
+      }, (sucursales) {
+        setState(() {
+          _sucursales = sucursales.where((s) => s.isActiva).toList();
+        });
+      });
+    } catch (e) {
+      debugPrint('Error al cargar las sucursales: $e');
     }
   }
 
@@ -187,6 +206,34 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
     }
   }
 
+  Future<void> _crearNuevaPersona() async {
+    final identificacion = _searchController.text.trim();
+    if (identificacion.isEmpty) {
+      SnackHelper.show(
+        context,
+        message: 'Por favor ingrese una identificación',
+        isError: true,
+      );
+      return;
+    }
+
+    final personaCreada = await CrearPersonaPage.navigate(
+      context: context,
+      titulo: "Registrar Nueva Persona",
+      identificacion: identificacion,
+    );
+
+    if (personaCreada != null && mounted) {
+      await _buscarPersona(identificacion);
+
+      SnackHelper.show(
+        context,
+        message: "Persona registrada exitosamente",
+        isSuccess: true,
+      );
+    }
+  }
+
   Future<void> _buscarPersona(String identificacion) async {
     final appState = ref.watch(appStateProvider);
     try {
@@ -210,11 +257,9 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
           setState(() {
             _empleadosFiltrados = [];
           });
-          DialogHelper.error(context,
-              message: '$identificacion : ${failure.message}',
-              dismissible: true, onConfirmed: () {
-            debugPrint('Error al buscar empleado: ${failure.message}');
-          });
+          appState.setLoading(false);
+          // No mostrar error, solo dejar que se muestre el botón de crear
+          debugPrint('Error al buscar empleado: ${failure.message}');
         },
         (persona) async {
           final usuarioResult = await _usuariosRepository
@@ -335,6 +380,96 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
         _empleadosFiltrados[indexFiltrados] = empleadoNuevo;
       }
     });
+  }
+
+  Future<void> _gestionarSucursal(EmpleadoModel empleado) async {
+    if (empleado.usuario == null) {
+      DialogHelper.info(
+        context,
+        message:
+            'Esta persona no tiene usuario. Por favor, cree un usuario primero antes de cambiar la sucursal.',
+        dismissible: true,
+        onConfirmed: () {},
+      );
+      return;
+    }
+
+    if (_sucursales.isEmpty) {
+      SnackHelper.show(
+        context,
+        message: 'Cargando sucursales, por favor espere...',
+        isError: true,
+      );
+      await _cargarSucursales();
+      if (_sucursales.isEmpty) {
+        SnackHelper.show(
+          context,
+          message: 'No se pudieron cargar las sucursales',
+          isError: true,
+        );
+        return;
+      }
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) => GestionarSucursalesDialog(
+        idSucursalActual: empleado.usuario?.idSucursal,
+        sucursales: _sucursales,
+        nombrePersona:
+            '${empleado.persona.nombres} ${empleado.persona.apellidos}',
+        onSucursalSeleccionada: (sucursal) async {
+          if (empleado.usuario == null) return;
+
+          final appState = ref.watch(appStateProvider);
+          appState.setLoading(true);
+
+          try {
+            final result = await _usuariosRepository.updateUsuario(
+              empleado.usuario!.idUsuario,
+              UsuarioMapper.updateSucursalUsuario(sucursal),
+            );
+
+            result.fold(
+              (failure) {
+                appState.setLoading(false);
+                if (mounted) {
+                  SnackHelper.show(
+                    context,
+                    message: 'Error al cambiar sucursal: ${failure.message}',
+                    isError: true,
+                  );
+                }
+              },
+              (usuarioActualizado) {
+                appState.setLoading(false);
+                if (mounted) {
+                  DialogHelper.success(context,
+                      message: 'Sucursal actualizada correctamente',
+                      onConfirmed: () {});
+                  // Actualizar el empleado en la lista
+                  final empleadoActualizado = EmpleadoModel(
+                    usuario: usuarioActualizado,
+                    persona: empleado.persona,
+                    roles: empleado.roles,
+                  );
+                  _actualizarEmpleadoEnLista(empleado, empleadoActualizado);
+                }
+              },
+            );
+          } catch (e) {
+            appState.setLoading(false);
+            if (mounted) {
+              SnackHelper.show(
+                context,
+                message: 'Error inesperado: $e',
+                isError: true,
+              );
+            }
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _gestionarRoles(EmpleadoModel empleado) async {
@@ -461,15 +596,9 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
             message: 'Usuario no autenticado', isError: true);
         return;
       }
-
-      // Cambiar estado a INACTIVO en lugar de eliminar
       final result = await _personasRepository.updatePersona(
         empleado.persona.identificacion,
-        {
-          'ESTADO': EstadosPersona.INACTIVO.state,
-          'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
-          'USERMODIFICACION': user.idUsuario?.toString(),
-        },
+        PersonaMapper.deletePersona(user),
       );
 
       result.fold(
@@ -593,6 +722,7 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                             identificacion: empleado.persona.identificacion,
                             persona: empleado.persona,
                             titulo: 'Crear Usuario',
+                            sucursales: _sucursales,
                           );
                           if (usuarioCreado != null && mounted) {
                             setState(() {
@@ -603,6 +733,9 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                         } else {
                           _gestionarRoles(empleado);
                         }
+                      },
+                      onChangeSucursal: () {
+                        _gestionarSucursal(empleado);
                       },
                       onDelete: () async {
                         DialogHelper.confirm(context,
@@ -624,7 +757,7 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
             if (_index == 1) ...[
               // Tab Buscar
               InputSearchWidget(
-                label: 'Buscar',
+                label: 'Identificación',
                 hint: 'Ej: 0102030405',
                 showSuffixButton: false,
                 onSubmitted: (value) async {
@@ -655,6 +788,7 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                             identificacion: empleado.persona.identificacion,
                             persona: empleado.persona,
                             titulo: 'Crear Usuario',
+                            sucursales: _sucursales,
                           );
                           if (usuarioCreado != null && mounted) {
                             await _actualizarEmpleadoConUsuario(
@@ -674,19 +808,72 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                           debugPrint('Cancelado');
                         });
                       },
+                      onChangeSucursal: () {
+                        _gestionarSucursal(empleado);
+                      },
                     ),
                   );
                 })
-              else if (_empleadosFiltrados.isEmpty && _haRealizadoBusqueda)
+              else if (_empleadosFiltrados.isEmpty && _haRealizadoBusqueda) ...[
+                // Mostrar opción para crear persona
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.person_add_outlined,
+                        size: 48,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No se encontró una persona con la identificación',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade700,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _searchController.text.trim(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: ThemeApp.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      CustomButton(
+                        text: 'Crear Nueva Persona',
+                        colorButton: ThemeApp.primary,
+                        colorText: Colors.white,
+                        icon: Icons.person_add,
+                        onPressed: () {
+                          _crearNuevaPersona();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (_empleadosFiltrados.isEmpty &&
+                  !_haRealizadoBusqueda) ...[
                 const Padding(
                   padding: EdgeInsets.all(20),
                   child: Center(
                     child: Text(
-                      'No se encontraron empleados',
+                      'Ingrese una identificación para buscar',
                       style: TextStyle(color: Colors.grey),
                     ),
                   ),
                 ),
+              ],
             ],
           ],
         ),

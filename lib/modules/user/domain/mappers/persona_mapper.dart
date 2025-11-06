@@ -1,5 +1,7 @@
+import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart'; 
 import 'package:resturant_funny/shared/enums/estados_persona.dart';
 
 class PersonaMapper {
@@ -58,6 +60,15 @@ class PersonaMapper {
       'ESTADO': estado ?? EstadosPersona.ACTIVO.state,
       'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
       'USERMODIFICACION': userModificacion.toString(),
+    };
+  }
+
+  static Map<String, dynamic> deletePersona(UserModel user) {
+    final usuario = SingletonApp.getUser();
+    return {
+      'ESTADO': EstadosPersona.INACTIVO.state,
+      'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
+      'USERMODIFICACION': usuario!.idUsuario?.toString(),
     };
   }
 }

@@ -122,10 +122,10 @@ class _MainPageState extends ConsumerState<MainPage> {
         );
         break;
       case 5: // empleados
-      Navigator.of(context).push(
+        Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const EmpleadosPage(
-              titulo: 'Gestión de Clientes',
+              titulo: 'Gestión de Empleados',
             ),
           ),
         );
