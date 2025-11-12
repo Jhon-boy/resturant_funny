@@ -6,6 +6,7 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
+import 'package:resturant_funny/modules/user/presentation/edit_credentials_page.dart';
 
 class PerfilPage extends ConsumerStatefulWidget {
   const PerfilPage({super.key});
@@ -17,6 +18,7 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
   late UserModel user;
   late List<RolEntity> roles;
   bool isLoading = true;
+  bool hasUser = false;
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
     if (singletonUser != null) {
       setState(() {
         user = singletonUser;
+        hasUser = true;
       });
       debugPrint("User loaded from Singleton");
     } else {
@@ -37,6 +40,7 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
       if (providerUser != null) {
         setState(() {
           user = providerUser;
+          hasUser = true;
         });
         debugPrint("User loaded from Provider");
       }
@@ -123,6 +127,20 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
                     ),
                     elevation: 4,
                     color: ThemeApp.background,
+                     child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () async {
+                      final updated = await Navigator.of(context).push<UserModel>(
+                        MaterialPageRoute(
+                          builder: (_) => EditCredentialsPage(user: user),
+                        ),
+                      );
+                      if (updated != null && mounted) {
+                        setState(() {
+                          user = updated;
+                        });
+                      }
+                    },
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -145,6 +163,7 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
                         ],
                       ),
                     ),
+                    )
                   ),
                 ),
                 const SizedBox(
