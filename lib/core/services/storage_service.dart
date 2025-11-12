@@ -1,9 +1,7 @@
-
-
-
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+
 //Servicio de almancenamiento de preferencias e informacion base
 // JB
 class StorageService {

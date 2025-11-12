@@ -57,6 +57,7 @@ dependencies:
   crypto: ^3.0.6
   screenshot: ^3.0.0
   share_plus: ^12.0.0 
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

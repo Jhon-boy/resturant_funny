@@ -6,8 +6,7 @@ class ProductoEntity {
   final double precio;
   final String categoria;
   final String? imagen;
-  final bool? disponible;
-  final int? cantidad;
+  final bool? disponible; 
   final DateTime? fCreacion;
   final DateTime? fModificacion;
   final String? usuarioIngreso;
@@ -22,8 +21,7 @@ class ProductoEntity {
     required this.precio,
     required this.categoria,
     this.imagen,
-    this.disponible,
-    this.cantidad,
+    this.disponible, 
     this.fCreacion,
     this.fModificacion,
     this.usuarioIngreso,
@@ -41,8 +39,7 @@ class ProductoEntity {
       precio: (json['PRECIO'] ?? 0.0).toDouble(),
       categoria: json['CATEGORIA'] ?? '',
       imagen: json['IMAGEN'],
-      disponible: json['DISPONIBLE'],
-      cantidad: json['CANTIDAD'],
+      disponible: json['DISPONIBLE'], 
       fCreacion:
           json['FCREACION'] != null ? DateTime.parse(json['FCREACION']) : null,
       fModificacion: json['FMODIFICACION'] != null
@@ -64,8 +61,7 @@ class ProductoEntity {
       'PRECIO': precio,
       'CATEGORIA': categoria,
       'IMAGEN': imagen,
-      'DISPONIBLE': disponible,
-      'CANTIDAD': cantidad,
+      'DISPONIBLE': disponible, 
       'FCREACION': fCreacion?.toIso8601String(),
       'FMODIFICACION': fModificacion?.toIso8601String(),
       'USUARIOINGRESO': usuarioIngreso,
@@ -84,8 +80,7 @@ class ProductoEntity {
       'precio': precio,
       'categoria': categoria,
       'imagen': imagen,
-      'disponible': disponible,
-      'cantidad': cantidad,
+      'disponible': disponible, 
       'fCreacion': fCreacion?.toIso8601String(),
       'fModificacion': fModificacion?.toIso8601String(),
       'usuarioIngreso': usuarioIngreso,
@@ -119,8 +114,7 @@ class ProductoEntity {
       precio: precio ?? this.precio,
       categoria: categoria ?? this.categoria,
       imagen: imagen ?? this.imagen,
-      disponible: disponible ?? this.disponible,
-      cantidad: cantidad ?? this.cantidad,
+      disponible: disponible ?? this.disponible, 
       fCreacion: fCreacion ?? this.fCreacion,
       fModificacion: fModificacion ?? this.fModificacion,
       usuarioIngreso: usuarioIngreso ?? this.usuarioIngreso,
@@ -133,15 +127,8 @@ class ProductoEntity {
   bool get isDisponible => disponible == true;
   String get precioFormateado => '\$${precio.toStringAsFixed(2)}';
 
-  /// Obtiene la cantidad disponible (0 si es null)
-  int get cantidadDisponible => cantidad ?? 0;
-
-  /// Verifica si hay stock disponible
-  bool get tieneStock => cantidadDisponible > 0;
-
-  /// Verifica si el stock está bajo (menos de 5 unidades)
-  bool get stockBajo => cantidadDisponible > 0 && cantidadDisponible < 5;
-
+ 
+ 
   String? get imagenUrl {
     if (imagen == null || imagen!.isEmpty) return null;
     return imagen;

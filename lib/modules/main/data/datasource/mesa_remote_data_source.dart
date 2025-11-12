@@ -23,7 +23,7 @@ class MesasRemoteDataSource {
     try {
       final result = await SupabaseService.select(
         table: Entities.TMESA.tableName,
-        filters: {'IDSUCURSAL': idSucursal},
+        filters: {'IDSUCURSAL': idSucursal, 'ESTADO': EstadosPersona.ACTIVO.state},
         orderBy: 'FCREACION',
         ascending: false,
       );

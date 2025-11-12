@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
+import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/dialog_generic_widget.dart';
 
 class GestionarSucursalesDialog extends StatefulWidget {
@@ -214,61 +215,18 @@ class _GestionarSucursalesDialogState extends State<GestionarSucursalesDialog> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<SucursalEntity>(
+                CustomDropdown<SucursalEntity>(
                   value: _sucursalSeleccionada,
-                  decoration: const InputDecoration(
-                    labelText: 'Sucursal',
-                    hintText: 'Seleccione una sucursal',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.store),
-                  ),
-                  isExpanded: true,
-                  items: widget.sucursales
-                      .map((sucursal) => DropdownMenuItem<SucursalEntity>(
-                            value: sucursal,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    sucursal.nombre,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (_sucursalActual != null &&
-                                    sucursal.idSucursal ==
-                                        _sucursalActual!.idSucursal) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: ThemeApp.success.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      'Actual',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: ThemeApp.success,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ))
-                      .toList(),
+                  label: 'Sucursal',
+                  hint: 'Seleccione una sucursal',
+                  items: widget.sucursales,
+                  displayText: (sucursal) => sucursal.nombre,
                   onChanged: (sucursal) {
                     setState(() {
                       _sucursalSeleccionada = sucursal;
                     });
                   },
+                  enabled: true,
                 ),
               ],
             ],

@@ -28,9 +28,15 @@ class AppDrawer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildDrawerHeader(context),
-            _buildMainMenus(mainMenus),
-            _buildDrawerMenus(drawerMenus),
-            const Spacer(),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildMainMenus(mainMenus),
+                  if (drawerMenus.isNotEmpty) _buildDrawerMenus(drawerMenus),
+                ],
+              ),
+            ),
             const Divider(height: 1),
             _buildLogoutButton(context),
           ],
@@ -73,8 +79,7 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget _buildMainMenus(List<MenuItem> mainMenus) {
-    return SingleChildScrollView(
-        child: Column(
+    return Column(
       children: mainMenus.map((menu) {
         final isSelected = currentIndex == menu.index;
         return ListTile(
@@ -87,7 +92,7 @@ class AppDrawer extends StatelessWidget {
           onTap: () => onMainMenuTap(menu.index),
         );
       }).toList(),
-    ));
+    );
   }
 
   Widget _buildDrawerMenus(List<MenuItem> drawerMenus) {

@@ -2,8 +2,9 @@
 
 enum ProductosCategorias {
   BEBIDA("BEBIDA", "Bebida"),
-  COMIDA("COMIDA", "Comida"), 
-  RAPIDA("RAPIDA", "comida rapida"),
+  PRODUCTO("PRODUCTO", "Producto"),
+  COMIDA("COMIDA", "Comida"),
+  RAPIDA("RAPIDA", "Comida Rápida"),
   PORCION("PORCION", "Porcion");
 
   final String code;
@@ -19,5 +20,4 @@ enum ProductosCategorias {
   static String getLabelFromCode(String code) {
     return all.firstWhere((e) => e.code == code).label;
   }
-
 }
