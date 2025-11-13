@@ -235,7 +235,7 @@ class AuthRemoteDataSourceImpl {
       final List<Map<String, dynamic>> records = await SupabaseService.select(
         table: Entities.TROLUSUARIO.tableName,
         columns:
-            'IDROL, TROL(NOMBRE, FCREACION, FMODIFICACION, OBSERVACION, ESTADO, USUARIOINGRESO, USERMODIFICACION)',
+            'TROL(IDROL, CODIGO, NOMBRE, FCREACION, FMODIFICACION, OBSERVACION, ESTADO, USUARIOINGRESO, USERMODIFICACION)',
         filters: {'IDUSUARIO': idUsuario},
       );
 
