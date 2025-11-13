@@ -29,13 +29,12 @@ import 'package:resturant_funny/modules/user/presentation/crear_usuario_page.dar
 import 'package:resturant_funny/modules/user/presentation/widget/dialogo_gestionar_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/dialogo_sucursales_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/empleado_card_widget.dart';
+import 'package:resturant_funny/modules/user/presentation/widget/shimmer_widget.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/enums/roles.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
-import 'package:resturant_funny/shared/widgets/input_search_widget.dart';
-import 'package:shimmer/shimmer.dart';
-
+import 'package:resturant_funny/shared/widgets/input_search_widget.dart'; 
 class EmpleadosPage extends ConsumerStatefulWidget {
   final String titulo;
   const EmpleadosPage({super.key, required this.titulo});
@@ -692,7 +691,7 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
 
             if (_index == 0) ...[
               if (appState.isLoading)
-                _buildShimmerLoading()
+                ShimmerWidget.list()
               else if (_empleadosFiltrados.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(20),
@@ -773,7 +772,7 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
               const SizedBox(height: 8),
 
               if (appState.isLoading)
-                _buildShimmerLoading()
+                ShimmerWidget.list()
               else if (_empleadosFiltrados.isNotEmpty)
                 ..._empleadosFiltrados.map((empleado) {
                   return Padding(
@@ -892,81 +891,5 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
     );
   }
 
-  Widget _buildShimmerLoading() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            elevation: 2,
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey[300],
-                radius: 24,
-              ),
-              title: Container(
-                height: 16,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 150,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          width: 60,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Container(
-                          width: 80,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              trailing: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+ 
 }

@@ -81,6 +81,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
   Uint8List? _imagenSeleccionada;
   String? _imagenUrl;
   String? _imagenOriginalUrl;
+  String? _imagenOriginalPath;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -100,6 +101,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
     _imagenSeleccionada = null;
     _imagenUrl = null;
     _imagenOriginalUrl = null;
+    _imagenOriginalPath = null;
     _disponible = true;
   }
 
@@ -111,6 +113,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
     );
     _imagenUrl = producto?.imagen;
     _imagenOriginalUrl = _imagenUrl;
+    _imagenOriginalPath = _extractPathFromUrl(_imagenOriginalUrl);
     _disponible = producto?.isDisponible ?? true;
     _idSucursalSeleccionada = producto?.idSucursal ??
         (widget.sucursales
@@ -182,6 +185,8 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
         _imagenUrl == null;
 
     String? imageUrl;
+    final String? imagenAnteriorPath = _imagenOriginalPath;
+    String? nuevaImagenPath = _imagenOriginalPath;
     if (_precioCtrl.text.trim().isEmpty ||
         double.parse(_precioCtrl.text.trim()) <= 0) {
       SnackHelper.show(context,
@@ -205,7 +210,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
         final uploadResult = await _imagesRepository.uploadFile(
           path: path,
           bytes: _imagenSeleccionada!,
-          bucket: 'imagenes',
+          bucket: AppConstants.BUCKET_IMAGES,
           contentType: 'image/jpeg',
         );
 
@@ -218,7 +223,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
 
         final publicUrlResult = await _imagesRepository.getPublicUrl(
           path: path,
-          bucket: 'imagenes',
+          bucket: AppConstants.BUCKET_IMAGES,
         );
 
         publicUrlResult.fold(
@@ -228,7 +233,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
           },
           (url) => imageUrl = url,
         );
-        _imagenOriginalUrl = imageUrl;
+        nuevaImagenPath = path;
       } catch (e) {
         debugPrint('Error: $e');
         if (!mounted) return;
@@ -239,6 +244,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
       }
     } else if (imagenEliminada) {
       imageUrl = null;
+      nuevaImagenPath = null;
     } else {
       imageUrl = _imagenOriginalUrl;
     }
@@ -250,6 +256,10 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
         precio: price,
         categoria: categoria,
         imagen: imageUrl,
+        imagenAnteriorPath: imagenAnteriorPath,
+        nuevaImagenPath: nuevaImagenPath,
+        debeEliminarAnterior:
+            (hayNuevaImagen || imagenEliminada) && imagenAnteriorPath != null,
       );
     } else {
       await _crearProducto(
@@ -334,6 +344,9 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
     required double precio,
     required String categoria,
     String? imagen,
+    String? imagenAnteriorPath,
+    String? nuevaImagenPath,
+    bool debeEliminarAnterior = false,
   }) async {
     final producto = widget.producto;
     if (producto?.idProducto == null) {
@@ -384,13 +397,66 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
             message: 'No se pudo actualizar: ${failure.message}',
             isError: true);
       },
-      (productoActualizado) {
+      (productoActualizado) async {
+        final diningState = ref.read(diningProvider);
+        final notifier = ref.read(diningProvider.notifier);
+        final int? sucursalActual = diningState.sucursal.idSucursal;
+        if (sucursalActual == null ||
+            sucursalActual == productoActualizado.idSucursal) {
+          final productos = List<ProductoEntity>.from(diningState.productos);
+          final index = productos.indexWhere(
+              (p) => p.idProducto == productoActualizado.idProducto);
+          if (index == -1) {
+            notifier.agregarProducto(productoActualizado);
+          } else {
+            productos[index] = productoActualizado;
+            notifier.setProductos(productos);
+          }
+        }
+
         ref.read(appStateProvider.notifier).setLoading(false);
+        if (debeEliminarAnterior && imagenAnteriorPath != null) {
+          await _eliminarFotoProducto(imagenAnteriorPath);
+        }
+        _imagenOriginalUrl = productoActualizado.imagen;
+        _imagenOriginalPath = nuevaImagenPath;
+        _imagenSeleccionada = null;
         SnackHelper.show(context,
             message: 'Producto actualizado correctamente', isSuccess: true);
+        limpiarFormulario();
         Navigator.of(context).pop(productoActualizado);
       },
     );
+  }
+
+  Future<void> _eliminarFotoProducto(String path) async {
+    try {
+      final foto =
+          await _imagesRepository.deleteFile(path: path, bucket: AppConstants.BUCKET_IMAGES);
+      foto.fold((failure) {
+        debugPrint(
+            'Error al eliminar la foto del producto: ${failure.message}');
+      }, (_) {
+        debugPrint('Foto eliminada correctamente');
+      });
+    } catch (e) {
+      debugPrint('Error al eliminar la foto del producto: $e');
+    }
+  }
+
+  String? _extractPathFromUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    try {
+      final uri = Uri.parse(url);
+      final segments = uri.pathSegments;
+      final bucketIndex = segments.indexOf(AppConstants.BUCKET_IMAGES);
+      if (bucketIndex == -1 || bucketIndex == segments.length - 1) {
+        return null;
+      }
+      return segments.sublist(bucketIndex + 1).join('/');
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

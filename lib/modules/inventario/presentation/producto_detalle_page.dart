@@ -108,12 +108,15 @@ class _HeroImage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  producto.nombre,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
+                Expanded(
+                  child: Text(
+                    producto.nombre,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
                 Container(
@@ -195,7 +198,10 @@ class _InfoCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _InfoRow(label: 'Nombre', value: producto.nombre, icon: Icons.menu),
+          _InfoRow(
+              label: 'Nombre',
+              value: producto.nombre,
+              icon: Icons.restaurant_menu),
           const Divider(height: 24),
           _InfoRow(
               label: 'Descripción',

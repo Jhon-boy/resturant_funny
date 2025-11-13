@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/errors/exception.dart';
 import 'package:resturant_funny/core/network/http_client.dart';
 import 'package:resturant_funny/core/services/supabase_service.dart';
@@ -7,6 +8,7 @@ import 'package:resturant_funny/modules/authentication/domain/model/user_model.d
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
 import 'package:resturant_funny/shared/enums/categorias_producto.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
+import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProductosRemoteDataSource {
@@ -22,7 +24,10 @@ class ProductosRemoteDataSource {
   Future<List<ProductoEntity>> getProductos(int idSucursal,
       {bool includePorciones = false}) async {
     try {
-      final filters = <String, dynamic>{'IDSUCURSAL': idSucursal};
+      final filters = <String, dynamic>{
+        'IDSUCURSAL': idSucursal,
+        'ESTADO': EstadosPersona.ACTIVO.state
+      };
 
       if (includePorciones) {
         // Si includePorciones es true, solo traer productos de categoría PORCION
@@ -117,8 +122,9 @@ class ProductosRemoteDataSource {
 
   Future<bool> deleteProducto(String idProduct, UserModel? user) async {
     try {
-      await SupabaseService.delete(
+      await SupabaseService.update(
         table: Entities.TPRODUCTO.tableName,
+        data: {'ESTADO': EstadosPersona.INACTIVO.state},
         filters: {'IDPRODUCTO': int.parse(idProduct)},
       );
       return true;
@@ -192,7 +198,7 @@ class ProductosRemoteDataSource {
     String? fileName,
   }) async {
     try {
-      final bucket = supabase.storage.from('imagenes');
+      final bucket = supabase.storage.from(AppConstants.BUCKET_IMAGES);
       final path = 'productos/$idProducto/${fileName ?? "default.png"}';
 
       await bucket.uploadBinary(path, imagenBytes,

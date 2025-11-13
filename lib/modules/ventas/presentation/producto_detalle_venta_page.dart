@@ -5,7 +5,7 @@ import 'package:resturant_funny/modules/main/data/datasource/productos_remote_da
 import 'package:resturant_funny/modules/main/data/repository/productos_repository_impl.dart';
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
 import 'package:resturant_funny/modules/main/domain/repository/productos_repository.dart';
-import 'package:resturant_funny/modules/main/presentation/widget/shimer_producto.dart';
+import 'package:resturant_funny/shared/widgets/shimer_producto.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/detalle_compra.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:resturant_funny/app/providers/provider.dart';

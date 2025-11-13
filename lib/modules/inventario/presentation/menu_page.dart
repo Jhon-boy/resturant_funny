@@ -14,11 +14,14 @@ import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart'
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
 import 'package:resturant_funny/modules/main/domain/providers/dining_provider.dart';
 import 'package:resturant_funny/modules/main/domain/repository/productos_repository.dart';
+import 'package:resturant_funny/modules/main/presentation/widget/no_producto_widget.dart';
+import 'package:resturant_funny/modules/user/presentation/widget/shimmer_widget.dart';
 import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
 import 'package:resturant_funny/modules/sucursales/data/repository/sucursal_repository.dart';
 import 'package:resturant_funny/modules/sucursales/domain/sucursal_repository.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
+import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
 class MenuPage extends ConsumerStatefulWidget {
@@ -218,11 +221,26 @@ class _MenuPageState extends ConsumerState<MenuPage> {
   }
 
   Future<void> _handleDelete(ProductoEntity producto) async {
-    SnackHelper.show(
-      context,
-      message:
-          'Funcionalidad de eliminación en desarrollo para ${producto.nombre}',
-    );
+    try {
+      DialogHelper.confirm(context,
+          message: '¿Está seguro de eliminar el producto ${producto.nombre}?',
+          onConfirm: () async {
+        final result = await _productosRepository.deleteProducto(
+            producto.idProducto!.toString(), ref.read(userProvider).user!);
+        result.fold((failure) {
+          _handleError(failure.message);
+        }, (ok) {
+          if (!mounted) return;
+          SnackHelper.show(context,
+              message: 'Producto eliminado', isSuccess: true);
+          Navigator.of(context).pop();
+          _refreshProductos();
+        });
+      }, onCancel: () {});
+    } catch (e) {
+      _handleError(e.toString());
+      debugPrint('Error al eliminar el producto: $e');
+    }
   }
 
   @override
@@ -238,23 +256,15 @@ class _MenuPageState extends ConsumerState<MenuPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DropdownButtonFormField<SucursalEntity>(
+            const Text('Seleccione la sucursal',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 5),
+            CustomDropdown<SucursalEntity>(
               value: _selectedSucursal,
-              decoration: InputDecoration(
-                labelText: 'Sucursal',
-                hintText: 'Seleccione una sucursal',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              items: _sucursales
-                  .map(
-                    (sucursal) => DropdownMenuItem<SucursalEntity>(
-                      value: sucursal,
-                      child: Text(sucursal.nombre),
-                    ),
-                  )
-                  .toList(),
+              label: 'Sucursal',
+              hint: 'Seleccione una sucursal',
+              displayText: (sucursal) => sucursal.nombre,
+              items: _sucursales,
               onChanged: (sucursal) {
                 if (sucursal == null ||
                     sucursal.idSucursal == _selectedSucursal?.idSucursal) {
@@ -267,14 +277,14 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                 _fetchProductos(sucursal.idSucursal!);
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text.rich(TextSpan(children: [
               const TextSpan(text: 'Menu de productos de la sucursal: '),
               TextSpan(
                   text: _selectedSucursal?.nombre ?? '',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
             ])),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Expanded(
               child: _ProductosList(
                 isLoading: isLoading,
@@ -317,7 +327,7 @@ class _ProductosList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading && productos.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return ShimmerWidget.list(itemCount: 3);
     }
 
     return RefreshIndicator(
@@ -326,18 +336,7 @@ class _ProductosList extends StatelessWidget {
       child: productos.isEmpty
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
-                SizedBox(height: 120),
-                Card(
-                  child: Column(
-                    children: [
-                      Icon(Icons.inventory_2_outlined,
-                          size: 48, color: ThemeApp.textSecondary),
-                      Text('No existen productos para esta sucursal.'),
-                    ],
-                  ),
-                )
-              ],
+              children: const [SizedBox(height: 120), NoProductosWidget()],
             )
           : LayoutBuilder(
               builder: (context, constraints) {

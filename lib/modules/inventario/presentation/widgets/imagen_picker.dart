@@ -19,34 +19,31 @@ class ImagenPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget preview;
+    const borderColor = ThemeApp.textSecondary;
+    const double previewHeight = 180;
+    const double borderRadiusValue = 16;
+
+    Widget content;
     if (imagenBytes != null) {
-      preview = Image.memory(
+      content = Image.memory(
         imagenBytes!,
         fit: BoxFit.cover,
-        height: 180,
         width: double.infinity,
       );
     } else if (imagenUrl != null && imagenUrl!.isNotEmpty) {
-      preview = Image.network(
+      content = Image.network(
         imagenUrl!,
         fit: BoxFit.cover,
-        height: 180,
         width: double.infinity,
       );
     } else {
-      preview = Container(
-        height: 180,
+      content = Container(
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: ThemeApp.inputBorder),
-          color: Colors.grey.shade100,
-        ),
+        color: Colors.grey.shade100,
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.image_outlined, size: 40, color: ThemeApp.textSecondary),
+            Icon(Icons.image_outlined, size: 40, color: ThemeApp.primary),
             SizedBox(height: 8),
             Text(
               'Sin imagen seleccionada',
@@ -61,9 +58,14 @@ class ImagenPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: preview,
+        Container(
+          height: previewHeight,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(borderRadiusValue),
+            border: Border.all(color: borderColor, width: 2),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: content,
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
