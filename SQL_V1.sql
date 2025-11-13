@@ -189,6 +189,7 @@ CREATE TABLE public.TPRODUCTO_INSUMO (
 );
 CREATE TABLE public.TROL (
   IDROL integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  CODIGO character varying UNIQUE NOT NULL,
   NOMBRE character varying NOT NULL,
   FCREACION timestamp without time zone NOT NULL,
   FMODIFICACION timestamp without time zone,

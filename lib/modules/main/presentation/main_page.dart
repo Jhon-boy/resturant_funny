@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
+import 'package:resturant_funny/modules/inventario/presentation/inventario_page.dart';
+import 'package:resturant_funny/modules/inventario/presentation/menu_page.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/sucursales_page.dart';
 import 'package:resturant_funny/modules/user/presentation/empleados_page.dart';
@@ -139,11 +141,23 @@ class _MainPageState extends ConsumerState<MainPage> {
             ),
           ),
         );
-      case 7: // Usuarios
-        //  Navegar a usuarios
+      case 7: // Menú
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const MenuPage(
+              titulo: 'Gestión de Menú',
+            ),
+          ),
+        );
         break;
-      case 8: // Ayuda
-        //  Mostrar ayuda
+      case 8: // Inventario
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const InventarioPage(
+              titulo: 'Gestión de Inventario',
+            ),
+          ),
+        );
         break;
       case 9: // Acerca de
         //  Mostrar acerca de

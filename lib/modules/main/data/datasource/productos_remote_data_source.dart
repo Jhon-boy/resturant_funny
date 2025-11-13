@@ -10,11 +10,13 @@ import 'package:resturant_funny/shared/enums/entities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProductosRemoteDataSource {
-  final HttpClient client;
-  final WidgetRef ref;
+  final HttpClient? client;
+  final WidgetRef? ref;
 
-  ProductosRemoteDataSource({HttpClient? client, required this.ref})
-      : client = client ?? HttpClient(ref);
+  ProductosRemoteDataSource({HttpClient? client, WidgetRef? ref})
+      : client = client ?? (ref != null ? HttpClient(ref) : null),
+        ref = ref;
+
   final SupabaseClient supabase = Supabase.instance.client;
 
   Future<List<ProductoEntity>> getProductos(int idSucursal,
@@ -61,6 +63,7 @@ class ProductosRemoteDataSource {
       ProductoEntity producto, UserModel? user) async {
     try {
       final data = producto.toJson();
+      data.remove('IDPRODUCTO');
       if (user != null) data['USUARIOINGRESO'] = user.idUsuario;
       final result = await SupabaseService.insert(
         table: Entities.TPRODUCTO.tableName,

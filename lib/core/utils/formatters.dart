@@ -19,6 +19,26 @@ class UpperCaseTextFormatter extends TextInputFormatter {
   }
 }
 
+class SentenceCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final lower = newValue.text.toLowerCase();
+    final sentence =
+        lower.isEmpty ? lower : lower[0].toUpperCase() + lower.substring(1);
+
+    final selection = TextSelection.collapsed(
+      offset: sentence.length < newValue.selection.start
+          ? sentence.length
+          : newValue.selection.start,
+    );
+
+    return TextEditingValue(text: sentence, selection: selection);
+  }
+}
+
 class LowerCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

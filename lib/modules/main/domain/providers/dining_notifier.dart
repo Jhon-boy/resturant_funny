@@ -36,48 +36,8 @@ class DiningNotifier extends StateNotifier<DiningContext> {
       ultimaActualizacion: DateTime.now(),
     );
   }
-
-  /// Reducir cantidad de un producto (venta)
-  void reducirCantidadProducto(int idProducto, int cantidadVendida) {
-    final productos = List<ProductoEntity>.from(state.productos);
-    final index = productos.indexWhere((p) => p.idProducto == idProducto);
-
-    if (index != -1) {
-      final producto = productos[index];
-      final nuevaCantidad = (producto.cantidad ?? 0) - cantidadVendida;
-
-      productos[index] = producto.copyWith(
-        cantidad: nuevaCantidad,
-        disponible: nuevaCantidad > 0,
-      );
-
-      state = state.copyWith(
-        productos: productos,
-        ultimaActualizacion: DateTime.now(),
-      );
-    }
-  }
-
-  /// Aumentar cantidad de un producto (stock recibido)
-  void aumentarCantidadProducto(int idProducto, int cantidadRecibida) {
-    final productos = List<ProductoEntity>.from(state.productos);
-    final index = productos.indexWhere((p) => p.idProducto == idProducto);
-
-    if (index != -1) {
-      final producto = productos[index];
-      final nuevaCantidad = (producto.cantidad ?? 0) + cantidadRecibida;
-
-      productos[index] = producto.copyWith(
-        cantidad: nuevaCantidad,
-        disponible: nuevaCantidad > 0,
-      );
-
-      state = state.copyWith(
-        productos: productos,
-        ultimaActualizacion: DateTime.now(),
-      );
-    }
-  }
+ 
+  
 
   /// Actualizar disponibilidad manual de un producto
   void actualizarDisponibilidadProducto(int idProducto, bool disponible) {
@@ -104,21 +64,18 @@ class DiningNotifier extends StateNotifier<DiningContext> {
   }
 
   /// Verificar disponibilidad de un producto
-  bool verificarDisponibilidadProducto(int idProducto, int cantidadSolicitada) {
+  bool verificarDisponibilidadProducto(int idProducto) {
     final producto = obtenerProductoPorId(idProducto);
     if (producto == null || !producto.isDisponible) return false;
 
-    if (producto.cantidad != null) {
-      return producto.cantidad! >= cantidadSolicitada;
-    }
+   
     return true;
   }
 
   /// Productos con stock bajo
   List<ProductoEntity> obtenerProductosStockBajo({int limiteStock = 5}) {
     return state.productos.where((producto) {
-      if (producto.cantidad == null) return false;
-      return producto.cantidad! <= limiteStock && producto.cantidad! > 0;
+      return producto.disponible == true;
     }).toList();
   }
 
@@ -130,13 +87,7 @@ class DiningNotifier extends StateNotifier<DiningContext> {
     return state.getPorciones();
   }
 
-  /// Productos agotados
-  List<ProductoEntity> obtenerProductosAgotados() {
-    return state.productos.where((producto) {
-      if (producto.cantidad == null) return false;
-      return producto.cantidad! <= 0;
-    }).toList();
-  }
+ 
 
   /// Limpiar error
   void limpiarError() {

@@ -810,8 +810,8 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
               Row(children: [
                 Expanded(
                   child: CalendarWidget(
-                    title: 'Fecha Desde *',
-                    hint: 'Seleccionar fecha desde',
+                    title: 'Seleccione *',
+                    hint: 'Fecha desde',
                     selectedDate: _fechaDesde,
                     firstDate: DateTime(2000),
                     lastDate: DateTime.now(),
@@ -837,8 +837,8 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: CalendarWidget(
-                    title: 'Fecha Hasta *',
-                    hint: 'Seleccionar fecha hasta',
+                    title: 'Seleccione *',
+                    hint: 'Fecha hasta',
                     selectedDate: _fechaHasta,
                     firstDate: _fechaDesde ?? DateTime(2000),
                     lastDate: _fechaDesde != null

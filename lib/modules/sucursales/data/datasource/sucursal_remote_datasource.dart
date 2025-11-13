@@ -8,11 +8,13 @@ import 'package:resturant_funny/shared/enums/entities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SucursalRemoteDataSource {
-  final HttpClient client;
-  final WidgetRef ref;
+  final HttpClient? client;
+  final WidgetRef? ref;
 
-  SucursalRemoteDataSource({HttpClient? client, required this.ref})
-      : client = client ?? HttpClient(ref);
+  SucursalRemoteDataSource({HttpClient? client, WidgetRef? ref})
+      : client = client ?? (ref != null ? HttpClient(ref) : null),
+        ref = ref;
+
   final SupabaseClient supabase = Supabase.instance.client;
 
   /// OBTENER TODAS LAS SUCURSALES
