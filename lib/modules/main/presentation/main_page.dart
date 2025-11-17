@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
+import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/inventario/presentation/inventario_page.dart';
@@ -30,7 +31,8 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   void initState() {
     super.initState();
-    // El índice se maneja a través del provider, no necesitamos resetearlo aquí
+    _userRole = SingletonApp.getRolPrincipal();
+    debugPrint('Rol actual: $_userRole');
   }
 
   @override
