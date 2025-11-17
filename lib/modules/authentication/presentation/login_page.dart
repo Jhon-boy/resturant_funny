@@ -67,7 +67,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           SingletonApp.setUserData(
             user: user,
             roles: roles,
-            rolPrincipal: roles.isNotEmpty ? roles.first.nombre : null,
+            rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
           );
           Navigator.pushReplacement(
             context,
@@ -98,6 +98,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         final roles = rolesResult.getOrElse(() => []);
 
         ref.read(userProvider.notifier).setUser(user, roles: roles);
+        SingletonApp.setUserData(
+          user: user,
+          roles: roles,
+          rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
+        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SplashPage()),
