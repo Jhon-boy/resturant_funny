@@ -12,6 +12,7 @@ import 'package:resturant_funny/modules/authentication/domain/entity/persona_ent
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/main/presentation/main_page.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:mobile_device_identifier/mobile_device_identifier.dart';
 
 //CLASE Util dedicado a la desarrollo de metodos utiles en toda la aplicacion
 // JB
@@ -62,6 +63,14 @@ class AppUtils {
     }
     final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     final NetworkInfo networkInfo = NetworkInfo();
+    final mobileIdentifier = MobileDeviceIdentifier();
+    String deviceId = AppConstants.UNKNOWN;
+    try {
+      deviceId = await mobileIdentifier.getDeviceId() ?? AppConstants.UNKNOWN;
+    } catch (e) {
+      deviceId = AppConstants.UNKNOWN;
+      debugPrint('Error al obtener el id: ${e.toString()}');
+    }
 
     String? modelo;
     String? fabricante;
@@ -78,14 +87,14 @@ class AppUtils {
       fabricante = androidInfo.manufacturer;
       sistemaOperativo = "Android";
       versionSO = androidInfo.version.release;
-      idUnico = androidInfo.id;
+      idUnico = deviceId;
     } else if (Platform.isIOS) {
       var iosInfo = await deviceInfo.iosInfo;
       modelo = iosInfo.utsname.machine;
       fabricante = "Apple";
       sistemaOperativo = "iOS";
       versionSO = iosInfo.systemVersion;
-      idUnico = iosInfo.identifierForVendor;
+      idUnico = deviceId;
     }
 
     wifiSSID = await networkInfo.getWifiName();
@@ -209,8 +218,8 @@ class AppUtils {
         return 'N';
     }
   }
-  
-   static String? mapearGeneroDesdeBD(String? generoBD) {
+
+  static String? mapearGeneroDesdeBD(String? generoBD) {
     if (generoBD == null || generoBD.trim().isEmpty) return null;
     switch (generoBD.toUpperCase().trim()) {
       case 'M':

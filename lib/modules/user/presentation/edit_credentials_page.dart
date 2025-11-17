@@ -7,6 +7,7 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source.dart';
 import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
 class EditCredentialsPage extends ConsumerStatefulWidget {
@@ -184,7 +185,7 @@ class _EditCredentialsPageState extends ConsumerState<EditCredentialsPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Nueva contrasena 
+                // Nueva contrasena
                 TextFormField(
                   controller: _newPassCtrl,
                   obscureText: _obscureNew,
@@ -228,15 +229,11 @@ class _EditCredentialsPageState extends ConsumerState<EditCredentialsPage> {
                 ),
 
                 const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.save),
-                  label: const Text('Guardar cambios'),
+                CustomButton(
+                  text: 'Guardar cambios',
+                  onPressed: _save,
+                  isLoading: _saving,
+                  icon: Icons.save,
                 ),
               ],
             ),

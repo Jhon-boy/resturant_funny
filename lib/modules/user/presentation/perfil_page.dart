@@ -119,58 +119,68 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
                 ),
                 const SizedBox(height: 10),
                 // Información en secciones con fondo ligero
-                const Text("Información usuario", style: TextStyle(color: ThemeApp.apple),),
+                const Text(
+                  "Información usuario",
+                  style: TextStyle(color: ThemeApp.apple),
+                ),
                 SizedBox(
                   child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 4,
-                    color: ThemeApp.background,
-                     child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () async {
-                      final updated = await Navigator.of(context).push<UserModel>(
-                        MaterialPageRoute(
-                          builder: (_) => EditCredentialsPage(user: user),
-                        ),
-                      );
-                      if (updated != null && mounted) {
-                        setState(() {
-                          user = updated;
-                        });
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 10),
-                          _infoRow(Icons.email, 'Correo', user.correo ?? "-"),
-                          const SizedBox(height: 10),
-                          _infoRow(
-                              Icons.person, 'Usuario', user.usuario ?? "-"),
-                          const SizedBox(height: 10),
-                          _infoRow(Icons.email, 'Sucursal',
-                              user.idSucursal.toString()),
-                          const SizedBox(height: 10),
-                          _infoRow(Icons.calendar_month, 'Creado',
-                              AppUtils.formatDate(user.fCreacionUsuario)),
-                          const SizedBox(height: 10),
-                          _infoRow(Icons.calendar_month, 'Ult. Actualización',
-                              AppUtils.formatDate(user.fModificacionUsuario)),
-                        ],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ),
-                    )
-                  ),
+                      elevation: 4,
+                      color: ThemeApp.background,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () async {
+                          final updated =
+                              await Navigator.of(context).push<UserModel>(
+                            MaterialPageRoute(
+                              builder: (_) => EditCredentialsPage(user: user),
+                            ),
+                          );
+                          if (updated != null && mounted) {
+                            setState(() {
+                              user = updated;
+                            });
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 10),
+                              _infoRow(
+                                  Icons.email, 'Correo', user.correo ?? "-"),
+                              const SizedBox(height: 10),
+                              _infoRow(
+                                  Icons.person, 'Usuario', user.usuario ?? "-"),
+                              const SizedBox(height: 10),
+                              _infoRow(Icons.email, 'Sucursal',
+                                  user.idSucursal.toString()),
+                              const SizedBox(height: 10),
+                              _infoRow(Icons.calendar_month, 'Creado',
+                                  AppUtils.formatDate(user.fCreacionUsuario)),
+                              const SizedBox(height: 10),
+                              _infoRow(
+                                  Icons.calendar_month,
+                                  'Ult. Actualización',
+                                  AppUtils.formatDate(
+                                      user.fModificacionUsuario)),
+                            ],
+                          ),
+                        ),
+                      )),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 // Información en secciones con fondo ligero
-                const Text("Información Persona", style: TextStyle(color: ThemeApp.apple),),
+                const Text(
+                  "Información Persona",
+                  style: TextStyle(color: ThemeApp.apple),
+                ),
                 SizedBox(
                     child: Card(
                   shape: RoundedRectangleBorder(

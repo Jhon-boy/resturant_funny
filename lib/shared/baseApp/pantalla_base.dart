@@ -5,6 +5,8 @@ import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/main/presentation/main_page.dart';
+import 'package:resturant_funny/modules/notification/notifications_list.dart';
+import 'package:resturant_funny/modules/notification/providers/notification_provider.dart';
 import 'package:resturant_funny/shared/baseApp/app_drawer.dart';
 import 'package:resturant_funny/shared/baseApp/app_bottom_nav.dart';
 
@@ -75,10 +77,54 @@ class _PantallaBaseState extends ConsumerState<PantallaBase> {
         ),
         actions: [
           if (widget.actions != null) widget.actions!,
-          const Padding(
-            padding: EdgeInsets.only(right: 8.0),
-            child: Icon(Icons.notifications_none_rounded,
-                color: ThemeApp.baseText),
+          Consumer(
+            builder: (context, ref, child) {
+              final notificationState = ref.watch(notificationProvider);
+              final unreadCount = notificationState.unreadCount;
+
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications_none_rounded,
+                      color: ThemeApp.baseText,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsList(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 99 ? '99+' : unreadCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
         bottom: const PreferredSize(
@@ -123,7 +169,7 @@ class _PantallaBaseState extends ConsumerState<PantallaBase> {
               // Verificar si la ruta es MainPage por el nombre de la ruta
               if (route.settings.name == '/base') {
                 foundMainPage = true;
-                return true;  
+                return true;
               }
               // Si es la primera ruta (raíz), parar
               if (route.isFirst) {

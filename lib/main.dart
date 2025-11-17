@@ -6,6 +6,7 @@ import 'package:resturant_funny/app/config/env_config.dart';
 import 'package:resturant_funny/app/config/enviroment.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/services/conection_service.dart';
+import 'package:resturant_funny/core/services/shared_preferences_service.dart';
 import 'package:resturant_funny/core/services/storage_service.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
@@ -44,7 +45,9 @@ Future<void> main() async {
     url: EnvConfig.SUPABASE_URL,
     anonKey: EnvConfig.SUPABASE_ANON_KEY,
   );
-
+  // Inicializar servicio de preferencias
+  await SharedPrefsService.instance.init();
+  // App
   runApp(const ProviderScope(child: MyApp())); // Riverpod
 }
 

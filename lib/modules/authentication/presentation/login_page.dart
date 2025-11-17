@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/app_constants.dart';
+import 'package:resturant_funny/core/services/shared_preferences_service.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
@@ -14,6 +15,7 @@ import 'package:resturant_funny/modules/authentication/domain/repository/auth_re
 import 'package:resturant_funny/modules/authentication/presentation/splash_page.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:local_auth/local_auth.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -28,8 +30,34 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   late final AuthRepository _authRepository;
+  bool isDeviceLoggedOnce = false;
   bool canLogin = false;
   bool isLoading = false;
+  bool canFingerPrint = false;
+  bool canFace = false;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkBiometric();
+      isDeviceLoggedOnce = SharedPrefsService.instance.deviceLoggedOnce();
+    });
+
+    _authRepository = AuthRepositoryImpl(
+      remoteDataSource: AuthRemoteDataSourceImpl(ref: ref),
+    );
+    usuarioController.addListener(_validateFields);
+    passwordController.addListener(_validateFields);
+  }
+
+  @override
+  void dispose() {
+    usuarioController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  final LocalAuthentication auth = LocalAuthentication();
 
   Future<void> iniciarSesion() async {
     setState(() {
@@ -91,6 +119,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final trusDevice = await _authRepository.isTrustedDevice(deviceInfo);
     trusDevice.fold((failure) {
       debugPrint("Dispositivo no Registrado");
+      DialogHelper.info(context,
+          message:
+              "Dispositivo no Registrado, Ingrese con usuario y contraseña",
+          onConfirmed: () {});
     }, (user) async {
       try {
         final rolesResult =
@@ -103,6 +135,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           roles: roles,
           rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
         );
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SplashPage()),
@@ -119,32 +152,48 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
   }
 
+  Future<void> checkBiometric() async {
+    try {
+      final List<BiometricType> availableBiometrics =
+          await auth.getAvailableBiometrics();
+
+      setState(() {
+        canFingerPrint =
+            availableBiometrics.contains(BiometricType.fingerprint);
+        canFace = availableBiometrics.contains(BiometricType.face);
+      });
+    } catch (e) {
+      debugPrint("Error al verificar la biometría: $e");
+    }
+  }
+
+  Future<void> iniciarConBiometria() async {
+    try {
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Autentícate para ingresar',
+        biometricOnly: true,
+      );
+
+      if (didAuthenticate) {
+        debugPrint("Biometría correcta");
+        await checkDevice();
+      } else {
+        debugPrint("Autenticación biométrica fallida");
+        SnackHelper.show(context,
+            message: "No se pudo autenticar con biometría", isError: true);
+      }
+    } catch (e) {
+      debugPrint("Error al autenticar con biometría: $e");
+      SnackHelper.show(context,
+          message: "Error al intentar verificar tu identidad", isError: true);
+    }
+  }
+
   void _validateFields() {
     setState(() {
       canLogin = usuarioController.text.isNotEmpty &&
           passwordController.text.isNotEmpty;
     });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      checkDevice();
-    });
-
-    _authRepository = AuthRepositoryImpl(
-      remoteDataSource: AuthRemoteDataSourceImpl(ref: ref),
-    );
-    usuarioController.addListener(_validateFields);
-    passwordController.addListener(_validateFields);
-  }
-
-  @override
-  void dispose() {
-    usuarioController.dispose();
-    passwordController.dispose();
-    super.dispose();
   }
 
   @override
@@ -203,99 +252,105 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("USUARIO"),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      maxLength: AppConstants.MAX_CARACTERES_TITULOS,
-                      controller: usuarioController,
-                      decoration: const InputDecoration(
-                        hintText: "usuario",
-                        prefixIcon: Icon(Icons.people),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("USUARIO"),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        maxLength: AppConstants.MAX_CARACTERES_TITULOS,
+                        controller: usuarioController,
+                        decoration: const InputDecoration(
+                          hintText: "usuario",
+                          prefixIcon: Icon(Icons.people),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text("CONTRASEÑA"),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      obscureText: obscureText,
-                      controller: passwordController,
-                      decoration: InputDecoration(
-                          hintText: "********",
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
+                      const SizedBox(height: 20),
+                      const Text("CONTRASEÑA"),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        obscureText: obscureText,
+                        controller: passwordController,
+                        decoration: InputDecoration(
+                            hintText: "********",
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  obscureText = !obscureText;
+                                });
+                              },
+                              icon: Icon(
+                                obscureText
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                              ),
+                            )),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // ===== LOGIN BUTTON =====
+                      SizedBox(
+                          width: double.infinity,
+                          child: CustomButton(
+                            isLoading: isLoading,
                             onPressed: () {
-                              setState(() {
-                                obscureText = !obscureText;
-                              });
+                              iniciarSesion();
                             },
-                            icon: Icon(
-                              obscureText
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                            ),
+                            text: isLoading ? "Cargando..." : "Iniciar Sesión",
+                            enable: canLogin,
                           )),
-                    ),
-                    const SizedBox(height: 30),
+                      const SizedBox(height: 20),
 
-                    // ===== LOGIN BUTTON =====
-                    SizedBox(
-                        width: double.infinity,
-                        child: CustomButton(
-                          isLoading: isLoading,
-                          onPressed: () {
-                            iniciarSesion();
-                          },
-                          text: isLoading ? "Cargando..." : "Iniciar Sesión",
-                          enable: canLogin,
-                        )),
-                    const SizedBox(height: 20),
-
-                    // ===== SIGN UP =====
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("Tienes problema en registrarte? "),
-                        Text(
-                          "Contáctanos",
-                          style: TextStyle(
-                            color: ThemeApp.link,
-                            fontWeight: FontWeight.bold,
+                      // ===== SIGN UP =====
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("Tienes problema en registrarte? "),
+                          Text(
+                            "Contáctanos",
+                            style: TextStyle(
+                              color: ThemeApp.link,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      if (isDeviceLoggedOnce) ...[
+                        // ===== OR SOCIAL =====
+                        const Row(
+                          children: [
+                            Expanded(child: Divider(thickness: 1)),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: Text("O ingresa con"),
+                            ),
+                            Expanded(child: Divider(thickness: 1)),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            canFingerPrint
+                                ? socialButton(
+                                    ThemeApp.baseText, Icons.fingerprint,
+                                    onTap: () {
+                                    debugPrint("Login con huella");
+                                  })
+                                : const SizedBox.shrink(),
+                            const SizedBox(width: 16),
+                            canFace
+                                ? socialButton(
+                                    ThemeApp.baseText, Icons.tag_faces,
+                                    onTap: () {
+                                    debugPrint("Login con rostro");
+                                  })
+                                : const SizedBox.shrink(),
+                          ],
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 30),
-
-                    // ===== OR SOCIAL =====
-                    const Row(
-                      children: [
-                        Expanded(child: Divider(thickness: 1)),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text("O ingresa con"),
-                        ),
-                        Expanded(child: Divider(thickness: 1)),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        socialButton(ThemeApp.baseText, Icons.fingerprint,
-                            onTap: () {
-                          debugPrint("Login con huella");
-                        }),
-                        const SizedBox(width: 16),
-                        socialButton(ThemeApp.baseText, Icons.tag_faces,
-                            onTap: () {
-                          debugPrint("Login con rostro");
-                        }),
-                      ],
-                    ),
-                  ],
-                ),
+                    ]),
               ),
             ],
           ),

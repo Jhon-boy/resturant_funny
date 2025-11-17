@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart'; 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
@@ -8,6 +7,8 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/inventario/presentation/inventario_page.dart';
 import 'package:resturant_funny/modules/inventario/presentation/menu_page.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
+import 'package:resturant_funny/modules/notification/notifications_list.dart';
+import 'package:resturant_funny/modules/notification/providers/notification_provider.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/sucursales_page.dart';
 import 'package:resturant_funny/modules/user/presentation/empleados_page.dart';
 import 'package:resturant_funny/modules/user/presentation/perfil_page.dart';
@@ -63,10 +64,52 @@ class _MainPageState extends ConsumerState<MainPage> {
             'Restaurant Funny',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 8.0),
-              child: Icon(Icons.notifications_none_rounded),
+          actions: [
+            Consumer(
+              builder: (context, ref, child) {
+                final notificationState = ref.watch(notificationProvider);
+                final unreadCount = notificationState.unreadCount;
+
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsList(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ],
           bottom: const PreferredSize(
