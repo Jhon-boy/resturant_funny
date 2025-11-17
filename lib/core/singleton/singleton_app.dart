@@ -30,7 +30,7 @@ class SingletonApp {
     if (rolPrincipal != null && roles.contains(rolPrincipal)) {
       instance._rolPrincipal = rolPrincipal;
     } else if (roles.isNotEmpty) {
-      instance._rolPrincipal = roles.first.nombre;
+      instance._rolPrincipal = roles.first.codigo;
     } else {
       instance._rolPrincipal = null;
     }
