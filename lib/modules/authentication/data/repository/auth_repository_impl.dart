@@ -7,6 +7,7 @@ import 'package:resturant_funny/core/models/deviceInfo_model.dart';
 import 'package:resturant_funny/core/services/conection_service.dart';
 import 'package:resturant_funny/core/utils/either.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
+import 'package:resturant_funny/modules/authentication/domain/entity/dispositivo_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
@@ -35,7 +36,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (_) {
-      return const Left(ServerFailure('Ha ocurrido un error, intentalo mas luego'));
+      return const Left(
+          ServerFailure('Ha ocurrido un error, intentalo mas luego'));
     }
   }
 
@@ -112,9 +114,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> registerTrustedDevice(UserModel entity) async {
+  Future<Either<Failure, bool>> registerTrustedDevice(
+      UserModel entity, DeviceInfoModel deviceInfo) async {
     try {
-      final register = await remoteDataSource.registerTrustedDevice(entity);
+      final register =
+          await remoteDataSource.registerTrustedDevice(entity, deviceInfo);
 
       return Right(register);
     } catch (e) {
@@ -151,6 +155,28 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       debugPrint('ERROR EN LA BASE DE DATOS: $e');
       return const Right([]);
+    }
+  }
+
+  @override
+  Future<Either<Failure, DispositivoEntity>> getDeviceByIdentificacion(
+      String identificacion) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+
+    try {
+      // ignore: non_constant_identifier_names
+      final UserModel =
+          await remoteDataSource.getDeviceByIdentificacion(identificacion);
+      if (UserModel == null) {
+        return const Left(DatabaseFailure('Dispositivo no autorizado'));
+      }
+      return Right(UserModel);
+    } catch (e) {
+      debugPrint('ERROR EN LA BASE DE DATOS: $e');
+      return const Left(DatabaseFailure('Error verificando dispositivo'));
     }
   }
 }

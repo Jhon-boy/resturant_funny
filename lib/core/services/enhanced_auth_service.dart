@@ -352,8 +352,5 @@ class EnhancedAuthService {
     _currentUser = user;
     _currentSessionToken = sessionToken;
     sessionExpiry = expiry;
-
-    // Configurar header
-    _supabase.rest.headers['Authorization'] = 'Bearer $sessionToken';
   }
 }

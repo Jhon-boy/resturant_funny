@@ -5,12 +5,17 @@ import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/models/deviceInfo_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
+import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
+import 'package:resturant_funny/modules/main/domain/providers/dining_provider.dart';
 import 'package:resturant_funny/modules/main/presentation/main_page.dart';
+import 'package:resturant_funny/modules/notification/providers/notification_provider.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:mobile_device_identifier/mobile_device_identifier.dart';
 
@@ -66,7 +71,12 @@ class AppUtils {
     final mobileIdentifier = MobileDeviceIdentifier();
     String deviceId = AppConstants.UNKNOWN;
     try {
-      deviceId = await mobileIdentifier.getDeviceId() ?? AppConstants.UNKNOWN;
+      final rawDeviceId = await mobileIdentifier.getDeviceId();
+      if (rawDeviceId != null && rawDeviceId.isNotEmpty) {
+        deviceId = generateSha256(rawDeviceId);
+      } else {
+        deviceId = AppConstants.UNKNOWN;
+      }
     } catch (e) {
       deviceId = AppConstants.UNKNOWN;
       debugPrint('Error al obtener el id: ${e.toString()}');
@@ -201,10 +211,39 @@ class AppUtils {
       context,
       message: '¿Estás seguro de querer cerrar sesión?',
       onConfirm: () {
+        // Limpiar todos los providers antes de cerrar sesión
+        clearProviders(context);
         navigator?.pushNamedAndRemoveUntil('/login', (route) => false);
       },
       onCancel: () {},
     );
+  }
+
+  /// Limpia todos los providers de la aplicación
+  static void clearProviders(BuildContext context) {
+    try {
+      final container = ProviderScope.containerOf(context);
+
+      container.read(userProvider.notifier).clearUser();
+
+      container.read(diningProvider.notifier).limpiarDatos();
+      container.read(notificationProvider.notifier).clearAll();
+      container.read(navigationIndexProvider.notifier).state = 0;
+      final appState = container.read(appStateProvider);
+      appState.setLoading(false);
+      appState.setProcessLoading(false);
+
+      debugPrint('Todos los providers han sido limpiados');
+    } catch (e) {
+      debugPrint('Error al limpiar providers: $e');
+    }
+  }
+
+  static cerrarSesion(BuildContext context) {
+    final navigator = AppUtils.navigatorKey.currentState;
+    // Limpiar todos los providers antes de cerrar sesión
+    clearProviders(context);
+    navigator?.pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
   static String getGenero(String genero) {

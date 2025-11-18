@@ -35,7 +35,7 @@ CREATE TABLE public.TDIRECCION_CLIENTE (
 CREATE TABLE public.TDISPOSITIVO (
   IDDISPOSITIVO integer GENERATED ALWAYS AS IDENTITY NOT NULL,
   IDUSUARIO integer NOT NULL,
-  IMEI character varying UNIQUE,
+  IMEI text NOT NULL UNIQUE,
   MARCA character varying,
   MODELO character varying,
   ULTIMOACCESO timestamp without time zone,

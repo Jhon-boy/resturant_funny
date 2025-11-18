@@ -7,6 +7,7 @@ import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/user/presentation/edit_credentials_page.dart';
+import 'package:resturant_funny/modules/user/presentation/widget/dispositivo_widget.dart';
 
 class PerfilPage extends ConsumerStatefulWidget {
   const PerfilPage({super.key});
@@ -168,6 +169,14 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
                                   'Ult. Actualización',
                                   AppUtils.formatDate(
                                       user.fModificacionUsuario)),
+                              Center(
+                                child: Icon(
+                                  Icons.chevron_right,
+                                  size: 35,
+                                  color:
+                                      ThemeApp.textSecondary.withOpacity(0.5),
+                                ),
+                              )
                             ],
                           ),
                         ),
@@ -213,7 +222,23 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
                       ],
                     ),
                   ),
-                ))
+                )),
+                const SizedBox(height: 10),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.phone_android, size: 20, color: ThemeApp.apple),
+                    SizedBox(width: 8),
+                    Text(
+                      "Información Dispositivo",
+                      style: TextStyle(color: ThemeApp.apple),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                DispositivoWidget(
+                    idUsuario:
+                        user.idUsuario ?? SingletonApp.getUser()!.idUsuario!),
               ],
             ),
           )),

@@ -1,7 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/services/shared_preferences_service.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
@@ -10,12 +14,12 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
 import 'package:resturant_funny/modules/authentication/data/repository/auth_repository_impl.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
 import 'package:resturant_funny/modules/authentication/presentation/splash_page.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
-import 'package:local_auth/local_auth.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -87,35 +91,46 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             message: failure.message, onConfirmed: () {});
       },
       (user) async {
-        try {
-          final rolesResult =
-              await _authRepository.getRolesByUser(user.idUsuario!);
-          final roles = rolesResult.getOrElse(() => []);
-          ref.read(userProvider.notifier).setUser(user, roles: roles);
-          SingletonApp.setUserData(
-            user: user,
-            roles: roles,
-            rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
-          );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const SplashPage()),
-          );
-          SnackHelper.show(context, message: 'Bienvenido ${user.nombres}!');
-        } catch (e) {
-          debugPrint("Error obteniendo roles o guardando usuario: $e");
-          DialogHelper.error(
-            context,
-            message: "Error al cargar la información del usuario",
-            onConfirmed: () {},
-          );
-        }
+        await _loadUserDataAndNavigate(user);
       },
     );
   }
 
+  Future<void> _loadUserDataAndNavigate(UserModel user) async {
+    try {
+      final rolesResult = await _authRepository.getRolesByUser(user.idUsuario!);
+      final roles = rolesResult.getOrElse(() => []);
+      ref.read(userProvider.notifier).setUser(user, roles: roles);
+      SingletonApp.setUserData(
+        user: user,
+        roles: roles,
+        rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SplashPage()),
+      );
+      SnackHelper.show(context, message: 'Bienvenido ${user.nombres}!');
+    } catch (e) {
+      debugPrint("Error obteniendo roles o guardando usuario: $e");
+      DialogHelper.error(
+        context,
+        message: "Error al cargar la información del usuario",
+        onConfirmed: () {},
+      );
+    }
+  }
+
   Future<void> checkDevice() async {
     final deviceInfo = await AppUtils.getInfoDevice();
+    if (deviceInfo.idUnico == AppConstants.UNKNOWN) {
+      DialogHelper.info(context,
+          message:
+              "Error al obtener el id del dispositivo, Inicie con usuario y contraseña",
+          onConfirmed: () {});
+      return;
+    }
     final trusDevice = await _authRepository.isTrustedDevice(deviceInfo);
     trusDevice.fold((failure) {
       debugPrint("Dispositivo no Registrado");
@@ -124,31 +139,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               "Dispositivo no Registrado, Ingrese con usuario y contraseña",
           onConfirmed: () {});
     }, (user) async {
-      try {
-        final rolesResult =
-            await _authRepository.getRolesByUser(user.idUsuario!);
-        final roles = rolesResult.getOrElse(() => []);
-
-        ref.read(userProvider.notifier).setUser(user, roles: roles);
-        SingletonApp.setUserData(
-          user: user,
-          roles: roles,
-          rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SplashPage()),
-        );
-        SnackHelper.show(context, message: 'Bienvenido ${user.nombres}!');
-      } catch (e) {
-        debugPrint("Error obteniendo roles o guardando usuario: $e");
-        DialogHelper.error(
-          context,
-          message: "Error al cargar la información del usuario",
-          onConfirmed: () {},
-        );
-      }
+      await _loadUserDataAndNavigate(user);
     });
   }
 
@@ -167,14 +158,54 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
+  Future<bool> supportAuthWithCredentials() async {
+    bool isSupported = await auth.isDeviceSupported();
+    bool canCheckBiometrics;
+
+    try {
+      canCheckBiometrics = await auth.canCheckBiometrics;
+    } on PlatformException catch (_) {
+      canCheckBiometrics = false;
+    }
+
+    if (Platform.isAndroid) {
+      List<BiometricType> availableBiometrics =
+          await auth.getAvailableBiometrics();
+      if (availableBiometrics.isEmpty) {
+        return false;
+      }
+    }
+
+    if (isSupported && canCheckBiometrics) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Future<void> iniciarConBiometria() async {
     try {
-      final bool didAuthenticate = await auth.authenticate(
-        localizedReason: 'Autentícate para ingresar',
+      setState(() {
+        isLoading = true;
+      });
+      final bool supportsAuth = await supportAuthWithCredentials();
+      if (!supportsAuth) {
+        SnackHelper.show(
+          context,
+          message: "Este dispositivo no soporta autenticación biométrica",
+          isError: true,
+        );
+        return;
+      }
+
+      // Realizar autenticación biométrica
+      final bool authenticated = await auth.authenticate(
+        localizedReason:
+            'Escanee su huella digital (o su rostro) para autenticarse',
         biometricOnly: true,
       );
 
-      if (didAuthenticate) {
+      if (authenticated) {
         debugPrint("Biometría correcta");
         await checkDevice();
       } else {
@@ -186,6 +217,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       debugPrint("Error al autenticar con biometría: $e");
       SnackHelper.show(context,
           message: "Error al intentar verificar tu identidad", isError: true);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -332,21 +367,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            canFingerPrint
-                                ? socialButton(
-                                    ThemeApp.baseText, Icons.fingerprint,
-                                    onTap: () {
-                                    debugPrint("Login con huella");
-                                  })
-                                : const SizedBox.shrink(),
+                            socialButton(ThemeApp.baseText, Icons.fingerprint,
+                                onTap: () {
+                              iniciarConBiometria();
+                            }),
                             const SizedBox(width: 16),
-                            canFace
-                                ? socialButton(
-                                    ThemeApp.baseText, Icons.tag_faces,
-                                    onTap: () {
-                                    debugPrint("Login con rostro");
-                                  })
-                                : const SizedBox.shrink(),
                           ],
                         ),
                       ],

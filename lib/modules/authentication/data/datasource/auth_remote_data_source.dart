@@ -8,6 +8,7 @@ import 'package:resturant_funny/core/network/http_client.dart';
 import 'package:resturant_funny/core/services/enhanced_auth_service.dart';
 import 'package:resturant_funny/core/services/supabase_service.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
+import 'package:resturant_funny/modules/authentication/domain/entity/dispositivo_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
@@ -93,6 +94,7 @@ class AuthRemoteDataSourceImpl {
   /// Verifica si un dispositivo es de confianza
   Future<UserModel?> isTrustedDevice(DeviceInfoModel deviceInfo) async {
     try {
+      debugPrint('isTrustedDevice: ${deviceInfo.toJson()}');
       final deviceRecord = await SupabaseService.selectSingleFree(
         table: Entities.TDISPOSITIVO.tableName,
         filters: {
@@ -116,14 +118,53 @@ class AuthRemoteDataSourceImpl {
     }
   }
 
+  /// Verifica si un dispositivo es de confianza
+  Future<DispositivoEntity?> getDeviceByIdentificacion(
+      String identificacion) async {
+    try {
+      final deviceRecord = await SupabaseService.selectSingleFree(
+        table: Entities.TDISPOSITIVO.tableName,
+        filters: {
+          'IDUSUARIO': identificacion,
+        },
+      );
+
+      if (deviceRecord == null) return null;
+      return DispositivoEntity.fromJson(deviceRecord);
+    } catch (e) {
+      debugPrint("Error verificando dispositivo: ${e.toString()}");
+      return null;
+    }
+  }
+
 // Obtiene la informacion del usuario a travez del IDUSUARIO
   Future<UserModel> _buildUserModel(int userId) async {
-    final userInfo = await EnhancedAuthService.getUserById(userId);
-    final personaInfo = await EnhancedAuthService.getPersonaByIdentificacion(
-        userInfo.identificacion);
+    final userRecord = await SupabaseService.selectSingleFree(
+      table: Entities.TUSUARIO.tableName,
+      filters: {'IDUSUARIO': userId},
+    );
+
+    if (userRecord == null) {
+      throw ServerException(
+        message: "No se encontraron datos de usuario para $userId",
+      );
+    }
+
+    final personaRecord = await SupabaseService.selectSingleFree(
+      table: Entities.TPERSONA.tableName,
+      filters: {'IDENTIFICACION': userRecord['IDENTIFICACION']},
+    );
+
+    if (personaRecord == null) {
+      throw ServerException(
+        message:
+            "No se encontraron datos de persona para ${userRecord['IDENTIFICACION']}",
+      );
+    }
+
     return UserModel.fromJson(
-      usuarioJson: userInfo.toJson(),
-      personaJson: personaInfo.toJson(),
+      usuarioJson: userRecord,
+      personaJson: personaRecord,
     );
   }
 
@@ -142,11 +183,18 @@ class AuthRemoteDataSourceImpl {
   }
 
   /// Registra un dispositivo como de confianza
-  Future<bool> registerTrustedDevice(UserModel entity) async {
+  /// Recibe el UserModel y el DeviceInfoModel para vincular correctamente el dispositivo con el usuario
+  Future<bool> registerTrustedDevice(
+      UserModel entity, DeviceInfoModel deviceInfo) async {
     try {
-      final deviceInfo = await AppUtils.getInfoDevice();
+      debugPrint('registerTrustedDevice: ${deviceInfo.toJson()}');
+      // Validar que el dispositivo tenga un IMEI válido
+      if (deviceInfo.idUnico == null || deviceInfo.idUnico!.isEmpty) {
+        debugPrint('ERROR: El dispositivo no tiene un IMEI válido');
+        return false;
+      }
 
-      // Verificar si ya existe
+      // Verificar si ya existe un dispositivo con este IMEI
       final existingDevice = await SupabaseService.selectSingle(
         table: Entities.TDISPOSITIVO.tableName,
         filters: {
@@ -155,39 +203,52 @@ class AuthRemoteDataSourceImpl {
       );
 
       if (existingDevice != null) {
-        // Actualizar último acceso
+        // Si el dispositivo ya existe y pertenece a otro usuario, no permitir el registro
+        final existingUserId = existingDevice['IDUSUARIO'] as int;
+        if (existingUserId != entity.idUsuario) {
+          debugPrint(
+              'ERROR: El dispositivo ya está registrado por otro usuario');
+          return false;
+        }
+
+        // Si pertenece al mismo usuario, actualizar último acceso
         await SupabaseService.update(
           table: Entities.TDISPOSITIVO.tableName,
           data: {
             'ULTIMOACCESO': AppUtils.getFechaActual().toIso8601String(),
             'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
+            'USERMODIFICACION': entity.usuario ?? '',
           },
           filters: {
             'IMEI': deviceInfo.idUnico,
           },
         );
+        debugPrint('Dispositivo actualizado exitosamente');
         return true;
       }
 
-      // Registrar nuevo dispositivo
+      // Registrar nuevo dispositivo con el IMEI del dispositivo actual
       await SupabaseService.insert(
         table: Entities.TDISPOSITIVO.tableName,
         data: {
           'IDUSUARIO': entity.idUsuario,
-          'IMEI': deviceInfo.idUnico,
+          'IMEI': deviceInfo.idUnico, // IMEI del dispositivo actual
           'MARCA': deviceInfo.fabricante ?? 'Desconocida',
           'MODELO': deviceInfo.modelo ?? 'Desconocido',
           'SISTEMAOPERATIVO': deviceInfo.sistemaOperativo ?? 'Desconocido',
           'ULTIMOACCESO': AppUtils.getFechaActual().toIso8601String(),
-          'FCREACION': AppUtils.getFechaActual().toIso8601String(), 
-          'USUARIOINGRESO': entity.usuario,
-          'USERMODIFICACION': '',
+          'FCREACION': AppUtils.getFechaActual().toIso8601String(),
+          'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
+          'USUARIOINGRESO': entity.usuario ?? '',
+          'USERMODIFICACION': entity.usuario ?? '',
         },
       );
 
+      debugPrint(
+          'Dispositivo registrado exitosamente con IMEI: ${deviceInfo.idUnico}');
       return true;
     } catch (e) {
-      debugPrint('ERROR EN LA BASE DE DATOS: $e');
+      debugPrint('ERROR EN LA BASE DE DATOS al registrar dispositivo: $e');
       return false;
     }
   }
