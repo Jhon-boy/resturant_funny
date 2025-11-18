@@ -159,8 +159,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, DispositivoEntity>> getDeviceByIdentificacion(
-      String identificacion) async {
+  Future<Either<Failure, DispositivoEntity>> getDeviceByIdDispositivo(
+      String imei) async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
       return const Left(NetworkFailure('No internet connection'));
@@ -168,8 +168,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
     try {
       // ignore: non_constant_identifier_names
-      final UserModel =
-          await remoteDataSource.getDeviceByIdentificacion(identificacion);
+      final UserModel = await remoteDataSource.getDeviceByIdDispositivo(imei);
       if (UserModel == null) {
         return const Left(DatabaseFailure('Dispositivo no autorizado'));
       }

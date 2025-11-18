@@ -14,6 +14,7 @@ class EmpleadoCardWidget extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onChangeSucursal;
+  final VoidCallback? onViewStatistics;
 
   const EmpleadoCardWidget({
     super.key,
@@ -22,6 +23,7 @@ class EmpleadoCardWidget extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onChangeSucursal,
+    this.onViewStatistics,
   });
 
   @override
@@ -50,7 +52,7 @@ class EmpleadoCardWidget extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: ThemeApp.textPrimary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -62,14 +64,14 @@ class EmpleadoCardWidget extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.badge_outlined,
-                        size: 14, color: Colors.grey.shade600),
+                    const Icon(Icons.badge_outlined,
+                        size: 14, color: ThemeApp.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       empleado.persona.identificacion,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade600,
+                        color: ThemeApp.textSecondary,
                       ),
                     ),
                   ],
@@ -78,25 +80,25 @@ class EmpleadoCardWidget extends StatelessWidget {
                 if (empleado.usuario != null) ...[
                   Row(
                     children: [
-                      Icon(Icons.person_outline,
-                          size: 14, color: Colors.grey.shade600),
+                      const Icon(Icons.person_outline,
+                          size: 14, color: ThemeApp.textSecondary),
                       const SizedBox(width: 4),
                       Text(
                         'Usuario: ${empleado.usuario!.usuario ?? 'N/A'}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: ThemeApp.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ] else ...[
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.info_outline,
-                          size: 14, color: Colors.orange.shade600),
-                      const SizedBox(width: 4),
-                      const Expanded(
+                          size: 14, color: ThemeApp.primary),
+                      SizedBox(width: 4),
+                      Expanded(
                         child: Text(
                           'Esta persona no tiene un usuario ni roles asignados',
                           style: TextStyle(
@@ -112,20 +114,41 @@ class EmpleadoCardWidget extends StatelessWidget {
                 ],
                 if (empleado.roles.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Builder(
-                    builder: (context) {
-                      // Buscar roles desde BD por IDs
-                      final rolesEmpleado = roles
-                          .where((r) => empleado.roles.contains(r.idRol))
-                          .toList();
-                      return RolesChipsWidget(
-                        roles: rolesEmpleado,
-                        selectedRoleIds: empleado.roles,
-                        spacing: 2.0,
-                        runSpacing: 2.0,
-                      );
-                    },
-                  ),
+                  Row(
+                    children: [
+                      const Icon(Icons.rule_sharp,
+                          size: 14, color: ThemeApp.textSecondary),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ThemeApp.textSecondary,
+                              height: 1.4,
+                            ),
+                            children: [
+                              const TextSpan(text: "Roles: "),
+                              TextSpan(
+                                text: roles
+                                    .where(
+                                        (r) => empleado.roles.contains(r.idRol))
+                                    .map((r) => r.nombre)
+                                    .join(', '),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: ThemeApp.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  )
                 ],
               ],
             ),
@@ -185,20 +208,33 @@ class EmpleadoCardWidget extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 12),
-                  const Divider(height: 1),
+                  const Divider(height: 1, color: ThemeApp.textSecondary),
+                  const SizedBox(height: 12),
+                  const Row(
+                    children: [
+                      Icon(Icons.settings, size: 20, color: ThemeApp.primary),
+                      SizedBox(width: 8),
+                      Text('Acciones disponibles',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: ThemeApp.primary)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
                           const SizedBox(width: 4),
-                          Icon(Icons.location_on,
-                              size: 20, color: Colors.grey.shade600),
+                          const Icon(Icons.location_on,
+                              size: 20, color: ThemeApp.textSecondary),
                           const SizedBox(width: 8),
                           Text(
                               'Sucursal: ${empleado.usuario?.idSucursal.toString() ?? 'N/A'}',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade600)),
+                              style: const TextStyle(
+                                  fontSize: 12, color: ThemeApp.textSecondary)),
                         ],
                       ),
                       IconButton(
@@ -208,27 +244,31 @@ class EmpleadoCardWidget extends StatelessWidget {
                             }
                           },
                           icon: const Icon(Icons.assistant_direction_sharp,
-                              size: 30, color: ThemeApp.error)),
+                              size: 30, color: ThemeApp.primary)),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Icon(Icons.bar_chart,
-                              size: 20, color: Colors.grey.shade600),
-                          const SizedBox(width: 8),
+                              size: 20, color: ThemeApp.textSecondary),
+                          SizedBox(width: 8),
                           Text('Ver Estadisticas',
                               style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade600)),
+                                  fontSize: 12, color: ThemeApp.textSecondary)),
                         ],
                       ),
                       IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (onViewStatistics != null) {
+                              onViewStatistics!();
+                            }
+                          },
                           icon: const Icon(Icons.bar_chart_rounded,
-                              size: 30, color: ThemeApp.error)),
+                              size: 30, color: ThemeApp.primary)),
                     ],
                   ),
                   Row(
@@ -237,12 +277,12 @@ class EmpleadoCardWidget extends StatelessWidget {
                       Row(
                         children: [
                           const SizedBox(width: 4),
-                          Icon(Icons.rule_outlined,
-                              size: 20, color: Colors.grey.shade600),
+                          const Icon(Icons.rule_outlined,
+                              size: 20, color: ThemeApp.textSecondary),
                           const SizedBox(width: 8),
                           Text('Gestionar Roles (${empleado.roles.length})',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade600)),
+                              style: const TextStyle(
+                                  fontSize: 12, color: ThemeApp.textSecondary)),
                         ],
                       ),
                       IconButton(
@@ -252,7 +292,7 @@ class EmpleadoCardWidget extends StatelessWidget {
                             }
                           },
                           icon: const Icon(Icons.edit_square,
-                              size: 30, color: ThemeApp.error)),
+                              size: 30, color: ThemeApp.primary)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -272,7 +312,7 @@ class EmpleadoCardWidget extends StatelessWidget {
                         Expanded(
                           child: CustomButton(
                             text: 'Desactivar',
-                            colorButton: ThemeApp.error,
+                            colorButton: ThemeApp.textSecondary,
                             colorText: Colors.white,
                             icon: Icons.delete,
                             onPressed: () {
@@ -312,9 +352,9 @@ class EmpleadoCardWidget extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: ThemeApp.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),

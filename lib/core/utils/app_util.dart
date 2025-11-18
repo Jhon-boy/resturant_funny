@@ -331,4 +331,10 @@ class AppUtils {
     }
     return Icons.person;
   }
+  static  List<String> botonesMenu = [
+    'Estadísticas',
+    'Ordenes',
+    'Clientes',
+    'Buscar',
+  ];
 }

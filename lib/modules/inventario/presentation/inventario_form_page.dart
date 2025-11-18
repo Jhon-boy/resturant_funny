@@ -131,7 +131,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     final precio =
         double.tryParse(_precioCtrl.text.trim().replaceAll(',', '.')) ?? 0.0;
 
-    if (precio < 1) {
+    if (precio < 0) {
       SnackHelper.show(context,
           message: 'El precio debe ser mayor a 0', isError: true);
       return;

@@ -265,12 +265,16 @@ class _InventarioPageState extends ConsumerState<InventarioPage> {
             CustomButton(
                 icon: Icons.inventory_2,
                 text: 'Registrar Inventario',
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => InventarioFormPage(
-                            titulo: 'Registrar Inventario',
-                            sucursales: _sucursales,
-                          )));
+                onPressed: () async {
+                  final result =
+                      await Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => InventarioFormPage(
+                                titulo: 'Registrar Inventario',
+                                sucursales: _sucursales,
+                              )));
+                  if (result != null) {
+                    _fetchInventarios(_selectedSucursal?.idSucursal ?? 1);
+                  }
                 })
           ],
         ),
@@ -305,7 +309,7 @@ class _InventariosList extends StatelessWidget {
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: const [
-                SizedBox(height: 120),
+                SizedBox(height: 80),
                 NoProductosWidget(message: 'No hay inventarios registrados')
               ],
             )
@@ -313,7 +317,7 @@ class _InventariosList extends StatelessWidget {
               builder: (context, constraints) {
                 final crossAxisCount = ResponsiveUtil.columnsForGrid(
                   context,
-                  minTileWidth: 280,
+                  minTileWidth: 200,
                   minColumns: 1,
                   maxColumns: 4,
                 );

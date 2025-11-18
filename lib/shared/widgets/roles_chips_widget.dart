@@ -65,10 +65,7 @@ class RolesChipsWidget extends StatelessWidget {
                   color: isSelected ? ThemeApp.success : Colors.grey.shade600,
                 )
               : null,
-          avatar: isSelected
-              ? const Icon(Icons.check_circle,
-                  size: 16, color: ThemeApp.success)
-              : null,
+      
         );
       }).toList(),
     );

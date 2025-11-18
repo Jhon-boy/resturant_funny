@@ -55,8 +55,8 @@ class _DispositivoWidgetState extends ConsumerState<DispositivoWidget> {
       });
       currentDeviceInfo = await AppUtils.getInfoDevice();
 
-      final deviceResult = await _authRepository.getDeviceByIdentificacion(
-        widget.idUsuario.toString(),
+      final deviceResult = await _authRepository.getDeviceByIdDispositivo(
+        currentDeviceInfo!.idUnico!,
       );
 
       deviceResult.fold(
@@ -89,7 +89,7 @@ class _DispositivoWidgetState extends ConsumerState<DispositivoWidget> {
         DialogHelper.info(
           context,
           message:
-              "Este dispositivo no soporta autenticación biométrica. No se puede registrar para autenticación biométrica.",
+              "Este dispositivo no soporta autenticación biométrica. No se puede registrar para este dispositivo.",
           onConfirmed: () {},
         );
         return;
@@ -227,7 +227,7 @@ class _DispositivoWidgetState extends ConsumerState<DispositivoWidget> {
             (success) async {
               if (success) {
                 await SharedPrefsService.instance.setDeviceLoggedOnce(false);
-                DialogHelper.info(context,
+                DialogHelper.success(context,
                     message:
                         "Dispositivo eliminado exitosamente. Vuelve a iniciar sesión para continuar",
                     onConfirmed: () {

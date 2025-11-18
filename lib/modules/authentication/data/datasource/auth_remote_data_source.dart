@@ -119,13 +119,13 @@ class AuthRemoteDataSourceImpl {
   }
 
   /// Verifica si un dispositivo es de confianza
-  Future<DispositivoEntity?> getDeviceByIdentificacion(
-      String identificacion) async {
+  Future<DispositivoEntity?> getDeviceByIdDispositivo(
+      String imei) async {
     try {
       final deviceRecord = await SupabaseService.selectSingleFree(
         table: Entities.TDISPOSITIVO.tableName,
         filters: {
-          'IDUSUARIO': identificacion,
+          'IMEI': imei,
         },
       );
 

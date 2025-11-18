@@ -30,11 +30,13 @@ import 'package:resturant_funny/modules/user/presentation/widget/dialogo_gestion
 import 'package:resturant_funny/modules/user/presentation/widget/dialogo_sucursales_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/empleado_card_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/shimmer_widget.dart';
+import 'package:resturant_funny/modules/user/presentation/empleado_estadisticas_page.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/enums/roles.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
-import 'package:resturant_funny/shared/widgets/input_search_widget.dart'; 
+import 'package:resturant_funny/shared/widgets/input_search_widget.dart';
+
 class EmpleadosPage extends ConsumerStatefulWidget {
   final String titulo;
   const EmpleadosPage({super.key, required this.titulo});
@@ -736,6 +738,15 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                       onChangeSucursal: () {
                         _gestionarSucursal(empleado);
                       },
+                      onViewStatistics: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => EmpleadoEstadisticasPage(
+                              empleado: empleado,
+                            ),
+                          ),
+                        );
+                      },
                       onDelete: () async {
                         DialogHelper.confirm(context,
                             okText: 'Desactivar',
@@ -809,6 +820,15 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
                       },
                       onChangeSucursal: () {
                         _gestionarSucursal(empleado);
+                      },
+                      onViewStatistics: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => EmpleadoEstadisticasPage(
+                              empleado: empleado,
+                            ),
+                          ),
+                        );
                       },
                     ),
                   );
@@ -890,6 +910,4 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
       ),
     );
   }
-
- 
 }

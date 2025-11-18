@@ -1,10 +1,12 @@
+// Página para ver estadísticas y ventas de un empleado específico
+// Reutiliza los widgets de mi_dia_page.dart pero filtrado por empleado
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
-import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
+import 'package:resturant_funny/modules/user/domain/models/empleados_model.dart';
 import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
 import 'package:resturant_funny/modules/ventas/data/repository/ventas_repository_impl.dart';
 import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
@@ -19,15 +21,23 @@ import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
 import 'package:resturant_funny/shared/widgets/input_search_widget.dart';
+import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 
-class MiDiaPage extends ConsumerStatefulWidget {
-  const MiDiaPage({super.key});
+class EmpleadoEstadisticasPage extends ConsumerStatefulWidget {
+  final EmpleadoModel empleado;
+
+  const EmpleadoEstadisticasPage({
+    super.key,
+    required this.empleado,
+  });
 
   @override
-  ConsumerState<MiDiaPage> createState() => _MiDiaPageState();
+  ConsumerState<EmpleadoEstadisticasPage> createState() =>
+      _EmpleadoEstadisticasPageState();
 }
 
-class _MiDiaPageState extends ConsumerState<MiDiaPage> {
+class _EmpleadoEstadisticasPageState
+    extends ConsumerState<EmpleadoEstadisticasPage> {
   bool _isLoading = true;
   List<VentaEntity> _ventasHoy = [];
   List<VentaEntity> _ventasAyer = [];
@@ -53,9 +63,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
     });
   }
 
-
-
-  clearData() {
+  void clearData() {
     _ventasHoy = [];
     _ventasAyer = [];
     _ventasAnteayer = [];
@@ -72,27 +80,39 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
     clearData();
 
     try {
-      final user = ref.read(userProvider).user;
-      if (user?.idUsuario == null) return;
+      // Verificar que el empleado tenga usuario válido
+      if (widget.empleado.usuario?.idUsuario == null) {
+        appState.setLoading(false);
+        setState(() => _isLoading = false);
+        if (mounted) {
+          SnackHelper.show(
+            context,
+            message: 'Este empleado no tiene un usuario asignado',
+            isError: true,
+          );
+        }
+        return;
+      }
 
       final hoy = _selectedDate;
       final ayer = hoy.subtract(const Duration(days: 1));
       final anteayer = hoy.subtract(const Duration(days: 2));
 
+      // Cargar ventas filtradas por el ID del empleado
       final ventasHoyResult = await _ventasRepository.getVentasBy(
-        user!.idUsuario!,
+        widget.empleado.usuario!.idUsuario,
         fechaDesde: DateTime(hoy.year, hoy.month, hoy.day),
         fechaHasta: DateTime(hoy.year, hoy.month, hoy.day, 23, 59, 59),
       );
 
       final ventasAyerResult = await _ventasRepository.getVentasBy(
-        user.idUsuario!,
+        widget.empleado.usuario!.idUsuario,
         fechaDesde: DateTime(ayer.year, ayer.month, ayer.day),
         fechaHasta: DateTime(ayer.year, ayer.month, ayer.day, 23, 59, 59),
       );
 
       final ventasAnteayerResult = await _ventasRepository.getVentasBy(
-        user.idUsuario!,
+        widget.empleado.usuario!.idUsuario,
         fechaDesde: DateTime(anteayer.year, anteayer.month, anteayer.day),
         fechaHasta:
             DateTime(anteayer.year, anteayer.month, anteayer.day, 23, 59, 59),
@@ -129,7 +149,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
       final diaHasta = DateTime(hoy.year, hoy.month, hoy.day, 23, 59, 59);
 
       final cardsEither = await _ventasRepository.getVentaCardsBy(
-        user.idUsuario!,
+        widget.empleado.usuario!.idUsuario,
         fechaDesde: diaDesde,
         fechaHasta: diaHasta,
       );
@@ -159,20 +179,25 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
           SnackHelper.show(context,
               message: 'No se encontraron ventas', isError: true);
         },
-        (cards) => {
-          if (cards.isNotEmpty)
-            {
-              _identificacionController.clear(),
-              setState(() => _ventasClientes = cards),
-            }
-          else
-            {
-              DialogHelper.error(context, message: 'No se encontraron ventas',
-                  onConfirmed: () {
-                _identificacionController.clear();
-                setState(() => _ventasClientes = []);
-              })
-            }
+        (cards) {
+          // Filtrar solo las ventas del empleado actual
+          final ventasFiltradas = cards.where((card) {
+            // Verificar si la venta pertenece al empleado
+            // Esto requeriría verificar el ID del empleado que hizo la venta
+            // Por ahora mostramos todas las ventas del cliente
+            return true;
+          }).toList();
+
+          if (ventasFiltradas.isNotEmpty) {
+            _identificacionController.clear();
+            setState(() => _ventasClientes = ventasFiltradas);
+          } else {
+            DialogHelper.error(context, message: 'No se encontraron ventas',
+                onConfirmed: () {
+              _identificacionController.clear();
+              setState(() => _ventasClientes = []);
+            });
+          }
         },
       );
     } catch (e) {
@@ -187,8 +212,16 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
     final appState = ref.watch(appStateProvider);
     try {
       appState.setLoading(true);
-      final cards =
-          await _ventasRepository.getVentaById(int.parse(identificacion));
+      final id = int.tryParse(identificacion);
+      if (id == null) {
+        DialogHelper.error(context,
+            message: 'El identificador debe ser un número válido',
+            onConfirmed: () {});
+        setState(() => _ventasIdentificador = []);
+        return;
+      }
+
+      final cards = await _ventasRepository.getVentaById(id);
       cards.fold(
         (_) {
           DialogHelper.error(context,
@@ -196,15 +229,13 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
               onConfirmed: () {});
           setState(() => _ventasIdentificador = []);
         },
-        (cards) => {
-          {
-            _identificadorController.clear(),
-            setState(() => _ventasIdentificador = [cards]),
-          }
+        (venta) {
+          _identificadorController.clear();
+          setState(() => _ventasIdentificador = [venta]);
         },
       );
     } catch (e) {
-      debugPrint('Error buscando ventas por cliente: $e');
+      debugPrint('Error buscando ventas por identificador: $e');
     } finally {
       appState.setLoading(false);
     }
@@ -219,8 +250,12 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    final nombreEmpleado =
+        '${widget.empleado.persona.nombres} ${widget.empleado.persona.apellidos}';
+
+    return PantallaBase(
+      title: 'Estadísticas - $nombreEmpleado',
+      onBack: () => Navigator.of(context).pop(),
       body: _isLoading ? _buildShimmerLoading() : _buildContent(),
     );
   }
@@ -316,7 +351,6 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
                 onChanged: (value) {
                   setState(() {
                     _identificacionController.text = value;
-                    //  _buscarVentasPorCliente(_identificacionController.text);
                   });
                 },
               ),
@@ -329,7 +363,7 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
             ],
             if (_index == 3) ...[
               InputSearchWidget(
-                label: 'Buscar orden por ID',
+                label: 'Buscar por orden por ID',
                 hint: 'Ej: 1220',
                 showSuffixButton: false,
                 onSubmitted: (value) async {
@@ -339,7 +373,6 @@ class _MiDiaPageState extends ConsumerState<MiDiaPage> {
                 onChanged: (value) {
                   setState(() {
                     _identificadorController.text = value;
-                    //  _buscarVentasPorCliente(_identificacionController.text);
                   });
                 },
               ),

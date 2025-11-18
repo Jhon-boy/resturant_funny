@@ -11,8 +11,8 @@ abstract class AuthRepository {
   Future<Either<Failure, UserModel>> checkAuthStatus();
   Future<Either<Failure, UserModel>> isTrustedDevice(
       DeviceInfoModel deviceInfo);
-  Future<Either<Failure, DispositivoEntity>> getDeviceByIdentificacion(
-      String idUsuario);
+  Future<Either<Failure, DispositivoEntity>> getDeviceByIdDispositivo(
+      String idDispositivo);
   Future<Either<Failure, bool>> registerTrustedDevice(
       UserModel entity, DeviceInfoModel deviceInfo);
   Future<Either<Failure, bool>> removeTrustedDevice(String imei);
