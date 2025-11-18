@@ -5,6 +5,7 @@ import 'package:resturant_funny/core/services/supabase_service.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/inventario/domain/entity/inventario_entity.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
+import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class InventarioRemoteDataSource {
@@ -46,7 +47,12 @@ class InventarioRemoteDataSource {
     try {
       final result = await SupabaseService.select(
         table: Entities.TINVENTARIO.tableName,
-        filters: {'IDSUCURSAL': idSucursal},
+        filters: {
+          'IDSUCURSAL': idSucursal,
+          'ESTADO': EstadosPersona.ACTIVO.getState,
+        },
+        orderBy: 'FCREACION',
+        ascending: false,
       );
       return result.map((json) => InventarioEntity.fromJson(json)).toList();
     } catch (e) {
@@ -59,6 +65,7 @@ class InventarioRemoteDataSource {
       InventarioEntity inventario, UserModel? user) async {
     try {
       final data = inventario.toJson();
+      data.remove('IDINVENTARIO'); // Remove IDINVENTARIO for auto-increment
       if (user != null) data['USUARIOINGRESO'] = user.idUsuario;
       final result = await SupabaseService.insert(
         table: Entities.TINVENTARIO.tableName,
@@ -86,11 +93,11 @@ class InventarioRemoteDataSource {
     }
   }
 
-  /// Eliminar inventario
   Future<bool> deleteInventario(int idInventario) async {
     try {
-      await SupabaseService.delete(
+      await SupabaseService.update(
         table: Entities.TINVENTARIO.tableName,
+        data: {'ESTADO': EstadosPersona.INACTIVO.getState},
         filters: {'IDINVENTARIO': idInventario},
       );
       return true;
