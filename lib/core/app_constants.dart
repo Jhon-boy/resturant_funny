@@ -9,4 +9,5 @@ class AppConstants {
   static final int MAX_CARACTERES_DESCRIPCION = 200;
   static final int TOKEN_EXPIRATION = 4;
   static final String BUCKET_IMAGES = "imagenes";
+  static final String UNKNOWN = "UNKNOW";
 }
