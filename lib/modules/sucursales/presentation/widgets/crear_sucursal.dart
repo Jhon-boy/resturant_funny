@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/app_constants.dart';
@@ -47,6 +48,9 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
   final _direccionController = TextEditingController();
+  final _latitudController = TextEditingController();
+  final _longitudController = TextEditingController();
+  final _contactoController = TextEditingController();
 
   late SucursalRepository _sucursalRepository;
   bool _isActiva = true;
@@ -62,6 +66,9 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
     if (widget.isEdit && widget.sucursal != null) {
       _nombreController.text = widget.sucursal!.nombre;
       _direccionController.text = widget.sucursal!.direccion ?? '';
+      _latitudController.text = widget.sucursal!.latitud?.toString() ?? '';
+      _longitudController.text = widget.sucursal!.longitud?.toString() ?? '';
+      _contactoController.text = widget.sucursal!.contacto ?? '';
       _isActiva = widget.sucursal!.estado ?? true;
     }
   }
@@ -70,6 +77,9 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
   void dispose() {
     _nombreController.dispose();
     _direccionController.dispose();
+    _latitudController.dispose();
+    _longitudController.dispose();
+    _contactoController.dispose();
     super.dispose();
   }
 
@@ -93,11 +103,23 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
 
       if (widget.isEdit && widget.sucursal != null) {
         // Actualizar sucursal existente
+        final latitud = _latitudController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_latitudController.text.trim());
+        final longitud = _longitudController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_longitudController.text.trim());
+
         sucursalData = widget.sucursal!.copyWith(
           nombre: _nombreController.text.trim(),
           direccion: _direccionController.text.trim().isEmpty
               ? null
               : _direccionController.text.trim(),
+          latitud: latitud,
+          longitud: longitud,
+          contacto: _contactoController.text.trim().isEmpty
+              ? null
+              : _contactoController.text.trim(),
           estado: _isActiva,
           fModificacion: fechaActual,
           userModificacion: usuarioId,
@@ -136,11 +158,23 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
         );
       } else {
         // Crear nueva sucursal
+        final latitud = _latitudController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_latitudController.text.trim());
+        final longitud = _longitudController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_longitudController.text.trim());
+
         sucursalData = SucursalEntity(
           nombre: _nombreController.text.trim(),
           direccion: _direccionController.text.trim().isEmpty
               ? null
               : _direccionController.text.trim(),
+          latitud: latitud,
+          longitud: longitud,
+          contacto: _contactoController.text.trim().isEmpty
+              ? null
+              : _contactoController.text.trim(),
           estado: _isActiva,
           fCreacion: fechaActual,
           usuarioIngreso: usuarioId,
@@ -253,6 +287,86 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 16),
+
+                // Campo Latitud
+                TextFormField(
+                  controller: _latitudController,
+                  enabled: !_isLoading,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^-?\d+\.?\d{0,6}')),
+                  ],
+                  decoration: ThemeApp.inputDecoration(
+                    'Latitud',
+                    'Ingrese la latitud (opcional)',
+                    Icons.location_on,
+                    isRequired: false,
+                    fillColor: ThemeApp.white,
+                  ),
+                  validator: (value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      final latitud = double.tryParse(value.trim());
+                      if (latitud == null) {
+                        return 'La latitud debe ser un número válido';
+                      }
+                      if (latitud < -90 || latitud > 90) {
+                        return 'La latitud debe estar entre -90 y 90';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Campo Longitud
+                TextFormField(
+                  controller: _longitudController,
+                  enabled: !_isLoading,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^-?\d+\.?\d{0,6}')),
+                  ],
+                  decoration: ThemeApp.inputDecoration(
+                    'Longitud',
+                    'Ingrese la longitud (opcional)',
+                    Icons.location_on,
+                    isRequired: false,
+                    fillColor: ThemeApp.white,
+                  ),
+                  validator: (value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      final longitud = double.tryParse(value.trim());
+                      if (longitud == null) {
+                        return 'La longitud debe ser un número válido';
+                      }
+                      if (longitud < -180 || longitud > 180) {
+                        return 'La longitud debe estar entre -180 y 180';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Campo Contacto
+                TextFormField(
+                  controller: _contactoController,
+                  enabled: !_isLoading,
+                  keyboardType: TextInputType.text,
+                  decoration: ThemeApp.inputDecoration(
+                    'Contacto',
+                    'Ingrese el contacto (opcional)',
+                    Icons.phone,
+                    isRequired: false,
+                    fillColor: ThemeApp.white,
+                  ),
+                  maxLength: 50,
                 ),
                 const SizedBox(height: 16),
 

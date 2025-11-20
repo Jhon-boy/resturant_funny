@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
-import 'package:resturant_funny/core/theme_app.dart'; 
+import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/main/data/datasource/mesa_remote_data_source.dart';
 import 'package:resturant_funny/modules/main/data/repository/mesa_repository_impl.dart';
@@ -13,6 +13,7 @@ import 'package:resturant_funny/modules/main/domain/repository/mesa_repository.d
 import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
 import 'package:resturant_funny/modules/sucursales/data/repository/sucursal_repository.dart';
 import 'package:resturant_funny/modules/sucursales/domain/sucursal_repository.dart';
+import 'package:resturant_funny/modules/sucursales/presentation/widgets/crear_sucursal.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/widgets/sucursal_card_widget.dart';
 import 'package:resturant_funny/modules/user/data/datasource/persona_data_source.dart';
 import 'package:resturant_funny/modules/user/data/datasource/rol_usuario_data_source.dart';
@@ -25,6 +26,7 @@ import 'package:resturant_funny/modules/user/domain/repository/persona_repositor
 import 'package:resturant_funny/modules/user/domain/repository/rol_usuario.dart';
 import 'package:resturant_funny/modules/user/domain/repository/usuario_repository.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 
 class SucursalesPage extends ConsumerStatefulWidget {
   const SucursalesPage({super.key, required this.titulo});
@@ -200,52 +202,76 @@ class _SucursalesPageState extends ConsumerState<SucursalesPage> {
       return ThemeApp.buildShimmerLoading();
     }
 
-    if (_sucursales.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.store_outlined,
-                size: 64,
-                color: Colors.grey.shade400,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No hay sucursales registradas',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_sucursales.isEmpty)
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.store_outlined,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No hay sucursales registradas',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: _sucursales.length,
+                itemBuilder: (context, index) {
+                  final sucursal = _sucursales[index];
+                  final idSucursal = sucursal.idSucursal;
+                  final mesas = idSucursal != null
+                      ? (_mesasPorSucursal[idSucursal] ?? [])
+                      : <MesaEntity>[];
+                  final empleados = idSucursal != null
+                      ? (_empleadosPorSucursal[idSucursal] ?? [])
+                      : <EmpleadoModel>[];
+
+                  return SucursalCardWidget(
+                    sucursal: sucursal,
+                    mesas: mesas,
+                    empleados: empleados,
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: 16),
+          CustomButton(
+            icon: Icons.add_business_rounded,
+            text: 'Crear Sucursal',
+            onPressed: () async {
+              final result = await CrearSucursal.show(
+                context: context,
+                isEdit: false,
+              );
+              if (result != null && mounted) {
+                _cargarSucursales();
+              }
+            },
           ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _sucursales.length,
-      itemBuilder: (context, index) {
-        final sucursal = _sucursales[index];
-        final idSucursal = sucursal.idSucursal;
-        final mesas = idSucursal != null
-            ? (_mesasPorSucursal[idSucursal] ?? [])
-            : <MesaEntity>[];
-        final empleados = idSucursal != null
-            ? (_empleadosPorSucursal[idSucursal] ?? [])
-            : <EmpleadoModel>[];
-
-        return SucursalCardWidget(
-          sucursal: sucursal,
-          mesas: mesas,
-          empleados: empleados,
-        );
-      },
+        ],
+      ),
     );
   }
- 
 }

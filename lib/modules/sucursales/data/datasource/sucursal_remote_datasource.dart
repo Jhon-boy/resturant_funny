@@ -70,6 +70,9 @@ class SucursalRemoteDataSource {
         'NOMBRE': sucursal.nombre,
         'DIRECCION': sucursal.direccion,
         'ESTADO': sucursal.estado ?? true,
+        'LATITUD': sucursal.latitud,
+        'LONGITUD': sucursal.longitud,
+        'CONTACTO': sucursal.contacto,
         'FCREACION': AppUtils.getFechaActual().toIso8601String(),
         'USUARIOINGRESO': sucursal.usuarioIngreso,
       };

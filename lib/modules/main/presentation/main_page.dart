@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
@@ -9,6 +9,7 @@ import 'package:resturant_funny/modules/inventario/presentation/menu_page.dart';
 import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
 import 'package:resturant_funny/modules/notification/notifications_list.dart';
 import 'package:resturant_funny/modules/notification/providers/notification_provider.dart';
+import 'package:resturant_funny/modules/reportes/presentation/reportes_page.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/sucursales_page.dart';
 import 'package:resturant_funny/modules/user/presentation/empleados_page.dart';
 import 'package:resturant_funny/modules/user/presentation/perfil_page.dart';
@@ -205,7 +206,13 @@ class _MainPageState extends ConsumerState<MainPage> {
         );
         break;
       case 9: // Acerca de
-        //  Mostrar acerca de
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ReportesPage(
+              titulo: 'Gestión de Reportes',
+            ),
+          ),
+        );
         break;
     }
   }

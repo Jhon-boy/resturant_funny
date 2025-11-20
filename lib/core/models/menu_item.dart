@@ -97,6 +97,14 @@ class MenuItem {
       allowedRoles: ['ADM'],
     ),
     MenuItem(
+      label: 'Reportes',
+      icon: Icons.data_exploration_outlined,
+      index: 9,
+      isMainMenu: true,
+      requiresRole: true,
+      allowedRoles: ['ADM'],
+    ),
+    MenuItem(
       label: 'Acerca de',
       icon: Icons.info_outline,
       index: 10,

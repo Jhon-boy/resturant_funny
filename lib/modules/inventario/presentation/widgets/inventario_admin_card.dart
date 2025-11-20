@@ -16,14 +16,14 @@ class InventarioAdminCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: ThemeApp.baseText,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
           height: 10,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: ThemeApp.baseText,
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
@@ -62,7 +62,22 @@ class InventarioAdminCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        _StockChip(stock: inventario.stock),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: ThemeApp.success.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'Stock: ${inventario.stock}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: ThemeApp.success,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -72,7 +87,7 @@ class InventarioAdminCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
-                            inventario.precioFormateado,
+                            'Precio U.: ${inventario.precioFormateado}',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -174,52 +189,6 @@ class _InventarioThumbnail extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _StockChip extends StatelessWidget {
-  const _StockChip({required this.stock});
-
-  final int? stock;
-
-  @override
-  Widget build(BuildContext context) {
-    final stockValue = stock ?? 0;
-    final color = stockValue > 0
-        ? (stockValue < 10 ? Colors.orange : ThemeApp.success)
-        : ThemeApp.error;
-    final label = stockValue > 0
-        ? (stockValue < 10 ? 'Stock bajo' : 'En stock')
-        : 'Sin stock';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            stockValue > 0
-                ? (stockValue < 10 ? Icons.warning_amber : Icons.check_circle)
-                : Icons.cancel_outlined,
-            size: 14,
-            color: color,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
       ),
     );
   }

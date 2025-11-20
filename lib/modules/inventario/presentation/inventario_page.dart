@@ -326,9 +326,9 @@ class _InventariosList extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 16),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: 12,
+                    mainAxisSpacing: 10,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 2.1,
+                    childAspectRatio: 3.1,
                   ),
                   itemCount: inventarios.length,
                   itemBuilder: (context, index) {

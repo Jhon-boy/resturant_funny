@@ -5,8 +5,7 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/user/domain/models/empleados_model.dart';
 import 'package:resturant_funny/shared/enums/estados_persona.dart';
-import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
-import 'package:resturant_funny/shared/widgets/roles_chips_widget.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart'; 
 
 class EmpleadoCardWidget extends StatelessWidget {
   final EmpleadoModel empleado;

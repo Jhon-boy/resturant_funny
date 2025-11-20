@@ -3,6 +3,9 @@ class SucursalEntity {
   final String nombre;
   final String? direccion;
   final bool? estado;
+  final double? latitud;
+  final double? longitud;
+  final String? contacto;
   final DateTime? fCreacion;
   final DateTime? fModificacion;
   final String? usuarioIngreso;
@@ -13,6 +16,9 @@ class SucursalEntity {
     required this.nombre,
     this.direccion,
     this.estado,
+    this.latitud,
+    this.longitud,
+    this.contacto,
     this.fCreacion,
     this.fModificacion,
     this.usuarioIngreso,
@@ -37,6 +43,9 @@ class SucursalEntity {
       nombre: json['NOMBRE'] ?? '',
       direccion: json['DIRECCION'],
       estado: estado,
+      latitud: json['LATITUD']?.toDouble(),
+      longitud: json['LONGITUD']?.toDouble(),
+      contacto: json['CONTACTO'],
       fCreacion:
           json['FCREACION'] != null ? DateTime.parse(json['FCREACION']) : null,
       fModificacion: json['FMODIFICACION'] != null
@@ -54,6 +63,9 @@ class SucursalEntity {
       'NOMBRE': nombre,
       'DIRECCION': direccion,
       'ESTADO': estado,
+      'LATITUD': latitud,
+      'LONGITUD': longitud,
+      'CONTACTO': contacto,
       'FCREACION': fCreacion?.toIso8601String(),
       'FMODIFICACION': fModificacion?.toIso8601String(),
       'USUARIOINGRESO': usuarioIngreso,
@@ -68,6 +80,9 @@ class SucursalEntity {
       'nombre': nombre,
       'direccion': direccion,
       'estado': estado,
+      'latitud': latitud,
+      'longitud': longitud,
+      'contacto': contacto,
       'fCreacion': fCreacion?.toIso8601String(),
       'fModificacion': fModificacion?.toIso8601String(),
       'usuarioIngreso': usuarioIngreso,
@@ -83,6 +98,9 @@ class SucursalEntity {
     String? telefono,
     String? email,
     bool? estado,
+    double? latitud,
+    double? longitud,
+    String? contacto,
     DateTime? fCreacion,
     DateTime? fModificacion,
     String? usuarioIngreso,
@@ -93,6 +111,9 @@ class SucursalEntity {
       nombre: nombre ?? this.nombre,
       direccion: direccion ?? this.direccion,
       estado: estado ?? this.estado,
+      latitud: latitud ?? this.latitud,
+      longitud: longitud ?? this.longitud,
+      contacto: contacto ?? this.contacto,
       fCreacion: fCreacion ?? this.fCreacion,
       fModificacion: fModificacion ?? this.fModificacion,
       usuarioIngreso: usuarioIngreso ?? this.usuarioIngreso,
@@ -102,8 +123,6 @@ class SucursalEntity {
 
   /// Verifica si la sucursal está activa
   bool get isActiva => estado == true;
-
-
 
   @override
   String toString() {
@@ -127,6 +146,9 @@ class SucursalEntity {
       nombre,
       direccion,
       estado,
+      latitud,
+      longitud,
+      contacto,
     );
   }
 }
