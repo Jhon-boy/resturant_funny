@@ -79,18 +79,10 @@ class EstadisticaCardWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                valor,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
               const SizedBox(width: 8),
               const Icon(
                 Icons.arrow_forward_ios,
-                size: 16,
+                size: 18,
                 color: ThemeApp.textSecondary,
               ),
             ],

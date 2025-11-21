@@ -44,7 +44,8 @@ class CalendarWidget extends ConsumerStatefulWidget {
         title: title,
         initialDate: initialDate ?? AppUtils.getFechaActual(),
         firstDate: firstDate ?? DateTime(1900),
-        lastDate: lastDate ?? AppUtils.getFechaActual().add(const Duration(days: 365)),
+        lastDate: lastDate ??
+            AppUtils.getFechaActual().add(const Duration(days: 365)),
       ),
     );
   }
@@ -119,7 +120,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           child: Text(
             widget.title,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: ThemeApp.textPrimary,
               letterSpacing: 0.5,
@@ -177,25 +178,27 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                 child: Row(
                   children: [
                     // Icono con animación
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _selectedDate != null
-                            ? ThemeApp.primary.withOpacity(0.1)
-                            : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        widget.icon ?? Icons.calendar_today,
-                        color: widget.enabled
-                            ? (_selectedDate != null
-                                ? ThemeApp.primary
-                                : Colors.grey.shade600)
-                            : Colors.grey.shade400,
-                        size: 20,
-                      ),
-                    ),
+                    _selectedDate == null
+                        ? AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _selectedDate != null
+                                  ? ThemeApp.primary.withOpacity(0.1)
+                                  : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              widget.icon ?? Icons.calendar_today,
+                              color: widget.enabled
+                                  ? (_selectedDate != null
+                                      ? ThemeApp.primary
+                                      : Colors.grey.shade600)
+                                  : Colors.grey.shade400,
+                              size: 20,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                     const SizedBox(width: 16),
 
                     // Texto de fecha
@@ -206,7 +209,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                           color: _selectedDate != null
                               ? ThemeApp.textPrimary
                               : Colors.grey.shade600,
-                          fontSize: 16,
+                          fontSize: 12,
                           fontWeight: _selectedDate != null
                               ? FontWeight.w500
                               : FontWeight.w400,
@@ -579,7 +582,7 @@ class _DatePickerDialogState extends State<_DatePickerDialog> {
             // Header
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.calendar_today,
                   color: ThemeApp.primary,
                   size: 24,
@@ -616,7 +619,7 @@ class _DatePickerDialogState extends State<_DatePickerDialog> {
                 ),
                 controlsTextStyle: const TextStyle(
                   color: ThemeApp.textPrimary,
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
                 dayTextStyle: const TextStyle(

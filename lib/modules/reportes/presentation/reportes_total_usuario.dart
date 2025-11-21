@@ -13,17 +13,17 @@ import 'package:resturant_funny/modules/user/data/datasource/persona_data_source
 import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
 import 'package:resturant_funny/modules/user/data/repository/persona_repository_impl.dart';
 import 'package:resturant_funny/modules/user/domain/repository/usuario_repository.dart';
-import 'package:resturant_funny/modules/user/domain/repository/persona_repository.dart';
-import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
-import 'package:resturant_funny/modules/sucursales/data/repository/sucursal_repository.dart';
-import 'package:resturant_funny/modules/sucursales/domain/sucursal_repository.dart';
+import 'package:resturant_funny/modules/user/domain/repository/persona_repository.dart'; 
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
+import 'package:resturant_funny/modules/reportes/presentation/widgets/reporte_data_table_widget.dart';
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
 class ReporteTotalUsuariosPage extends ConsumerStatefulWidget {
-  const ReporteTotalUsuariosPage({super.key});
+  const ReporteTotalUsuariosPage({super.key, required this.sucursales});
+  final List<SucursalEntity> sucursales;
 
   @override
   ConsumerState<ReporteTotalUsuariosPage> createState() =>
@@ -34,18 +34,15 @@ class _ReporteTotalUsuariosPageState
     extends ConsumerState<ReporteTotalUsuariosPage> {
   late UsuariosRepository _usuariosRepository;
   late PersonasRepository _personasRepository;
-  late SucursalRepository _sucursalRepository;
 
   // Filtros
   SucursalEntity? _sucursalSeleccionada;
   DateTime? _fechaInicio;
   DateTime? _fechaHasta;
-  List<SucursalEntity> _sucursales = [];
 
   List<TUsuariEntity> _usuarios = [];
   final Map<String, PersonaEntity> _personasMap = {};
   int _totalUsuarios = 0;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -57,54 +54,29 @@ class _ReporteTotalUsuariosPageState
       _personasRepository = PersonaRepositoryImpl(
         PersonasRemoteDataSource(ref: ref),
       );
-      _sucursalRepository = SucursalRemoteRepository(
-        SucursalRemoteDataSource(ref: ref),
-      );
-      _cargarSucursales();
     });
-  }
-
-  Future<void> _cargarSucursales() async {
-    final result = await _sucursalRepository.getSucursalesEntity();
-    result.fold(
-      (failure) {
-        if (mounted) {
-          SnackHelper.show(context, message: failure.message, isError: true);
-        }
-      },
-      (sucursales) {
-        if (mounted) {
-          setState(() {
-            _sucursales = sucursales.where((s) => s.isActiva).toList();
-            if (_sucursales.isNotEmpty && _sucursalSeleccionada == null) {
-              _sucursalSeleccionada = _sucursales.first;
-            }
-          });
-        }
-      },
-    );
   }
 
   Future<void> _cargarDatos() async {
     ref.read(appStateProvider.notifier).setLoading(true);
     if (_sucursalSeleccionada == null) {
-      setState(() {
-        _errorMessage = 'Por favor seleccione una sucursal';
+      DialogHelper.error(context, message: 'Por favor seleccione una sucursal',
+          onConfirmed: () {
+        Navigator.of(context).pop();
       });
       ref.read(appStateProvider.notifier).setLoading(false);
       return;
     }
 
     if (_fechaInicio == null || _fechaHasta == null) {
-      setState(() {
-        _errorMessage = 'Por favor seleccione el rango de fechas';
-      });
+      DialogHelper.error(context,
+          message: 'Por favor seleccione el rango de fechas',
+          onConfirmed: () {});
       ref.read(appStateProvider.notifier).setLoading(false);
       return;
     }
 
     setState(() {
-      _errorMessage = null;
       _usuarios = [];
       _personasMap.clear();
     });
@@ -119,8 +91,9 @@ class _ReporteTotalUsuariosPageState
 
       usuariosResult.fold(
         (failure) {
-          setState(() {
-            _errorMessage = failure.message;
+          DialogHelper.error(context, message: failure.message,
+              onConfirmed: () {
+            Navigator.of(context).pop();
           });
           if (mounted) {
             SnackHelper.show(context, message: failure.message, isError: true);
@@ -129,14 +102,12 @@ class _ReporteTotalUsuariosPageState
         (usuarios) async {
           _usuarios = usuarios;
           _totalUsuarios = usuarios.length;
-
-          // Cargar información de personas para cada usuario
+ 
           for (final usuario in usuarios) {
             final personaResult = await _personasRepository
                 .getPersonaByIdentificacion(usuario.identificacion);
             personaResult.fold(
-              (failure) {
-                // Si no se encuentra la persona, simplemente no la agregamos al mapa
+              (failure) { 
                 debugPrint(
                     'No se encontró persona para ${usuario.identificacion}');
               },
@@ -152,8 +123,9 @@ class _ReporteTotalUsuariosPageState
         },
       );
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Error inesperado: $e';
+      DialogHelper.error(context, message: 'Error inesperado: $e',
+          onConfirmed: () {
+        Navigator.of(context).pop();
       });
       if (mounted) {
         SnackHelper.show(context,
@@ -178,69 +150,42 @@ class _ReporteTotalUsuariosPageState
     return PantallaBase(
       title: 'Total de Usuarios',
       onBack: () => Navigator.of(context).pop(),
-      body: ref.watch(appStateProvider).isLoading
-          ? Center(child: ShimmerWidget.list(itemCount: 3))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Filtros
-                  _buildFiltros(),
-                  const SizedBox(height: 24),
-                  // Contenido del reporte
-                  _buildContenidoReporte(),
-                  const SizedBox(height: 24),
-                  // Botón para generar PDF
-                  CustomButton(
-                    text: 'Generar PDF',
-                    colorButton: ThemeApp.primary,
-                    colorText: Colors.white,
-                    icon: Icons.picture_as_pdf,
-                    onPressed: _generarPDF,
-                  ),
-                ],
-              ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Filtros
+            _buildFiltros(),
+            const SizedBox(height: 24),
+            // Contenido del reporte
+            _buildContenidoReporte(),
+            const SizedBox(height: 24),
+            // Botón para generar PDF
+            CustomButton(
+              text: 'Generar PDF',
+              colorButton: ThemeApp.primary,
+              colorText: Colors.white,
+              icon: Icons.picture_as_pdf,
+              onPressed: _generarPDF,
             ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildContenidoReporte() {
-    if (_errorMessage != null) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.red.shade50,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.red.shade200),
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red.shade700),
-            const SizedBox(height: 12),
-            Text(
-              _errorMessage!,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.red.shade700,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Estadísticas
-        _buildEstadisticas(),
-        const SizedBox(height: 24),
-        // Lista de usuarios
-        _buildListaUsuarios(),
-      ],
-    );
+    return ref.watch(appStateProvider).isLoading
+        ? Center(child: ShimmerWidget.list(itemCount: 3))
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildEstadisticas(),
+              const SizedBox(height: 24),
+              _buildListaUsuarios(),
+            ],
+          );
   }
 
   Widget _buildEstadisticas() {
@@ -423,7 +368,7 @@ class _ReporteTotalUsuariosPageState
             value: _sucursalSeleccionada,
             label: 'Sucursal',
             hint: 'Seleccione una sucursal',
-            items: _sucursales,
+            items: widget.sucursales,
             displayText: (s) => s.nombre,
             onChanged: (s) {
               setState(() => _sucursalSeleccionada = s);
@@ -604,111 +549,72 @@ class _ReporteTotalUsuariosPageState
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: ThemeApp.baseText,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return ReporteDataTableWidget(
+      titulo: 'Tabla de Usuarios',
+      icono: Icons.table_chart,
+      mensajeVacio: 'No se encontraron usuarios en el período seleccionado',
+      columns: const [
+        DataColumn(
+          label: Text(
+            'ID',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(Icons.table_chart, color: ThemeApp.primary, size: 24),
-                SizedBox(width: 12),
-                Text(
-                  'Tabla de Usuarios',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: ThemeApp.textPrimary,
-                  ),
-                ),
-              ],
-            ),
+        ),
+        DataColumn(
+          label: Text(
+            'Nombres',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          const Divider(height: 1),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: MaterialStateProperty.all(
-                ThemeApp.primary.withOpacity(0.1),
-              ),
-              columns: const [
-                DataColumn(
-                  label: Text(
-                    'ID',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DataColumn(
-                  label: Text(
-                    'Nombres',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DataColumn(
-                  label: Text(
-                    'Apellidos',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DataColumn(
-                  label: Text(
-                    'Identificación',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DataColumn(
-                  label: Text(
-                    'Correo',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DataColumn(
-                  label: Text(
-                    'Teléfono',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DataColumn(
-                  label: Text(
-                    'Fecha Creación',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-              rows: _usuarios.map((usuario) {
-                final persona = _personasMap[usuario.identificacion];
-                return DataRow(
-                  cells: [
-                    DataCell(Text('${usuario.idUsuario}')),
-                    DataCell(Text(persona?.nombres ?? 'N/A')),
-                    DataCell(Text(persona?.apellidos ?? 'N/A')),
-                    DataCell(Text(usuario.identificacion)),
-                    DataCell(Text(persona?.correo ?? 'N/A')),
-                    DataCell(Text(persona?.telefono ?? 'N/A')),
-                    DataCell(Text(
-                      usuario.fCreacion != null
-                          ? AppUtils.formatDate(usuario.fCreacion)
-                          : 'N/A',
-                    )),
-                  ],
-                );
-              }).toList(),
-            ),
+        ),
+        DataColumn(
+          label: Text(
+            'Apellidos',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-        ],
-      ),
+        ),
+        DataColumn(
+          label: Text(
+            'Identificación',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            'Correo',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            'Teléfono',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            'Fecha Creación',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+      rows: _usuarios.map((usuario) {
+        final persona = _personasMap[usuario.identificacion];
+        return DataRow(
+          cells: [
+            DataCell(Text('${usuario.idUsuario}')),
+            DataCell(Text(persona?.nombres ?? 'N/A')),
+            DataCell(Text(persona?.apellidos ?? 'N/A')),
+            DataCell(Text(usuario.identificacion)),
+            DataCell(Text(persona?.correo ?? 'N/A')),
+            DataCell(Text(persona?.telefono ?? 'N/A')),
+            DataCell(Text(
+              usuario.fCreacion != null
+                  ? AppUtils.formatDate(usuario.fCreacion)
+                  : 'N/A',
+            )),
+          ],
+        );
+      }).toList(),
     );
   }
 }
