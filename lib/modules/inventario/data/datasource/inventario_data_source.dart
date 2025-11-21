@@ -20,8 +20,21 @@ class InventarioRemoteDataSource {
   /// Obtener todos los inventarios
   Future<List<InventarioEntity>> getAllInventario() async {
     try {
-      final result =
-          await SupabaseService.select(table: Entities.TINVENTARIO.tableName);
+      final result = await SupabaseService.select(
+          table: Entities.TINVENTARIO.tableName,
+          filters: {'ESTADO': EstadosPersona.ACTIVO.getState});
+      return result.map((json) => InventarioEntity.fromJson(json)).toList();
+    } catch (e) {
+      _handleError(e, 'getAllInventario');
+    }
+  }
+
+  /// Obtener todos los inventarios
+  Future<List<InventarioEntity>> getAllInventarioPending() async {
+    try {
+      final result = await SupabaseService.select(
+          table: Entities.TINVENTARIO.tableName,
+          filters: {'ESTADO': EstadosPersona.PENDIENTE.getState});
       return result.map((json) => InventarioEntity.fromJson(json)).toList();
     } catch (e) {
       _handleError(e, 'getAllInventario');
@@ -33,7 +46,10 @@ class InventarioRemoteDataSource {
     try {
       final result = await SupabaseService.selectSingle(
         table: Entities.TINVENTARIO.tableName,
-        filters: {'IDINVENTARIO': idInventario},
+        filters: {
+          'IDINVENTARIO': idInventario,
+          'ESTADO': EstadosPersona.ACTIVO.getState
+        },
       );
       if (result == null) return null;
       return InventarioEntity.fromJson(result);
@@ -57,6 +73,25 @@ class InventarioRemoteDataSource {
       return result.map((json) => InventarioEntity.fromJson(json)).toList();
     } catch (e) {
       _handleError(e, 'getInventarioBySucursal');
+    }
+  }
+
+  /// Obtener inventarios pendientes por sucursal
+  Future<List<InventarioEntity>> getInventarioBySucursalPending(
+      int idSucursal) async {
+    try {
+      final result = await SupabaseService.select(
+        table: Entities.TINVENTARIO.tableName,
+        filters: {
+          'IDSUCURSAL': idSucursal,
+          'ESTADO': EstadosPersona.PENDIENTE.getState,
+        },
+        orderBy: 'FCREACION',
+        ascending: false,
+      );
+      return result.map((json) => InventarioEntity.fromJson(json)).toList();
+    } catch (e) {
+      _handleError(e, 'getInventarioBySucursalPending');
     }
   }
 
@@ -119,6 +154,7 @@ class InventarioRemoteDataSource {
     try {
       final allInventarios = await SupabaseService.select(
         table: Entities.TINVENTARIO.tableName,
+        filters: {'ESTADO': EstadosPersona.ACTIVO.getState},
       );
 
       var filtered = allInventarios;

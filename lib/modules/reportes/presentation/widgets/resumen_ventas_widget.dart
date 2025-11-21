@@ -224,12 +224,12 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFF1E3A5F),
-                const Color(0xFF2E5C8A),
+                 Color(0xFF1E3A5F),
+                 Color(0xFF2E5C8A),
               ],
             ),
             borderRadius: BorderRadius.circular(20),

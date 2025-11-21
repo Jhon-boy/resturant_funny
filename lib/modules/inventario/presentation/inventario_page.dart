@@ -12,6 +12,7 @@ import 'package:resturant_funny/modules/inventario/domain/repository/inventario_
 import 'package:resturant_funny/modules/inventario/presentation/inventario_detalle_page.dart';
 import 'package:resturant_funny/modules/inventario/presentation/inventario_form_page.dart';
 import 'package:resturant_funny/modules/inventario/presentation/widgets/inventario_admin_card.dart';
+import 'package:resturant_funny/modules/inventario/presentation/widgets/inventario_pendiente_widget.dart';
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
 import 'package:resturant_funny/modules/main/presentation/widget/no_producto_widget.dart';
 import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
@@ -38,6 +39,7 @@ class _InventarioPageState extends ConsumerState<InventarioPage> {
   List<SucursalEntity> _sucursales = [];
   SucursalEntity? _selectedSucursal;
   List<InventarioEntity> _inventarios = [];
+  List<InventarioEntity> _inventariosPendientes = [];
 
   @override
   void initState() {
@@ -109,6 +111,18 @@ class _InventarioPageState extends ConsumerState<InventarioPage> {
         setState(() {
           _inventarios = inventarios;
           ref.read(appStateProvider.notifier).setLoading(false);
+        });
+      },
+    );
+    final inventariosPendientesResult =
+        await _inventarioRepository.getInventarioBySucursalPending(idSucursal);
+    inventariosPendientesResult.fold(
+      (failure) {
+        _handleError(failure.message);
+      },
+      (inventariosPendientes) {
+        setState(() {
+          _inventariosPendientes = inventariosPendientes;
         });
       },
     );
@@ -253,6 +267,16 @@ class _InventarioPageState extends ConsumerState<InventarioPage> {
                   style: const TextStyle(fontWeight: FontWeight.bold)),
             ])),
             const SizedBox(height: 8),
+            if (_inventariosPendientes.isNotEmpty)
+              const Text('Inventarios pendientes de aprobación',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            InventarioPendienteWidget(
+              inventariosPendientes: _inventariosPendientes,
+              inventarioRepository: _inventarioRepository,
+              onRefresh: _refreshInventarios,
+              isLoading: isLoading,
+            ),
+            if (_inventariosPendientes.isNotEmpty) const SizedBox(height: 16),
             Expanded(
               child: _InventariosList(
                 isLoading: isLoading,

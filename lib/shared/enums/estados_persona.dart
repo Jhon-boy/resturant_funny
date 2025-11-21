@@ -8,7 +8,7 @@ enum EstadosPersona {
   BLOQUEADO("BLO", "Bloqueado"),
   SUSPENDIDO("SUS", "Suspendido"),
   PENDIENTE("PEN", "Pendiente"),
-  INACTIVO("INA", "Inactivo");
+  INACTIVO("INA", "Inactivo"); 
 
   final String state;
   final String label;
