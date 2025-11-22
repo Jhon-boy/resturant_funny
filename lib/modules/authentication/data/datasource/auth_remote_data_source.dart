@@ -172,9 +172,9 @@ class AuthRemoteDataSourceImpl {
   Future<bool> isCurrentDeviceTrusted() async {
     try {
       final deviceInfo = await AppUtils.getInfoDevice();
-      final UserModel = await isTrustedDevice(deviceInfo);
+      final userModel = await isTrustedDevice(deviceInfo);
 
-      return UserModel != null;
+      return userModel != null;
     } catch (e) {
       debugPrint(
           "Error obteniendo información del dispositivo: ${e.toString()}");

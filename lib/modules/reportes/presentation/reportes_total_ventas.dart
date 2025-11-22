@@ -9,21 +9,35 @@ import 'package:resturant_funny/modules/main/data/datasource/mesa_remote_data_so
 import 'package:resturant_funny/modules/main/data/repository/mesa_repository_impl.dart';
 import 'package:resturant_funny/modules/main/domain/repository/mesa_repository.dart';
 import 'package:resturant_funny/modules/ventas/data/datasource/detalles_ventas_datasource.dart';
+import 'package:resturant_funny/modules/ventas/data/datasource/facturas_data_source.dart';
 import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
 import 'package:resturant_funny/modules/ventas/data/repository/detalles_venta_impl.dart';
+import 'package:resturant_funny/modules/ventas/data/repository/facturas_repository_impl.dart';
 import 'package:resturant_funny/modules/ventas/data/repository/ventas_repository_impl.dart';
 import 'package:resturant_funny/modules/ventas/domain/repository/detalle_venta_repository.dart';
+import 'package:resturant_funny/modules/ventas/domain/repository/factura_repository.dart';
 import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
 import 'package:resturant_funny/modules/user/data/datasource/persona_data_source.dart';
 import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source.dart';
-import 'package:resturant_funny/modules/main/data/datasource/productos_remote_data_source.dart';
-import 'package:resturant_funny/modules/reportes/presentation/widgets/estadistica_card_widget.dart';
+import 'package:resturant_funny/modules/user/data/repository/persona_repository_impl.dart';
+import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
+import 'package:resturant_funny/modules/user/domain/repository/persona_repository.dart';
+import 'package:resturant_funny/modules/user/domain/repository/usuario_repository.dart';
+import 'package:resturant_funny/modules/reportes/presentation/widgets/estadisticas_basicas_widget.dart';
+import 'package:resturant_funny/modules/reportes/presentation/widgets/expandible_section_widget.dart';
+import 'package:resturant_funny/modules/reportes/presentation/widgets/grafico_ventas_completo_widget.dart';
+import 'package:resturant_funny/modules/reportes/domain/models/estadisticas_ventas_model.dart';
+import 'package:resturant_funny/modules/reportes/domain/services/estadisticas_ventas_service.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/shimmer_widget.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
+import 'package:resturant_funny/shared/enums/categorias_producto.dart';
 import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:resturant_funny/shared/widgets/not_found_card.dart';
+import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
+import 'package:resturant_funny/modules/ventas/domain/entity/factura_entity.dart';
 
 class ReporteTotalVentasPage extends ConsumerStatefulWidget {
   const ReporteTotalVentasPage({super.key, required this.sucursales});
@@ -38,24 +52,20 @@ class _ReporteTotalVentasPageState
     extends ConsumerState<ReporteTotalVentasPage> {
   late VentaRepository _ventaRepository;
   late DetalleVentaRepository _detalleVentaRepository;
+  late FacturasRepository _facturasRepository;
   late MesaRepository _mesaRepository;
-  late PersonasRemoteDataSource _personasDataSource;
-  late UsuariosRemoteDataSource _usuariosDataSource;
-  late ProductosRemoteDataSource _productosDataSource;
+  late PersonasRepository _personasRepository;
+  late UsuariosRepository _usuariosRepository;
 
   // Filtros
   SucursalEntity? _sucursalSeleccionada;
   DateTime? _fechaInicio;
   DateTime? _fechaHasta;
 
-  int _totalVentas = 0;
-  double _montoTotalVendido = 0.0;
-  double _promedioVenta = 0.0;
-  final Map<int, int> _ventasPorEmpleado = {}; // idEmpleado -> cantidad
-  final Map<int, String> _nombresEmpleados = {}; // idEmpleado -> nombre
-  final Map<int, int> _productosVendidos = {}; // idProducto -> cantidad total
-  final Map<int, String> _nombresProductos = {}; // idProducto -> nombre
-  final Map<String, int> _ventasPorTipo = {}; // tipoVenta -> cantidad
+  // Estadísticas completas
+  EstadisticasVentasCompletas? _estadisticas;
+  static const int MAX_DIAS = 30;
+  final Map<int, ProductoEntity> _productosCache = {};
 
   @override
   void initState() {
@@ -67,12 +77,18 @@ class _ReporteTotalVentasPageState
       _detalleVentaRepository = DetalleVentaRepositoryImpl(
         DetalleVentaRemoteDataSource(ref: ref),
       );
+      _facturasRepository = FacturasRepositoryImpl(
+        FacturasRemoteDataSource(ref: ref),
+      );
       _mesaRepository = MesaRepositoryImpl(
         MesasRemoteDataSource(ref: ref),
       );
-      _personasDataSource = PersonasRemoteDataSource(ref: ref);
-      _usuariosDataSource = UsuariosRemoteDataSource(ref: ref);
-      _productosDataSource = ProductosRemoteDataSource(ref: ref);
+      _personasRepository = PersonaRepositoryImpl(
+        PersonasRemoteDataSource(ref: ref),
+      );
+      _usuariosRepository = UsuariosRepositoryImpl(
+        UsuariosRemoteDataSource(ref: ref),
+      );
     });
   }
 
@@ -91,9 +107,9 @@ class _ReporteTotalVentasPageState
     }
 
     final diferencia = _fechaHasta!.difference(_fechaInicio!);
-    if (diferencia.inDays > 3) {
+    if (diferencia.inDays > MAX_DIAS) {
       DialogHelper.error(context,
-          message: 'El rango máximo es de 3 días', onConfirmed: () {});
+          message: 'El rango máximo es de $MAX_DIAS días', onConfirmed: () {});
       return;
     }
 
@@ -105,8 +121,8 @@ class _ReporteTotalVentasPageState
         _sucursalSeleccionada!.idSucursal ?? 0,
       );
 
-      mesasResult.fold(
-        (failure) {
+      await mesasResult.fold(
+        (failure) async {
           DialogHelper.error(context,
               message: failure.message, onConfirmed: () {});
           if (mounted) {
@@ -116,14 +132,7 @@ class _ReporteTotalVentasPageState
         (mesas) async {
           if (mesas.isEmpty) {
             setState(() {
-              _totalVentas = 0;
-              _montoTotalVendido = 0.0;
-              _promedioVenta = 0.0;
-              _ventasPorEmpleado.clear();
-              _nombresEmpleados.clear();
-              _productosVendidos.clear();
-              _nombresProductos.clear();
-              _ventasPorTipo.clear();
+              _estadisticas = null;
             });
             if (mounted) {
               ref.read(appStateProvider.notifier).setLoading(false);
@@ -132,6 +141,12 @@ class _ReporteTotalVentasPageState
           }
 
           final idsMesas = mesas.map((m) => m.idMesa ?? 0).toList();
+          final nombresMesas = <int, String>{};
+          for (final mesa in mesas) {
+            if (mesa.idMesa != null) {
+              nombresMesas[mesa.idMesa!] = mesa.numeroFormateado;
+            }
+          }
 
           // 2. Obtener todas las ventas y filtrar por mesas y fechas
           final ventasResult = await _ventaRepository.getVentas(
@@ -139,8 +154,8 @@ class _ReporteTotalVentasPageState
             fechaHasta: _fechaHasta?.add(const Duration(days: 1)),
           );
 
-          ventasResult.fold(
-            (failure) {
+          await ventasResult.fold(
+            (failure) async {
               DialogHelper.error(context,
                   message: failure.message, onConfirmed: () {});
               if (mounted) {
@@ -153,91 +168,164 @@ class _ReporteTotalVentasPageState
                   .where((v) => idsMesas.contains(v.idMesa))
                   .toList();
 
-              // 3. Calcular estadísticas básicas
-              _totalVentas = ventasFiltradas.length;
-              _montoTotalVendido = ventasFiltradas
-                  .where((v) => v.total != null)
-                  .map((v) => v.total!)
-                  .fold(0.0, (a, b) => a + b);
-              _promedioVenta =
-                  _totalVentas > 0 ? _montoTotalVendido / _totalVentas : 0.0;
+              // 3. Obtener facturas
+              final facturasResult = await _facturasRepository.getAllFacturas(
+                fechaDesde: _fechaInicio,
+                fechaHasta: _fechaHasta?.add(const Duration(days: 1)),
+              );
 
-              // 4. Ventas por empleado
-              _ventasPorEmpleado.clear();
-              _nombresEmpleados.clear();
+              final facturas = facturasResult.fold(
+                (failure) => <FacturaEntity>[],
+                (facturas) => facturas,
+              );
+
+              // 4. Obtener detalles de venta con productos
+              final idsVentas = ventasFiltradas.map((v) => v.idVenta!).toList();
+              final detallesResult = await _detalleVentaRepository
+                  .getDetallesConProductosBySucursal(
+                idsVentas,
+                fechaDesde: _fechaInicio,
+                fechaHasta: _fechaHasta,
+              );
+
+              final detallesConProductos = detallesResult.fold(
+                (failure) => <Map<String, dynamic>>[],
+                (detalles) => detalles,
+              );
+
+              // 5. Procesar empleados
               final empleadosUnicos = <int>{};
+              final nombresEmpleados = <int, String>{};
+              final montosPorEmpleado = <int, double>{};
+
               for (final venta in ventasFiltradas) {
-                _ventasPorEmpleado[venta.idEmpleado] =
-                    (_ventasPorEmpleado[venta.idEmpleado] ?? 0) + 1;
                 empleadosUnicos.add(venta.idEmpleado);
+                montosPorEmpleado[venta.idEmpleado] =
+                    (montosPorEmpleado[venta.idEmpleado] ?? 0.0) +
+                        (venta.total ?? 0.0);
               }
 
-              // Obtener nombres de empleados
               for (final idEmpleado in empleadosUnicos) {
                 try {
                   final usuarioResult =
-                      await _usuariosDataSource.getUsuarioById(idEmpleado);
-                  if (usuarioResult != null) {
-                    final personaResult = await _personasDataSource
-                        .getPersonaById(usuarioResult.identificacion);
-                    if (personaResult != null) {
-                      _nombresEmpleados[idEmpleado] =
-                          '${personaResult.nombres} ${personaResult.apellidos}';
-                    } else {
-                      _nombresEmpleados[idEmpleado] = 'Empleado #$idEmpleado';
-                    }
-                  } else {
-                    _nombresEmpleados[idEmpleado] = 'Empleado #$idEmpleado';
-                  }
+                      await _usuariosRepository.getUsuarioById(idEmpleado);
+                  usuarioResult.fold(
+                    (failure) {
+                      nombresEmpleados[idEmpleado] = 'Empleado #$idEmpleado';
+                    },
+                    (usuario) async {
+                      final personaResult = await _personasRepository
+                          .getPersonaByIdentificacion(usuario.identificacion);
+                      personaResult.fold(
+                        (failure) {
+                          nombresEmpleados[idEmpleado] =
+                              'Empleado #$idEmpleado';
+                        },
+                        (persona) {
+                          nombresEmpleados[idEmpleado] =
+                              '${persona.nombres} ${persona.apellidos}';
+                        },
+                      );
+                    },
+                  );
                 } catch (e) {
-                  _nombresEmpleados[idEmpleado] = 'Empleado #$idEmpleado';
+                  nombresEmpleados[idEmpleado] = 'Empleado #$idEmpleado';
                 }
               }
 
-              // 5. Ventas por tipo
-              _ventasPorTipo.clear();
-              for (final venta in ventasFiltradas) {
-                final tipo = venta.tipoVenta ?? 'Sin tipo';
-                _ventasPorTipo[tipo] = (_ventasPorTipo[tipo] ?? 0) + 1;
-              }
-
-              // 6. Productos más vendidos - obtener detalles de todas las ventas
-              _productosVendidos.clear();
-              _nombresProductos.clear();
-              final productosUnicos = <int>{};
+              // 6. Procesar clientes
+              final clientesUnicos = <String>{};
+              final nombresClientes = <String, String>{};
+              final montosPorCliente = <String, double>{};
 
               for (final venta in ventasFiltradas) {
-                final detallesResult = await _detalleVentaRepository
-                    .getDetallesByVenta(venta.idVenta ?? 0);
-                detallesResult.fold(
-                  (failure) {},
-                  (detalles) {
-                    for (final detalle in detalles) {
-                      _productosVendidos[detalle.idProducto] =
-                          (_productosVendidos[detalle.idProducto] ?? 0) +
-                              detalle.cantidad;
-                      productosUnicos.add(detalle.idProducto);
-                    }
-                  },
-                );
+                clientesUnicos.add(venta.cliente);
+                montosPorCliente[venta.cliente] =
+                    (montosPorCliente[venta.cliente] ?? 0.0) +
+                        (venta.total ?? 0.0);
               }
 
-              // Obtener nombres de productos
-              for (final idProducto in productosUnicos) {
+              for (final clienteId in clientesUnicos) {
                 try {
-                  final producto = await _productosDataSource
-                      .getProductById(idProducto.toString());
-                  if (producto != null) {
-                    _nombresProductos[idProducto] = producto.nombre;
-                  } else {
-                    _nombresProductos[idProducto] = 'Producto #$idProducto';
-                  }
+                  final personaResult = await _personasRepository
+                      .getPersonaByIdentificacion(clienteId);
+                  personaResult.fold(
+                    (failure) {
+                      nombresClientes[clienteId] = 'Cliente #$clienteId';
+                    },
+                    (persona) {
+                      nombresClientes[clienteId] =
+                          '${persona.nombres} ${persona.apellidos}';
+                    },
+                  );
                 } catch (e) {
-                  _nombresProductos[idProducto] = 'Producto #$idProducto';
+                  nombresClientes[clienteId] = 'Cliente #$clienteId';
                 }
               }
 
-              setState(() {});
+              // 7. Procesar productos y porciones
+              final productosVendidos = <int, int>{};
+              final nombresProductos = <int, String>{};
+              final porcionesVendidas = <int, int>{};
+              final nombresPorciones = <int, String>{};
+              final montosPorMesa = <int, double>{};
+
+              final categoriasPermitidas = [
+                ProductosCategorias.PRODUCTO.code,
+                ProductosCategorias.COMIDA.code,
+              ];
+
+              for (final detalleJson in detallesConProductos) {
+                final productoJson =
+                    detalleJson['TPRODUCTO'] as Map<String, dynamic>?;
+                if (productoJson == null) continue;
+
+                final producto = ProductoEntity.fromJson(productoJson);
+                final cantidad = detalleJson['CANTIDAD'] as int;
+                final idProducto = producto.idProducto!;
+
+                _productosCache[idProducto] = producto;
+
+                if (producto.categoria == ProductosCategorias.PORCION.code) {
+                  porcionesVendidas[idProducto] =
+                      (porcionesVendidas[idProducto] ?? 0) + cantidad;
+                  nombresPorciones[idProducto] = producto.nombre;
+                } else if (categoriasPermitidas.contains(producto.categoria)) {
+                  productosVendidos[idProducto] =
+                      (productosVendidos[idProducto] ?? 0) + cantidad;
+                  nombresProductos[idProducto] = producto.nombre;
+                }
+              }
+
+              // 8. Calcular montos por mesa
+              for (final venta in ventasFiltradas) {
+                montosPorMesa[venta.idMesa] =
+                    (montosPorMesa[venta.idMesa] ?? 0.0) + (venta.total ?? 0.0);
+              }
+
+              // 9. Calcular estadísticas completas
+              final estadisticas =
+                  EstadisticasVentasService.calcularEstadisticas(
+                ventas: ventasFiltradas,
+                facturas: facturas,
+                nombresEmpleados: nombresEmpleados,
+                nombresClientes: nombresClientes,
+                nombresMesas: nombresMesas,
+                nombresProductos: nombresProductos,
+                nombresPorciones: nombresPorciones,
+                productosVendidos: productosVendidos,
+                porcionesVendidas: porcionesVendidas,
+                montosPorEmpleado: montosPorEmpleado,
+                montosPorCliente: montosPorCliente,
+                montosPorMesa: montosPorMesa,
+                fechaInicio: _fechaInicio!,
+                fechaHasta: _fechaHasta!,
+                detallesConProductos: detallesConProductos,
+              );
+
+              setState(() {
+                _estadisticas = estadisticas;
+              });
 
               if (mounted) {
                 ref.read(appStateProvider.notifier).setLoading(false);
@@ -329,97 +417,41 @@ class _ReporteTotalVentasPageState
             },
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Inicio',
-                  selectedDate: _fechaInicio,
-                  onDateSelected: (fecha) {
-                    setState(() {
-                      _fechaInicio = fecha;
-                      if (_fechaHasta != null && _fechaInicio != null) {
-                        final diferencia =
-                            _fechaHasta!.difference(_fechaInicio!);
-                        final diasDiferencia = diferencia.inDays;
-                        if (diasDiferencia > 3) {
-                          _fechaHasta =
-                              _fechaInicio!.add(const Duration(days: 3));
-                          if (_fechaHasta != null &&
-                              _fechaHasta!.isAfter(DateTime.now())) {
-                            _fechaHasta = DateTime.now();
-                          }
-                        }
-                      }
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Hasta',
-                  selectedDate: _fechaHasta,
-                  onDateSelected: (fecha) {
-                    setState(() {
-                      if (_fechaInicio != null &&
-                          fecha != null &&
-                          fecha.isBefore(_fechaInicio!)) {
-                        DialogHelper.info(context,
-                            message:
-                                'La fecha hasta debe ser posterior a la fecha inicio',
-                            onConfirmed: () {});
-                        return;
-                      }
-                      _fechaHasta = fecha;
-                      if (_fechaHasta != null &&
-                          _fechaHasta!.isAfter(DateTime.now())) {
-                        _fechaHasta = DateTime.now();
-                      }
-                      if (_fechaInicio != null && _fechaHasta != null) {
-                        final diferencia =
-                            _fechaHasta!.difference(_fechaInicio!);
-                        final diasDiferencia = diferencia.inDays;
-                        if (diasDiferencia > 3) {
-                          DialogHelper.info(context,
-                              message: 'El rango máximo es de 3 días',
-                              onConfirmed: () {});
-                          _fechaHasta =
-                              _fechaInicio!.add(const Duration(days: 3));
-                        }
-                      }
-                    });
-                  },
-                ),
-              ),
-            ],
+          DateRangeWidget(
+            title: 'Rango de Fechas (máx. $MAX_DIAS días)',
+            startDate: _fechaInicio,
+            endDate: _fechaHasta,
+            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+            lastDate: DateTime.now(),
+            onDateRangeSelected: (desde, hasta) {
+              setState(() {
+                if (desde != null && hasta != null) {
+                  final diferencia = hasta.difference(desde);
+                  final diasDiferencia = diferencia.inDays;
+                  if (diasDiferencia > MAX_DIAS) {
+                    _fechaHasta = desde.add(const Duration(days: MAX_DIAS));
+                    if (_fechaHasta != null &&
+                        _fechaHasta!.isAfter(DateTime.now())) {
+                      _fechaHasta = DateTime.now();
+                    }
+                    DialogHelper.info(context,
+                        message: 'El rango máximo es de $MAX_DIAS días',
+                        onConfirmed: () {});
+                  } else {
+                    _fechaInicio = desde;
+                    _fechaHasta = hasta;
+                  }
+                  if (_fechaHasta != null &&
+                      _fechaHasta!.isAfter(DateTime.now())) {
+                    _fechaHasta = DateTime.now();
+                  }
+                } else {
+                  _fechaInicio = desde;
+                  _fechaHasta = hasta;
+                }
+              });
+            },
           ),
-          if (_fechaInicio != null && _fechaHasta != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ThemeApp.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline,
-                      size: 16, color: ThemeApp.primary),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Rango seleccionado: ${_fechaHasta!.difference(_fechaInicio!).inDays} días',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: ThemeApp.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
           const SizedBox(height: 16),
           CustomButton(
             text: 'Buscar',
@@ -434,181 +466,476 @@ class _ReporteTotalVentasPageState
   }
 
   Widget _buildContenidoReporte() {
-    return ref.watch(appStateProvider).isLoading
-        ? Center(child: ShimmerWidget.list(itemCount: 3))
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildEstadisticas(),
-              const SizedBox(height: 24),
-              _buildProductosMasVendidos(),
-              const SizedBox(height: 24),
-              _buildEmpleadoMasVentas(),
-              const SizedBox(height: 24),
-              _buildVentasPorTipo(),
-            ],
-          );
-  }
+    if (ref.watch(appStateProvider).isLoading) {
+      return Center(child: ShimmerWidget.list(itemCount: 3));
+    }
 
-  Widget _buildEstadisticas() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.analytics, color: ThemeApp.primary, size: 28),
-              SizedBox(width: 12),
-              Text(
-                'Resumen de Ventas',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: ThemeApp.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              EstadisticaCardWidget(
-                titulo: 'Total Ventas',
-                icon: Icons.point_of_sale,
-                color: ThemeApp.primary,
-                valor: '$_totalVentas',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Monto Total',
-                icon: Icons.attach_money,
-                color: Colors.green,
-                valor: '\$${_montoTotalVendido.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Promedio por Venta',
-                icon: Icons.trending_flat,
-                color: Colors.blue,
-                valor: '\$${_promedioVenta.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-            ],
-          ),
-        ],
-      ),
+    if (_estadisticas == null) {
+      return const NotFoundCard(
+        message: 'No se encontraron datos para el período seleccionado',
+        icon: Icons.bar_chart_outlined,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildEstadisticasBasicas(),
+        const SizedBox(height: 24),
+        _buildGraficoVentas(),
+        const SizedBox(height: 24),
+        _buildProductosConVentas(),
+        const SizedBox(height: 24),
+        _buildPorcionesMasVendidas(),
+        const SizedBox(height: 24),
+        _buildVentasPorEmpleado(),
+        const SizedBox(height: 24),
+        _buildClienteTop(),
+        const SizedBox(height: 24),
+        _buildVentasPorMesa(),
+        const SizedBox(height: 24),
+        _buildVentasPorTipo(),
+        const SizedBox(height: 24),
+        _buildEstadisticasAdicionales(),
+      ],
     );
   }
 
-  Widget _buildProductosMasVendidos() {
-    if (_productosVendidos.isEmpty) {
+  Widget _buildEstadisticasBasicas() {
+    if (_estadisticas == null) return const SizedBox.shrink();
+
+    return EstadisticasBasicasWidget(
+      titulo: 'Resumen de Ventas',
+      icono: Icons.analytics,
+      estadisticas: [
+        EstadisticaBasica(
+          titulo: 'Total Ventas',
+          valor: '${_estadisticas!.totalVentas}',
+          icon: Icons.point_of_sale,
+          color: ThemeApp.primary,
+        ),
+        EstadisticaBasica(
+          titulo: 'Monto Total',
+          valor: '\$${_estadisticas!.montoTotalVendido.toStringAsFixed(2)}',
+          icon: Icons.attach_money,
+          color: Colors.green,
+        ),
+        EstadisticaBasica(
+          titulo: 'Promedio por Venta',
+          valor: '\$${_estadisticas!.promedioVenta.toStringAsFixed(2)}',
+          icon: Icons.trending_flat,
+          color: Colors.blue,
+        ),
+        EstadisticaBasica(
+          titulo: 'Promedio por Día',
+          valor: '\$${_estadisticas!.promedioPorDia.toStringAsFixed(2)}',
+          icon: Icons.calendar_today,
+          color: Colors.orange,
+        ),
+        EstadisticaBasica(
+          titulo: 'Total Facturas',
+          valor: '${_estadisticas!.totalFacturas}',
+          icon: Icons.receipt,
+          color: Colors.purple,
+        ),
+        EstadisticaBasica(
+          titulo: 'Monto Facturado',
+          valor: '\$${_estadisticas!.montoTotalFacturado.toStringAsFixed(2)}',
+          icon: Icons.account_balance_wallet,
+          color: Colors.teal,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGraficoVentas() {
+    if (_estadisticas == null || _estadisticas!.ventasPorDia.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // Ordenar productos por cantidad descendente
-    final productosOrdenados = _productosVendidos.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    return GraficoVentasCompletoWidget(
+      ventasPorDia: _estadisticas!.ventasPorDia,
+      mostrarMontos: true,
+    );
+  }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.restaurant_menu, color: ThemeApp.primary, size: 24),
-              SizedBox(width: 12),
-              Text(
-                'Productos Más Vendidos',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: ThemeApp.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...productosOrdenados.take(10).map((entry) {
-            final nombreProducto =
-                _nombresProductos[entry.key] ?? 'Producto #${entry.key}';
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildProductosConVentas() {
+    if (_estadisticas == null || _estadisticas!.productosConVentas.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final productosIniciales =
+        _estadisticas!.productosConVentas.take(5).toList();
+    final tieneMas = _estadisticas!.productosConVentas.length > 5;
+
+    Widget _buildItemProducto(ProductoVentaCount producto) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      nombreProducto,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: ThemeApp.textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Text(
+                    producto.nombreProducto,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: ThemeApp.textPrimary,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: ThemeApp.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${entry.value} unidades',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ThemeApp.primary,
-                      ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${producto.cantidadUnidades} unidades',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: ThemeApp.textSecondary,
                     ),
                   ),
                 ],
               ),
-            );
-          }),
-        ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${producto.cantidadVentas} ventas',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: ThemeApp.primary,
+                    ),
+                  ),
+                  if (producto.montoTotal > 0)
+                    Text(
+                      '\$${producto.montoTotal.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: ThemeApp.textSecondary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ExpandibleSectionWidget(
+      titulo: 'Productos Vendidos',
+      icono: Icons.restaurant_menu,
+      contenidoInicial: Column(
+        children: productosIniciales.map(_buildItemProducto).toList(),
       ),
+      contenido: Column(
+        children:
+            _estadisticas!.productosConVentas.map(_buildItemProducto).toList(),
+      ),
+      mostrarVerMas: tieneMas,
     );
   }
 
-  Widget _buildEmpleadoMasVentas() {
-    if (_ventasPorEmpleado.isEmpty) {
+  Widget _buildPorcionesMasVendidas() {
+    if (_estadisticas == null || _estadisticas!.porcionesVendidas.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // Ordenar empleados por cantidad de ventas descendente
-    final empleadosOrdenados = _ventasPorEmpleado.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final porcionesIniciales =
+        _estadisticas!.porcionesVendidas.take(5).toList();
+    final tieneMas = _estadisticas!.porcionesVendidas.length > 5;
 
-    final empleadoTop = empleadosOrdenados.first;
-    final nombreEmpleado =
-        _nombresEmpleados[empleadoTop.key] ?? 'Empleado #${empleadoTop.key}';
+    Widget _buildItemPorcion(PorcionStats porcion) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                porcion.nombreProducto,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: ThemeApp.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${porcion.cantidadVendida} unidades',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: ThemeApp.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ExpandibleSectionWidget(
+      titulo: 'Porciones Más Vendidas',
+      icono: Icons.fastfood,
+      contenidoInicial: Column(
+        children: [
+          if (_estadisticas!.porcionTop != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: ThemeApp.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _estadisticas!.porcionTop!.nombreProducto,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_estadisticas!.porcionTop!.cantidadVendida} unidades',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ...porcionesIniciales.map(_buildItemPorcion).toList(),
+        ],
+      ),
+      contenido: Column(
+        children: [
+          if (_estadisticas!.porcionTop != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: ThemeApp.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _estadisticas!.porcionTop!.nombreProducto,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_estadisticas!.porcionTop!.cantidadVendida} unidades',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ..._estadisticas!.porcionesVendidas.map(_buildItemPorcion).toList(),
+        ],
+      ),
+      mostrarVerMas: tieneMas,
+    );
+  }
+
+  Widget _buildVentasPorEmpleado() {
+    if (_estadisticas == null || _estadisticas!.ventasPorEmpleado.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final empleadosIniciales =
+        _estadisticas!.ventasPorEmpleado.take(5).toList();
+    final tieneMas = _estadisticas!.ventasPorEmpleado.length > 5;
+
+    Widget _buildItemEmpleado(VentaEmpleadoStats empleado) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                empleado.nombreEmpleado,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: ThemeApp.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${empleado.totalVentas} venta${empleado.totalVentas > 1 ? 's' : ''}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: ThemeApp.primary,
+                    ),
+                  ),
+                  Text(
+                    '\$${empleado.montoTotal.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: ThemeApp.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ExpandibleSectionWidget(
+      titulo: 'Ventas por Empleado',
+      icono: Icons.person,
+      contenidoInicial: Column(
+        children: [
+          if (_estadisticas!.empleadoTop != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: ThemeApp.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _estadisticas!.empleadoTop!.nombreEmpleado,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_estadisticas!.empleadoTop!.totalVentas} venta${_estadisticas!.empleadoTop!.totalVentas > 1 ? 's' : ''} - \$${_estadisticas!.empleadoTop!.montoTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ...empleadosIniciales.map(_buildItemEmpleado).toList(),
+        ],
+      ),
+      contenido: Column(
+        children: [
+          if (_estadisticas!.empleadoTop != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: ThemeApp.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _estadisticas!.empleadoTop!.nombreEmpleado,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_estadisticas!.empleadoTop!.totalVentas} venta${_estadisticas!.empleadoTop!.totalVentas > 1 ? 's' : ''} - \$${_estadisticas!.empleadoTop!.montoTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ..._estadisticas!.ventasPorEmpleado.map(_buildItemEmpleado).toList(),
+        ],
+      ),
+      mostrarVerMas: tieneMas,
+    );
+  }
+
+  Widget _buildClienteTop() {
+    if (_estadisticas == null || _estadisticas!.ventasPorCliente.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -628,10 +955,10 @@ class _ReporteTotalVentasPageState
         children: [
           const Row(
             children: [
-              Icon(Icons.person, color: ThemeApp.primary, size: 24),
+              Icon(Icons.people, color: ThemeApp.primary, size: 24),
               SizedBox(width: 12),
               Text(
-                'Empleado con Más Ventas',
+                'Cliente que Más Compra',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -641,151 +968,331 @@ class _ReporteTotalVentasPageState
             ],
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: ThemeApp.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+          if (_estadisticas!.clienteTop != null) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: ThemeApp.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _estadisticas!.clienteTop!.nombreCliente,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_estadisticas!.clienteTop!.totalCompras} compra${_estadisticas!.clienteTop!.totalCompras > 1 ? 's' : ''} - \$${_estadisticas!.clienteTop!.montoTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.star, color: ThemeApp.primary, size: 32),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            if (_estadisticas!.ventasPorCliente.length > 1) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Top 5 Clientes',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: ThemeApp.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ..._estadisticas!.ventasPorCliente.take(5).map((cliente) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        nombreEmpleado,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: ThemeApp.textPrimary,
+                      Expanded(
+                        child: Text(
+                          cliente.nombreCliente,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
-                        '${empleadoTop.value} venta${empleadoTop.value > 1 ? 's' : ''}',
+                        '${cliente.totalCompras} compra${cliente.totalCompras > 1 ? 's' : ''}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: ThemeApp.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          color: ThemeApp.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          if (empleadosOrdenados.length > 1) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Top 5 Empleados',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: ThemeApp.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...empleadosOrdenados.take(5).map((entry) {
-              final nombre =
-                  _nombresEmpleados[entry.key] ?? 'Empleado #${entry.key}';
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        nombre,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: ThemeApp.textSecondary,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${entry.value} venta${entry.value > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ThemeApp.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+                );
+              }),
+            ],
           ],
         ],
       ),
     );
   }
 
-  Widget _buildVentasPorTipo() {
-    if (_ventasPorTipo.isEmpty) {
+  Widget _buildVentasPorMesa() {
+    if (_estadisticas == null || _estadisticas!.ventasPorMesa.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.category, color: ThemeApp.primary, size: 24),
-              SizedBox(width: 12),
-              Text(
-                'Ventas por Tipo',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+    final mesasIniciales = _estadisticas!.ventasPorMesa.take(5).toList();
+    final tieneMas = _estadisticas!.ventasPorMesa.length > 5;
+
+    Widget _buildItemMesa(MesaStats mesa) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                mesa.nombreMesa,
+                style: const TextStyle(
+                  fontSize: 14,
                   color: ThemeApp.textPrimary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ..._ventasPorTipo.entries.map((entry) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    entry.key,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: ThemeApp.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    '${entry.value} venta${entry.value > 1 ? 's' : ''}',
+                    '${mesa.totalVentas} venta${mesa.totalVentas > 1 ? 's' : ''}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: ThemeApp.textPrimary,
+                      color: ThemeApp.primary,
+                    ),
+                  ),
+                  Text(
+                    '\$${mesa.montoTotal.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: ThemeApp.textSecondary,
                     ),
                   ),
                 ],
               ),
-            );
-          }),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ExpandibleSectionWidget(
+      titulo: 'Ventas por Mesa',
+      icono: Icons.table_restaurant,
+      contenidoInicial: Column(
+        children: [
+          if (_estadisticas!.mesaTop != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: ThemeApp.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _estadisticas!.mesaTop!.nombreMesa,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_estadisticas!.mesaTop!.totalVentas} venta${_estadisticas!.mesaTop!.totalVentas > 1 ? 's' : ''} - \$${_estadisticas!.mesaTop!.montoTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ...mesasIniciales.map(_buildItemMesa).toList(),
         ],
       ),
+      contenido: Column(
+        children: [
+          if (_estadisticas!.mesaTop != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: ThemeApp.primary, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _estadisticas!.mesaTop!.nombreMesa,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_estadisticas!.mesaTop!.totalVentas} venta${_estadisticas!.mesaTop!.totalVentas > 1 ? 's' : ''} - \$${_estadisticas!.mesaTop!.montoTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ..._estadisticas!.ventasPorMesa.map(_buildItemMesa).toList(),
+        ],
+      ),
+      mostrarVerMas: tieneMas,
+    );
+  }
+
+  Widget _buildVentasPorTipo() {
+    if (_estadisticas == null || _estadisticas!.ventasPorTipo.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final tiposOrdenados = _estadisticas!.ventasPorTipo.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final tiposIniciales = tiposOrdenados.take(5).toList();
+    final tieneMas = tiposOrdenados.length > 5;
+
+    Widget _buildItemTipo(MapEntry<String, int> entry) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                entry.key,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: ThemeApp.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ThemeApp.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${entry.value} venta${entry.value > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: ThemeApp.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ExpandibleSectionWidget(
+      titulo: 'Ventas por Tipo',
+      icono: Icons.category,
+      contenidoInicial: Column(
+        children: tiposIniciales.map(_buildItemTipo).toList(),
+      ),
+      contenido: Column(
+        children: tiposOrdenados.map(_buildItemTipo).toList(),
+      ),
+      mostrarVerMas: tieneMas,
+    );
+  }
+
+  Widget _buildEstadisticasAdicionales() {
+    if (_estadisticas == null) return const SizedBox.shrink();
+
+    return EstadisticasBasicasWidget(
+      titulo: 'Estadísticas Adicionales',
+      icono: Icons.insights,
+      estadisticas: [
+        EstadisticaBasica(
+          titulo: 'Ticket Promedio',
+          valor: '\$${_estadisticas!.ticketPromedio.toStringAsFixed(2)}',
+          icon: Icons.receipt_long,
+          color: Colors.blue,
+        ),
+        EstadisticaBasica(
+          titulo: 'Ventas con Delivery',
+          valor: '${_estadisticas!.ventasConDelivery}',
+          icon: Icons.delivery_dining,
+          color: Colors.orange,
+        ),
+        EstadisticaBasica(
+          titulo: 'Monto Total Delivery',
+          valor: '\$${_estadisticas!.montoTotalDelivery.toStringAsFixed(2)}',
+          icon: Icons.local_shipping,
+          color: Colors.teal,
+        ),
+        EstadisticaBasica(
+          titulo: 'Promedio Delivery',
+          valor: _estadisticas!.ventasConDelivery > 0
+              ? '\$${(_estadisticas!.montoTotalDelivery / _estadisticas!.ventasConDelivery).toStringAsFixed(2)}'
+              : '\$0.00',
+          icon: Icons.trending_up,
+          color: Colors.purple,
+        ),
+      ],
     );
   }
 }

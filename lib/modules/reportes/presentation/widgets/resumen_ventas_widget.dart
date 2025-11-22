@@ -228,8 +228,8 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                 Color(0xFF1E3A5F),
-                 Color(0xFF2E5C8A),
+                Color(0xFF1E3A5F),
+                Color(0xFF2E5C8A),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
@@ -249,9 +249,9 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
                   Icon(Icons.dashboard, color: Colors.white, size: 28),
                   SizedBox(width: 12),
                   Text(
-                    'Resumen de Ventas por Sucursal - Últimos 3 Días',
+                    'Resumen de Ventas por Sucursal',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -260,9 +260,9 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Desliza para ver cada sucursal',
+                'Últimos 3 Días, desliza para ver cada sucursal',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: Colors.white.withOpacity(0.7),
                 ),
               ),
@@ -271,7 +271,7 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 380,
+          height: 420,
           child: PageView.builder(
             controller: _pageController,
             itemCount: _sucursalesStats.length,
@@ -308,7 +308,7 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
         borderRadius: BorderRadius.circular(4),
         color: _currentPage == index
             ? const Color(0xFF1E3A5F)
-            : const Color(0xFF1E3A5F).withOpacity(0.3),
+            : const Color(0xFF1E3A5F).withOpacity(0.1),
       ),
     );
   }
@@ -335,110 +335,112 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header de la sucursal
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF1E3A5F).withOpacity(0.8),
-                  const Color(0xFF2E5C8A).withOpacity(0.8),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header de la sucursal
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1E3A5F),
+                    const Color(0xFF2E5C8A).withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.store, color: Colors.white, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          stats.sucursal.nombre,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (stats.sucursal.direccion != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            stats.sucursal.direccion!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            const SizedBox(height: 16),
+            Row(
               children: [
-                const Icon(Icons.store, color: Colors.white, size: 24),
+                Expanded(
+                  child: _buildStatCard(
+                    'Total Ventas',
+                    '${stats.totalVentasUltimos3Dias}',
+                    Icons.point_of_sale,
+                    const Color(0xFF1E3A5F),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        stats.sucursal.nombre,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      if (stats.sucursal.direccion != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          stats.sucursal.direccion!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.8),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
+                  child: _buildStatCard(
+                    'Monto Total',
+                    '\$${stats.montoTotalUltimos3Dias.toStringAsFixed(2)}',
+                    Icons.attach_money,
+                    const Color(0xFF1E3A5F),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Promedio',
+                    '\$${stats.promedioVenta.toStringAsFixed(2)}',
+                    Icons.trending_flat,
+                    const Color(0xFF1E3A5F),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          // Estadísticas principales
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Total Ventas',
-                  '${stats.totalVentasUltimos3Dias}',
-                  Icons.point_of_sale,
-                  const Color(0xFF1E3A5F),
+            const SizedBox(height: 16),
+            // Gráfico de ventas
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF1E3A5F),
+                    Color(0xFF2E5C8A),
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'Monto Total',
-                  '\$${stats.montoTotalUltimos3Dias.toStringAsFixed(2)}',
-                  Icons.attach_money,
-                  const Color(0xFF1E3A5F),
-                ),
+              child: GraficoVentasWidget(
+                ventasPorDia: stats.ventasPorDia,
+                maxVentas: maxVentas,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'Promedio',
-                  '\$${stats.promedioVenta.toStringAsFixed(2)}',
-                  Icons.trending_flat,
-                  const Color(0xFF1E3A5F),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Gráfico de ventas
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF1E3A5F).withOpacity(0.1),
-                  const Color(0xFF2E5C8A).withOpacity(0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: GraficoVentasWidget(
-              ventasPorDia: stats.ventasPorDia,
-              maxVentas: maxVentas,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

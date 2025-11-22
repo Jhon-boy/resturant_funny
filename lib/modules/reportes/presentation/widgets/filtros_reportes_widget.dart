@@ -83,90 +83,29 @@ class FiltrosReportesWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Inicio',
-                  hint: 'Seleccionar',
-                  selectedDate: fechaInicio,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: DateTime.now(),
-                  initialDate:
-                      DateTime.now().subtract(const Duration(days: 30)),
-                  icon: Icons.calendar_today,
-                  onDateSelected: (fecha) {
-                    if (fecha == null) {
-                      onFechasChanged(null, fechaHasta);
-                      return;
-                    }
-
-                    // Si hay fecha hasta y la diferencia es mayor a 3 días, ajustar
-                    DateTime? nuevaFechaHasta = fechaHasta;
-                    if (fechaHasta != null) {
-                      final diferencia = fechaHasta!.difference(fecha).inDays;
-                      if (diferencia > 3) {
-                        nuevaFechaHasta = fecha.add(const Duration(days: 3));
-                        if (nuevaFechaHasta.isAfter(DateTime.now())) {
-                          nuevaFechaHasta = DateTime.now();
-                        }
-                      }
-                    }
-
-                    onFechasChanged(fecha, nuevaFechaHasta);
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Hasta',
-                  hint: 'Seleccionar',
-                  selectedDate: fechaHasta,
-                  firstDate: fechaInicio ??
-                      DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: fechaInicio != null
-                      ? (fechaInicio!
-                              .add(const Duration(days: 3))
-                              .isBefore(DateTime.now())
-                          ? fechaInicio!.add(const Duration(days: 3))
-                          : DateTime.now())
-                      : DateTime.now(),
-                  initialDate: fechaInicio != null
-                      ? (fechaInicio!
-                              .add(const Duration(days: 1))
-                              .isBefore(DateTime.now())
-                          ? fechaInicio!.add(const Duration(days: 1))
-                          : DateTime.now())
-                      : DateTime.now(),
-                  icon: Icons.calendar_today,
-                  onDateSelected: (fecha) {
-                    if (fecha == null) {
-                      onFechasChanged(fechaInicio, null);
-                      return;
-                    }
-
-                    // Validar que no sea mayor a 3 días desde fecha inicio
-                    if (fechaInicio != null) {
-                      final diferencia = fecha.difference(fechaInicio!).inDays;
-                      if (diferencia > 3) {
-                        // Mostrar error o ajustar automáticamente
-                        final fechaMaxima =
-                            fechaInicio!.add(const Duration(days: 3));
-                        if (fechaMaxima.isAfter(DateTime.now())) {
-                          onFechasChanged(fechaInicio, DateTime.now());
-                        } else {
-                          onFechasChanged(fechaInicio, fechaMaxima);
-                        }
-                        return;
-                      }
-                    }
-
-                    onFechasChanged(fechaInicio, fecha);
-                  },
-                ),
-              ),
-            ],
+          DateRangeWidget(
+            title: 'Rango de Fechas (máx. 3 días)',
+            startDate: fechaInicio,
+            endDate: fechaHasta,
+            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+            lastDate: DateTime.now(),
+            onDateRangeSelected: (desde, hasta) {
+              if (desde != null && hasta != null) {
+                final diferencia = hasta.difference(desde).inDays;
+                if (diferencia > 3) {
+                  final nuevaFechaHasta = desde.add(const Duration(days: 3));
+                  if (nuevaFechaHasta.isAfter(DateTime.now())) {
+                    onFechasChanged(desde, DateTime.now());
+                  } else {
+                    onFechasChanged(desde, nuevaFechaHasta);
+                  }
+                } else {
+                  onFechasChanged(desde, hasta);
+                }
+              } else {
+                onFechasChanged(desde, hasta);
+              }
+            },
           ),
           if (fechaInicio != null && fechaHasta != null)
             Builder(

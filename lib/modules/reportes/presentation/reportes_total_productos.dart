@@ -3,18 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
+import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/main/domain/entity/producto_entity.dart';
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
 import 'package:resturant_funny/modules/main/data/datasource/productos_remote_data_source.dart';
 import 'package:resturant_funny/modules/main/data/repository/productos_repository_impl.dart';
 import 'package:resturant_funny/modules/main/domain/repository/productos_repository.dart';
-import 'package:resturant_funny/modules/reportes/presentation/widgets/estadistica_card_widget.dart';
+import 'package:resturant_funny/modules/reportes/domain/models/producto_venta_stats.dart';
+import 'package:resturant_funny/modules/reportes/domain/services/estadisticas_productos_service.dart';
+import 'package:resturant_funny/modules/reportes/presentation/widgets/estadisticas_basicas_widget.dart';
 import 'package:resturant_funny/modules/reportes/presentation/widgets/reporte_data_table_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/shimmer_widget.dart';
+import 'package:resturant_funny/modules/ventas/data/datasource/detalles_ventas_datasource.dart';
+import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_source.dart';
+import 'package:resturant_funny/modules/ventas/data/repository/detalles_venta_impl.dart';
+import 'package:resturant_funny/modules/ventas/data/repository/ventas_repository_impl.dart';
+import 'package:resturant_funny/modules/ventas/domain/repository/detalle_venta_repository.dart';
+import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
+import 'package:resturant_funny/modules/main/data/datasource/mesa_remote_data_source.dart';
+import 'package:resturant_funny/modules/main/data/repository/mesa_repository_impl.dart';
+import 'package:resturant_funny/modules/main/domain/repository/mesa_repository.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
+import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:resturant_funny/shared/widgets/not_found_card.dart';
 
 class ReporteTotalProductosPage extends ConsumerStatefulWidget {
   const ReporteTotalProductosPage({super.key, required this.sucursales});
@@ -28,11 +42,20 @@ class ReporteTotalProductosPage extends ConsumerStatefulWidget {
 class _ReporteTotalProductosPageState
     extends ConsumerState<ReporteTotalProductosPage> {
   late ProductosRepository _productosRepository;
+  late DetalleVentaRepository _detalleVentaRepository;
+  late VentaRepository _ventaRepository;
+  late MesaRepository _mesaRepository;
 
   // Filtros
   SucursalEntity? _sucursalSeleccionada;
+  DateTime? _fechaDesde;
+  DateTime? _fechaHasta;
 
+  // Datos
   List<ProductoEntity> _productos = [];
+  EstadisticasProductos? _estadisticas;
+
+  // Estadísticas básicas de productos
   int _totalProductos = 0;
   double _precioPromedio = 0.0;
   double _precioMaximo = 0.0;
@@ -46,9 +69,25 @@ class _ReporteTotalProductosPageState
       _productosRepository = ProductosRepositoryImpl(
         ProductosRemoteDataSource(ref: ref),
       );
+      _detalleVentaRepository = DetalleVentaRepositoryImpl(
+        DetalleVentaRemoteDataSource(ref: ref),
+      );
+      _ventaRepository = VentaRepositoryImpl(
+        VentasRemoteDataSource(ref: ref),
+      );
+      _mesaRepository = MesaRepositoryImpl(
+        MesasRemoteDataSource(ref: ref),
+      );
+
+      final ahora = DateTime.now();
+      _fechaHasta = DateTime(ahora.year, ahora.month, ahora.day, 23, 59, 59);
+      _fechaDesde = _fechaHasta!.subtract(const Duration(days: 30));
+
       // Seleccionar primera sucursal por defecto si existe
       if (widget.sucursales.isNotEmpty) {
         _sucursalSeleccionada = widget.sucursales.first;
+        SnackHelper.show(context,
+            message: 'Seleccionando sucursal', isSuccess: true);
         _cargarDatos();
       }
     });
@@ -58,6 +97,7 @@ class _ReporteTotalProductosPageState
     if (_sucursalSeleccionada == null) {
       setState(() {
         _productos = [];
+        _estadisticas = null;
         _totalProductos = 0;
         _precioPromedio = 0.0;
         _precioMaximo = 0.0;
@@ -70,20 +110,21 @@ class _ReporteTotalProductosPageState
     ref.read(appStateProvider.notifier).setLoading(true);
 
     try {
+      // Cargar productos
       final productosResult = await _productosRepository.getProductos(
         _sucursalSeleccionada!.idSucursal ?? 0,
       );
 
-      productosResult.fold(
-        (failure) {
+      await productosResult.fold(
+        (failure) async {
           DialogHelper.error(context,
               message: failure.message, onConfirmed: () {});
           if (mounted) {
             ref.read(appStateProvider.notifier).setLoading(false);
           }
         },
-        (productos) {
-          // Calcular estadísticas
+        (productos) async {
+          // Calcular estadísticas básicas
           _totalProductos = productos.length;
 
           if (productos.isNotEmpty) {
@@ -102,6 +143,78 @@ class _ReporteTotalProductosPageState
           for (final producto in productos) {
             _productosPorCategoria[producto.categoria] =
                 (_productosPorCategoria[producto.categoria] ?? 0) + 1;
+          }
+
+          // Cargar estadísticas de productos vendidos
+          try {
+            // 1. Obtener mesas de la sucursal
+            final mesasResult = await _mesaRepository.getMesasBySucursal(
+              _sucursalSeleccionada!.idSucursal ?? 0,
+            );
+
+            await mesasResult.fold(
+              (failure) async {
+                _estadisticas = null;
+              },
+              (mesas) async {
+                if (mesas.isEmpty) {
+                  _estadisticas = null;
+                  return;
+                }
+
+                final idsMesas = mesas.map((m) => m.idMesa ?? 0).toList();
+
+                // 2. Obtener ventas de esas mesas
+                final ventasResult = await _ventaRepository.getVentas(
+                  fechaDesde: _fechaDesde,
+                  fechaHasta: _fechaHasta?.add(const Duration(days: 1)),
+                );
+
+                await ventasResult.fold(
+                  (failure) async {
+                    _estadisticas = null;
+                  },
+                  (ventas) async {
+                    // Filtrar ventas por mesas de la sucursal
+                    final ventasFiltradas = ventas
+                        .where((v) => idsMesas.contains(v.idMesa))
+                        .toList();
+
+                    final idsVentas =
+                        ventasFiltradas.map((v) => v.idVenta!).toList();
+
+                    if (idsVentas.isEmpty) {
+                      _estadisticas = null;
+                      return;
+                    }
+
+                    // 3. Obtener detalles con productos
+                    final detallesResult = await _detalleVentaRepository
+                        .getDetallesConProductosBySucursal(
+                      idsVentas,
+                      fechaDesde: _fechaDesde,
+                      fechaHasta: _fechaHasta,
+                    );
+
+                    final detallesConProductos = detallesResult.fold(
+                      (failure) => <Map<String, dynamic>>[],
+                      (detalles) => detalles,
+                    );
+
+                    if (detallesConProductos.isNotEmpty) {
+                      _estadisticas =
+                          EstadisticasProductosService.calcularEstadisticas(
+                        detallesConProductos,
+                      );
+                    } else {
+                      _estadisticas = null;
+                    }
+                  },
+                );
+              },
+            );
+          } catch (e) {
+            _estadisticas = null;
           }
 
           setState(() {
@@ -137,13 +250,10 @@ class _ReporteTotalProductosPageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Filtros
             _buildFiltros(),
             const SizedBox(height: 24),
-            // Contenido del reporte
             _buildContenidoReporte(),
             const SizedBox(height: 24),
-            // Botón para generar PDF
             CustomButton(
               text: 'Generar PDF',
               colorButton: ThemeApp.primary,
@@ -196,6 +306,21 @@ class _ReporteTotalProductosPageState
               _cargarDatos();
             },
           ),
+          const SizedBox(height: 16),
+          DateRangeWidget(
+            title: 'Rango de Fechas (para estadísticas de ventas)',
+            startDate: _fechaDesde,
+            endDate: _fechaHasta,
+            firstDate: DateTime(2020),
+            lastDate: DateTime.now(),
+            onDateRangeSelected: (desde, hasta) {
+              setState(() {
+                _fechaDesde = desde;
+                _fechaHasta = hasta;
+              });
+              _cargarDatos();
+            },
+          ),
         ],
       ),
     );
@@ -207,14 +332,163 @@ class _ReporteTotalProductosPageState
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildEstadisticas(),
+              if (_estadisticas != null) ...[
+                _buildEstadisticasVentas(),
+                const SizedBox(height: 24),
+              ],
+              _buildEstadisticasBasicas(),
               const SizedBox(height: 24),
               _buildListaProductos(),
             ],
           );
   }
 
-  Widget _buildEstadisticas() {
+  Widget _buildEstadisticasVentas() {
+    final stats = _estadisticas!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                ThemeApp.primary.withOpacity(0.8),
+                ThemeApp.primary,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: ThemeApp.primary.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.analytics, color: Colors.white, size: 32),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Estadísticas de Productos Vendidos',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Producto más vendido
+        if (stats.productoMasVendido != null)
+          _buildProductoMasVendidoCard(stats.productoMasVendido!),
+        const SizedBox(height: 16),
+        // Grid de estadísticas
+        EstadisticasBasicasWidget(
+          titulo: 'Estadísticas de Ventas',
+          icono: Icons.analytics,
+          estadisticas: [
+            EstadisticaBasica(
+              titulo: 'Total Unidades Vendidas',
+              valor: '${stats.totalUnidadesVendidas}',
+              icon: Icons.shopping_cart,
+              color: Colors.blue,
+            ),
+            EstadisticaBasica(
+              titulo: 'Total Ingresos',
+              valor: '\$${stats.totalIngresosProductos.toStringAsFixed(2)}',
+              icon: Icons.attach_money,
+              color: Colors.green,
+            ),
+            EstadisticaBasica(
+              titulo: 'Productos Diferentes',
+              valor: '${stats.totalProductosDiferentes}',
+              icon: Icons.inventory_2,
+              color: Colors.orange,
+            ),
+            if (stats.categoriaMasConsumida != null)
+              EstadisticaBasica(
+                titulo: 'Categoría Más Consumida',
+                valor: stats.categoriaMasConsumida!.categoria,
+                icon: Icons.category,
+                color: Colors.purple,
+              ),
+          ],
+        ),
+        // Top productos
+        if (stats.topProductos.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _buildTopProductos(stats.topProductos),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildProductoMasVendidoCard(ProductoVentaStats producto) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber, width: 2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.star, color: Colors.amber, size: 32),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Producto Más Vendido',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.amber,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  producto.producto.nombre,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: ThemeApp.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${producto.totalCantidadVendida} unidades vendidas • \$${producto.totalIngresos.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: ThemeApp.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopProductos(List<ProductoVentaStats> topProductos) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -233,135 +507,128 @@ class _ReporteTotalProductosPageState
         children: [
           const Row(
             children: [
-              Icon(Icons.analytics, color: ThemeApp.primary, size: 28),
-              SizedBox(width: 12),
+              Icon(Icons.trending_up, color: ThemeApp.primary, size: 24),
+              SizedBox(width: 8),
               Text(
-                'Estadísticas',
+                'Top 5 Productos Más Vendidos',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: ThemeApp.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              EstadisticaCardWidget(
-                titulo: 'Total Productos',
-                icon: Icons.restaurant_menu,
-                color: Colors.orange,
-                valor: '$_totalProductos',
-                onTap: () {},
+          const SizedBox(height: 16),
+          ...topProductos.asMap().entries.map((entry) {
+            final index = entry.key;
+            final producto = entry.value;
+            return Container(
+              margin: EdgeInsets.only(
+                  bottom: index < topProductos.length - 1 ? 12 : 0),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ThemeApp.baseText,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
               ),
-              EstadisticaCardWidget(
-                titulo: 'Precio Promedio',
-                icon: Icons.attach_money,
-                color: Colors.blue,
-                valor: '\$${_precioPromedio.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Precio Máximo',
-                icon: Icons.trending_up,
-                color: Colors.purple,
-                valor: '\$${_precioMaximo.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Precio Mínimo',
-                icon: Icons.trending_down,
-                color: Colors.teal,
-                valor: '\$${_precioMinimo.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-            ],
-          ),
-          if (_productosPorCategoria.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            const Text(
-              'Productos por Categoría',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: ThemeApp.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ..._productosPorCategoria.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: ThemeApp.textSecondary,
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: ThemeApp.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${index + 1}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: ThemeApp.primary,
+                        ),
                       ),
                     ),
-                    Text(
-                      '${entry.value} producto${entry.value > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ThemeApp.textPrimary,
-                      ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          producto.producto.nombre,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeApp.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${producto.totalCantidadVendida} unidades • \$${producto.totalIngresos.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: ThemeApp.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }),
-          ],
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
+  Widget _buildEstadisticasBasicas() {
+    return EstadisticasBasicasWidget(
+      titulo: 'Estadísticas de Productos en Inventario',
+      icono: Icons.info_outline,
+      estadisticas: [
+        EstadisticaBasica(
+          titulo: 'Total Productos',
+          valor: '$_totalProductos',
+          icon: Icons.inventory_2,
+          color: Colors.blue,
+        ),
+        EstadisticaBasica(
+          titulo: 'Precio Promedio',
+          valor: '\$${_precioPromedio.toStringAsFixed(2)}',
+          icon: Icons.attach_money,
+          color: Colors.green,
+        ),
+        EstadisticaBasica(
+          titulo: 'Precio Máximo',
+          valor: '\$${_precioMaximo.toStringAsFixed(2)}',
+          icon: Icons.trending_up,
+          color: Colors.orange,
+        ),
+        EstadisticaBasica(
+          titulo: 'Precio Mínimo',
+          valor: '\$${_precioMinimo.toStringAsFixed(2)}',
+          icon: Icons.trending_down,
+          color: Colors.red,
+        ),
+      ],
+    );
+  }
+
   Widget _buildListaProductos() {
     if (_productos.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: const Column(
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 64,
-              color: ThemeApp.textSecondary,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'No se encontraron productos en el período seleccionado',
-              style: TextStyle(
-                fontSize: 16,
-                color: ThemeApp.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
+      return const NotFoundCard(
+          message: 'No se encontraron productos',
+          icon: Icons.inventory_2_outlined);
     }
 
     return ReporteDataTableWidget(
-      titulo: 'Tabla de Productos',
+      titulo: 'Listado Completo de Productos',
       icono: Icons.table_chart,
-      mensajeVacio: 'No se encontraron productos en el período seleccionado',
+      mensajeVacio: 'No se encontraron productos',
       columns: const [
         DataColumn(
           label: Text(
@@ -372,6 +639,12 @@ class _ReporteTotalProductosPageState
         DataColumn(
           label: Text(
             'Nombre',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            'Descripción',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
@@ -410,7 +683,29 @@ class _ReporteTotalProductosPageState
         return DataRow(
           cells: [
             DataCell(Text('${producto.idProducto ?? 'N/A'}')),
-            DataCell(Text(producto.nombre)),
+            DataCell(
+              Tooltip(
+                message: producto.nombre,
+                child: Text(
+                  producto.nombre,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            ),
+            DataCell(
+              Tooltip(
+                message: producto.descripcion,
+                child: SizedBox(
+                  width: 150,
+                  child: Text(
+                    producto.descripcion,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                ),
+              ),
+            ),
             DataCell(Text(producto.categoria)),
             DataCell(Text('\$${producto.precio.toStringAsFixed(2)}')),
             DataCell(
@@ -437,7 +732,26 @@ class _ReporteTotalProductosPageState
                 ],
               ),
             ),
-            DataCell(Text(producto.estado ?? 'N/A')),
+            DataCell(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: producto.estado == 'ACT'
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  producto.estado ?? 'N/A',
+                  style: TextStyle(
+                    color:
+                        producto.estado == 'ACT' ? Colors.green : Colors.grey,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
             DataCell(Text(
               producto.fCreacion != null
                   ? AppUtils.formatDate(producto.fCreacion)

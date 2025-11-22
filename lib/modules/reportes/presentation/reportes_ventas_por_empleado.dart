@@ -305,97 +305,41 @@ class _ReporteVentasPorEmpleadoPageState
             },
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Inicio',
-                  selectedDate: _fechaInicio,
-                  onDateSelected: (fecha) {
-                    setState(() {
-                      _fechaInicio = fecha;
-                      if (_fechaHasta != null && _fechaInicio != null) {
-                        final diferencia =
-                            _fechaHasta!.difference(_fechaInicio!);
-                        final diasDiferencia = diferencia.inDays;
-                        if (diasDiferencia > 3) {
-                          _fechaHasta =
-                              _fechaInicio!.add(const Duration(days: 3));
-                          if (_fechaHasta != null &&
-                              _fechaHasta!.isAfter(DateTime.now())) {
-                            _fechaHasta = DateTime.now();
-                          }
-                        }
-                      }
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Hasta',
-                  selectedDate: _fechaHasta,
-                  onDateSelected: (fecha) {
-                    setState(() {
-                      if (_fechaInicio != null &&
-                          fecha != null &&
-                          fecha.isBefore(_fechaInicio!)) {
-                        DialogHelper.info(context,
-                            message:
-                                'La fecha hasta debe ser posterior a la fecha inicio',
-                            onConfirmed: () {});
-                        return;
-                      }
-                      _fechaHasta = fecha;
-                      if (_fechaHasta != null &&
-                          _fechaHasta!.isAfter(DateTime.now())) {
-                        _fechaHasta = DateTime.now();
-                      }
-                      if (_fechaInicio != null && _fechaHasta != null) {
-                        final diferencia =
-                            _fechaHasta!.difference(_fechaInicio!);
-                        final diasDiferencia = diferencia.inDays;
-                        if (diasDiferencia > 3) {
-                          DialogHelper.info(context,
-                              message: 'El rango máximo es de 3 días',
-                              onConfirmed: () {});
-                          _fechaHasta =
-                              _fechaInicio!.add(const Duration(days: 3));
-                        }
-                      }
-                    });
-                  },
-                ),
-              ),
-            ],
+          DateRangeWidget(
+            title: 'Rango de Fechas (máx. 3 días)',
+            startDate: _fechaInicio,
+            endDate: _fechaHasta,
+            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+            lastDate: DateTime.now(),
+            onDateRangeSelected: (desde, hasta) {
+              setState(() {
+                if (desde != null && hasta != null) {
+                  final diferencia = hasta.difference(desde);
+                  final diasDiferencia = diferencia.inDays;
+                  if (diasDiferencia > 3) {
+                    _fechaHasta = desde.add(const Duration(days: 3));
+                    if (_fechaHasta != null &&
+                        _fechaHasta!.isAfter(DateTime.now())) {
+                      _fechaHasta = DateTime.now();
+                    }
+                    DialogHelper.info(context,
+                        message: 'El rango máximo es de 3 días',
+                        onConfirmed: () {});
+                  } else {
+                    _fechaInicio = desde;
+                    _fechaHasta = hasta;
+                  }
+                  if (_fechaHasta != null &&
+                      _fechaHasta!.isAfter(DateTime.now())) {
+                    _fechaHasta = DateTime.now();
+                  }
+                } else {
+                  _fechaInicio = desde;
+                  _fechaHasta = hasta;
+                }
+              });
+            },
           ),
-          if (_fechaInicio != null && _fechaHasta != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ThemeApp.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline,
-                      size: 16, color: ThemeApp.primary),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Rango seleccionado: ${_fechaHasta!.difference(_fechaInicio!).inDays} días',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: ThemeApp.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
           const SizedBox(height: 16),
           CustomButton(
             text: 'Buscar',

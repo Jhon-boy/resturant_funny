@@ -734,13 +734,13 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              color: ThemeApp.primary,
+              color: ThemeApp.white,
               child: // Header
                   Row(
                 children: [
                   const Icon(
                     Icons.date_range,
-                    color: ThemeApp.baseText,
+                    color: ThemeApp.primary,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -750,16 +750,20 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: ThemeApp.baseText,
+                        color: ThemeApp.textPrimary,
                       ),
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: ThemeApp.baseText),
+                    icon: const Icon(Icons.close, color: ThemeApp.textPrimary),
                   ),
                 ],
               ),
+            ),
+            const Divider(
+              color: ThemeApp.textPrimary,
+              thickness: 1,
             ),
             const SizedBox(height: 20),
 

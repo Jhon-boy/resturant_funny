@@ -9,13 +9,14 @@ import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart'
 import 'package:resturant_funny/modules/inventario/data/datasource/inventario_data_source.dart';
 import 'package:resturant_funny/modules/inventario/data/repository/inventario_repository_impl.dart';
 import 'package:resturant_funny/modules/inventario/domain/repository/inventario_repository.dart';
-import 'package:resturant_funny/modules/reportes/presentation/widgets/estadistica_card_widget.dart';
+import 'package:resturant_funny/modules/reportes/presentation/widgets/estadisticas_basicas_widget.dart';
 import 'package:resturant_funny/modules/reportes/presentation/widgets/reporte_data_table_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/shimmer_widget.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:resturant_funny/shared/widgets/not_found_card.dart';
 
 class ReporteTotalInventarioPage extends ConsumerStatefulWidget {
   const ReporteTotalInventarioPage({super.key, required this.sucursales});
@@ -126,7 +127,7 @@ class _ReporteTotalInventarioPageState
           }
         },
       );
-    } catch (e) { 
+    } catch (e) {
       DialogHelper.error(context,
           message: 'Error inesperado: $e', onConfirmed: () {});
       if (mounted) {
@@ -220,155 +221,51 @@ class _ReporteTotalInventarioPageState
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildEstadisticas(),
+              _buildEstadisticasBasicas(),
               const SizedBox(height: 24),
               _buildListaInventario(),
             ],
           );
   }
 
-  Widget _buildEstadisticas() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.analytics, color: ThemeApp.primary, size: 28),
-              SizedBox(width: 12),
-              Text(
-                'Resumen del Inventario',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: ThemeApp.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              EstadisticaCardWidget(
-                titulo: 'Total Items',
-                icon: Icons.inventory_2_outlined,
-                color: Colors.purple,
-                valor: '$_totalItems',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Stock Total',
-                icon: Icons.storage,
-                color: Colors.blue,
-                valor: '$_stockTotal unidades',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Valor Total',
-                icon: Icons.attach_money,
-                color: Colors.green,
-                valor: '\$${_valorTotalInventario.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Precio Promedio',
-                icon: Icons.trending_flat,
-                color: Colors.orange,
-                valor: '\$${_precioPromedio.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-            ],
-          ),
-          if (_inventarioPorCategoria.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            const Text(
-              'Items por Categoría',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: ThemeApp.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ..._inventarioPorCategoria.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: ThemeApp.textSecondary,
-                      ),
-                    ),
-                    Text(
-                      '${entry.value} item${entry.value > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: ThemeApp.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ],
-        ],
-      ),
+  Widget _buildEstadisticasBasicas() {
+    return EstadisticasBasicasWidget(
+      titulo: 'Estadísticas de Inventario',
+      icono: Icons.info_outline,
+      estadisticas: [
+        EstadisticaBasica(
+          titulo: 'Total Items',
+          valor: '$_totalItems',
+          icon: Icons.inventory_2,
+          color: Colors.blue,
+        ),
+        EstadisticaBasica(
+          titulo: 'Stock Total',
+          valor: '$_stockTotal unidades',
+          icon: Icons.warehouse,
+          color: Colors.green,
+        ),
+        EstadisticaBasica(
+          titulo: 'Valor Total',
+          valor: '\$${_valorTotalInventario.toStringAsFixed(2)}',
+          icon: Icons.attach_money,
+          color: Colors.orange,
+        ),
+        EstadisticaBasica(
+          titulo: 'Precio Promedio',
+          valor: '\$${_precioPromedio.toStringAsFixed(2)}',
+          icon: Icons.trending_flat,
+          color: Colors.purple,
+        ),
+      ],
     );
   }
 
   Widget _buildListaInventario() {
     if (_inventarios.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: const Column(
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 64,
-              color: ThemeApp.textSecondary,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'No se encontró inventario en la sucursal seleccionada',
-              style: TextStyle(
-                fontSize: 16,
-                color: ThemeApp.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
+      return const NotFoundCard(
+          message: 'No se encontró inventario en la sucursal seleccionada',
+          icon: Icons.inventory_2_outlined);
     }
 
     return ReporteDataTableWidget(

@@ -13,13 +13,14 @@ import 'package:resturant_funny/modules/user/data/datasource/persona_data_source
 import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
 import 'package:resturant_funny/modules/user/data/repository/persona_repository_impl.dart';
 import 'package:resturant_funny/modules/user/domain/repository/usuario_repository.dart';
-import 'package:resturant_funny/modules/user/domain/repository/persona_repository.dart'; 
+import 'package:resturant_funny/modules/user/domain/repository/persona_repository.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
 import 'package:resturant_funny/modules/reportes/presentation/widgets/reporte_data_table_widget.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:resturant_funny/shared/widgets/not_found_card.dart';
 
 class ReporteTotalUsuariosPage extends ConsumerStatefulWidget {
   const ReporteTotalUsuariosPage({super.key, required this.sucursales});
@@ -102,12 +103,12 @@ class _ReporteTotalUsuariosPageState
         (usuarios) async {
           _usuarios = usuarios;
           _totalUsuarios = usuarios.length;
- 
+
           for (final usuario in usuarios) {
             final personaResult = await _personasRepository
                 .getPersonaByIdentificacion(usuario.identificacion);
             personaResult.fold(
-              (failure) { 
+              (failure) {
                 debugPrint(
                     'No se encontró persona para ${usuario.identificacion}');
               },
@@ -387,126 +388,43 @@ class _ReporteTotalUsuariosPageState
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Inicio',
-                  hint: 'Seleccionar',
-                  selectedDate: _fechaInicio,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: DateTime.now(),
-                  initialDate:
-                      DateTime.now().subtract(const Duration(days: 30)),
-                  icon: Icons.calendar_today,
-                  onDateSelected: (fecha) {
-                    setState(() {
-                      _fechaInicio = fecha;
-                      if (fecha != null && _fechaHasta != null) {
-                        final diferencia = _fechaHasta!.difference(fecha);
-                        final diasDiferencia = diferencia.inDays;
-                        if (diasDiferencia > 180) {
-                          _fechaHasta = fecha.add(const Duration(days: 180));
-                        }
-                        if (_fechaHasta != null &&
-                            _fechaHasta!.isAfter(DateTime.now())) {
-                          _fechaHasta = DateTime.now();
-                        }
-                      }
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: CalendarWidget(
-                  title: 'Fecha Hasta',
-                  hint: 'Seleccionar',
-                  selectedDate: _fechaHasta,
-                  firstDate: _fechaInicio ??
-                      DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: _fechaInicio != null
-                      ? (_fechaInicio!
-                              .add(const Duration(days: 180))
-                              .isBefore(DateTime.now())
-                          ? _fechaInicio!.add(const Duration(days: 180))
-                          : DateTime.now())
-                      : DateTime.now(),
-                  initialDate: _fechaInicio != null
-                      ? (_fechaInicio!
-                              .add(const Duration(days: 1))
-                              .isBefore(DateTime.now())
-                          ? (_fechaInicio!
-                                  .add(const Duration(days: 180))
-                                  .isBefore(DateTime.now())
-                              ? _fechaInicio!.add(const Duration(days: 180))
-                              : DateTime.now())
-                          : DateTime.now())
-                      : DateTime.now(),
-                  icon: Icons.calendar_today,
-                  onDateSelected: (fecha) {
-                    setState(() {
-                      if (fecha != null && _fechaInicio != null) {
-                        final diferencia = fecha.difference(_fechaInicio!);
-                        final diasDiferencia = diferencia.inDays;
-                        if (diasDiferencia > 180) {
-                          _fechaHasta =
-                              _fechaInicio!.add(const Duration(days: 180));
-                          if (_fechaHasta != null &&
-                              _fechaHasta!.isAfter(DateTime.now())) {
-                            _fechaHasta = DateTime.now();
-                          }
-                          SnackHelper.show(
-                            context,
-                            message: 'El rango máximo es de 6 meses',
-                            isError: true,
-                          );
-                        } else {
-                          _fechaHasta = fecha;
-                        }
-                        if (_fechaHasta != null &&
-                            _fechaHasta!.isAfter(DateTime.now())) {
-                          _fechaHasta = DateTime.now();
-                        }
-                      } else {
-                        _fechaHasta = fecha;
-                      }
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-          if (_fechaInicio != null && _fechaHasta != null)
-            Builder(
-              builder: (context) {
-                final diferencia = _fechaHasta!.difference(_fechaInicio!);
-                final mesesDiferencia = diferencia.inDays ~/ 30;
-                final diasDiferencia = diferencia.inDays % 30;
-                if (mesesDiferencia > 0 || diasDiferencia > 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline,
-                            size: 16, color: ThemeApp.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          mesesDiferencia > 0
-                              ? 'Rango: $mesesDiferencia mes${mesesDiferencia > 1 ? 'es' : ''}${diasDiferencia > 0 ? ' y $diasDiferencia día${diasDiferencia > 1 ? 's' : ''}' : ''}'
-                              : 'Rango: $diasDiferencia día${diasDiferencia > 1 ? 's' : ''}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: ThemeApp.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
+          DateRangeWidget(
+            title: 'Rango de Fechas (máx. 6 meses)',
+            startDate: _fechaInicio,
+            endDate: _fechaHasta,
+            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+            lastDate: DateTime.now(),
+            onDateRangeSelected: (desde, hasta) {
+              setState(() {
+                if (desde != null && hasta != null) {
+                  final diferencia = hasta.difference(desde);
+                  final diasDiferencia = diferencia.inDays;
+                  if (diasDiferencia > 180) {
+                    _fechaHasta = desde.add(const Duration(days: 180));
+                    if (_fechaHasta != null &&
+                        _fechaHasta!.isAfter(DateTime.now())) {
+                      _fechaHasta = DateTime.now();
+                    }
+                    SnackHelper.show(
+                      context,
+                      message: 'El rango máximo es de 6 meses',
+                      isError: true,
+                    );
+                  } else {
+                    _fechaInicio = desde;
+                    _fechaHasta = hasta;
+                  }
+                  if (_fechaHasta != null &&
+                      _fechaHasta!.isAfter(DateTime.now())) {
+                    _fechaHasta = DateTime.now();
+                  }
+                } else {
+                  _fechaInicio = desde;
+                  _fechaHasta = hasta;
                 }
-                return const SizedBox.shrink();
-              },
-            ),
+              });
+            },
+          ),
           const SizedBox(height: 16),
           CustomButton(
             text: 'Buscar',
@@ -522,31 +440,9 @@ class _ReporteTotalUsuariosPageState
 
   Widget _buildListaUsuarios() {
     if (_usuarios.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(40),
-        decoration: BoxDecoration(
-          color: ThemeApp.baseText,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Column(
-          children: [
-            Icon(
-              Icons.people_outline,
-              size: 64,
-              color: ThemeApp.textSecondary,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'No se encontraron usuarios en el período seleccionado',
-              style: TextStyle(
-                fontSize: 16,
-                color: ThemeApp.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
+      return const NotFoundCard(
+          message: 'No se encontraron usuarios en el período seleccionado',
+          icon: Icons.people_outline);
     }
 
     return ReporteDataTableWidget(

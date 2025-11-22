@@ -27,4 +27,12 @@ abstract class DetalleVentaRepository {
 
   /// Eliminar un detalle de venta
   Future<Either<Failure, bool>> deleteDetalle(int idDetalle);
+
+  /// Obtener detalles de venta con información de productos, filtrado por IDs de venta
+  Future<Either<Failure, List<Map<String, dynamic>>>>
+      getDetallesConProductosBySucursal(
+    List<int> idsVentas, {
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  });
 }

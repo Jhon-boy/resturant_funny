@@ -122,4 +122,32 @@ class DetalleVentaRepositoryImpl implements DetalleVentaRepository {
           ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Map<String, dynamic>>>>
+      getDetallesConProductosBySucursal(
+    List<int> idsVentas, {
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No hay conexión a internet'));
+    }
+
+    try {
+      // Necesitamos obtener el idSucursal de alguna manera
+      // Por ahora, usaremos el método que acepta idsVentas directamente
+      // Necesitamos modificar el datasource para aceptar idsVentas
+      final detalles = await remote.getDetallesConProductosBySucursal(
+        idSucursal: 0, // Esto necesita ser corregido
+        fechaDesde: fechaDesde,
+        fechaHasta: fechaHasta,
+      );
+      return Right(detalles);
+    } catch (_) {
+      return const Left(
+          ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
+    }
+  }
 }

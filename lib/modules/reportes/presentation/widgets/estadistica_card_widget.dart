@@ -7,7 +7,8 @@ class EstadisticaCardWidget extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String? subtitulo;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool showArrow;
 
   const EstadisticaCardWidget({
     super.key,
@@ -16,79 +17,97 @@ class EstadisticaCardWidget extends StatelessWidget {
     required this.icon,
     required this.color,
     this.subtitulo,
-    required this.onTap,
+    this.onTap,
+    this.showArrow = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    final content = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: ThemeApp.baseText,
         borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: ThemeApp.baseText,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              size: 32,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: ThemeApp.textPrimary,
+                  ),
                 ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: color,
+                const SizedBox(height: 4),
+                Text(
+                  valor,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: ThemeApp.textPrimary,
-                      ),
+                if (subtitulo != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitulo!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: ThemeApp.textSecondary,
                     ),
-                    if (subtitulo != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitulo!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: ThemeApp.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 18,
-                color: ThemeApp.textSecondary,
-              ),
-            ],
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
+          if (showArrow && onTap != null) ...[
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 18,
+              color: ThemeApp.textSecondary,
+            ),
+          ],
+        ],
       ),
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: content,
+        ),
+      );
+    }
+
+    return content;
   }
 }
