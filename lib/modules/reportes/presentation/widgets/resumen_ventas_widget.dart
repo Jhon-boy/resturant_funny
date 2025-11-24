@@ -87,10 +87,12 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
 
       await sucursalesResult.fold(
         (failure) async {
-          setState(() {
-            _loading = false;
-            _sucursalesStats = [];
-          });
+          if (mounted) {
+            setState(() {
+              _loading = false;
+              _sucursalesStats = [];
+            });
+          }
         },
         (todasLasSucursales) async {
           final sucursalesActivas =
@@ -104,10 +106,12 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
 
           await ventasUltimos3DiasResult.fold(
             (failure) async {
-              setState(() {
-                _loading = false;
-                _sucursalesStats = [];
-              });
+              if (mounted) {
+                setState(() {
+                  _loading = false;
+                  _sucursalesStats = [];
+                });
+              }
             },
             (todasLasVentas) async {
               _sucursalesStats.clear();
@@ -140,20 +144,37 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
                     final ventasPorDia = <VentaDia>[];
                     final diasNombre = ['Hace 3 días', 'Ayer', 'Hoy'];
 
-                    for (int i = 0; i < 3; i++) {
-                      final diaFecha = inicio3Dias.add(Duration(days: i));
-                      final inicioDia = DateTime(
-                          diaFecha.year, diaFecha.month, diaFecha.day, 0, 0, 0);
-                      final finDia = DateTime(diaFecha.year, diaFecha.month,
-                          diaFecha.day, 23, 59, 59);
+                    final ahoraNormalizado =
+                        DateTime(ahora.year, ahora.month, ahora.day);
 
+                    for (int i = 0; i < 3; i++) {
+                      final diaFecha =
+                          ahoraNormalizado.subtract(Duration(days: 2 - i));
+                      final diaAno = diaFecha.year;
+                      final diaMes = diaFecha.month;
+                      final diaDia = diaFecha.day;
+
+                      // Filtrar ventas que pertenecen a este día
+                      // Usar fCreacion ya que es el campo usado para filtrar en la BD
                       final ventasDia = ventasSucursal.where((venta) {
-                        if (venta.fecha == null) return false;
-                        final fechaVenta = venta.fecha!;
-                        return fechaVenta.isAfter(inicioDia
-                                .subtract(const Duration(seconds: 1))) &&
-                            fechaVenta.isBefore(
-                                finDia.add(const Duration(seconds: 1)));
+                        // Usar fCreacion (campo usado para filtrar en la BD)
+                        final fechaVenta = venta.fCreacion;
+
+                        if (fechaVenta == null) {
+                          return false;
+                        }
+
+                        // Normalizar fecha de venta (solo año, mes, día)
+                        final fechaVentaNormalizada = DateTime(
+                          fechaVenta.year,
+                          fechaVenta.month,
+                          fechaVenta.day,
+                        );
+
+                        // Comparar fechas normalizadas
+                        return fechaVentaNormalizada.year == diaAno &&
+                            fechaVentaNormalizada.month == diaMes &&
+                            fechaVentaNormalizada.day == diaDia;
                       }).toList();
 
                       final numeroVentas = ventasDia.length;
@@ -180,18 +201,22 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
                 );
               }
 
-              setState(() {
-                _loading = false;
-              });
+              if (mounted) {
+                setState(() {
+                  _loading = false;
+                });
+              }
             },
           );
         },
       );
     } catch (e) {
-      setState(() {
-        _loading = false;
-        _sucursalesStats = [];
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _sucursalesStats = [];
+        });
+      }
     }
   }
 
@@ -314,12 +339,14 @@ class _ResumenVentasWidgetState extends ConsumerState<ResumenVentasWidget> {
   }
 
   Widget _buildSucursalCard(SucursalVentasStats stats) {
-    final maxVentas = stats.ventasPorDia.isEmpty
-        ? 1.0
-        : stats.ventasPorDia
-            .map((v) => v.numeroVentas)
-            .reduce((a, b) => a > b ? a : b)
-            .toDouble();
+    // Calcular maxVentas correctamente
+    double maxVentas = 1.0;
+    if (stats.ventasPorDia.isNotEmpty) {
+      final max = stats.ventasPorDia
+          .map((v) => v.numeroVentas)
+          .reduce((a, b) => a > b ? a : b);
+      maxVentas = max > 0 ? max.toDouble() : 1.0;
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),

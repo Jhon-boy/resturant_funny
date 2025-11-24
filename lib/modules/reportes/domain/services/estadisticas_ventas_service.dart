@@ -51,13 +51,8 @@ class EstadisticasVentasService {
             fechaVenta.day == dia.day;
       }).toList();
 
-      final facturasDia = facturas.where((f) {
-        if (f.fecha == null) return false;
-        final fechaFactura = f.fecha!;
-        return fechaFactura.year == dia.year &&
-            fechaFactura.month == dia.month &&
-            fechaFactura.day == dia.day;
-      }).toList();
+      // Facturas del día: contar ventas con CONFACTURA = true
+      final facturasDia = ventasDia.where((v) => v.conFactura == true).toList();
 
       final montoDia = ventasDia
           .where((v) => v.total != null)

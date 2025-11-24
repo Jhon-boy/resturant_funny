@@ -15,13 +15,15 @@ import 'package:resturant_funny/modules/ventas/domain/repository/venta_repositor
 import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
 import 'package:resturant_funny/modules/sucursales/data/repository/sucursal_repository.dart';
 import 'package:resturant_funny/modules/sucursales/domain/sucursal_repository.dart';
-import 'package:resturant_funny/modules/reportes/presentation/widgets/estadistica_card_widget.dart';
 import 'package:resturant_funny/modules/reportes/presentation/widgets/reporte_data_table_widget.dart';
 import 'package:resturant_funny/modules/user/presentation/widget/shimmer_widget.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
+import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
+import 'package:resturant_funny/core/utils/snack_helper.dart';
 
+/// Modelo para estadísticas completas de sucursal
 class SucursalMesaStats {
   final SucursalEntity sucursal;
   final List<MesaEntity> mesas;
@@ -29,6 +31,7 @@ class SucursalMesaStats {
   final int totalVentas;
   final double montoTotal;
   final double promedioVenta;
+  final int totalClientes; // Clientes únicos
   final Map<int, int> ventasPorMesa; // idMesa -> cantidad ventas
 
   SucursalMesaStats({
@@ -38,6 +41,7 @@ class SucursalMesaStats {
     required this.totalVentas,
     required this.montoTotal,
     required this.promedioVenta,
+    required this.totalClientes,
     required this.ventasPorMesa,
   });
 }
@@ -61,7 +65,12 @@ class _ReporteSucursalesMesasPageState
   int _totalMesas = 0;
   int _totalVentasGeneral = 0;
   double _montoTotalGeneral = 0.0;
+  int _totalClientesGeneral = 0;
   SucursalMesaStats? _sucursalTopVentas;
+
+  DateTime? _fechaInicio;
+  DateTime? _fechaFin;
+  static const int MAX_DIAS = 30; // 1 mes
 
   @override
   void initState() {
@@ -76,11 +85,29 @@ class _ReporteSucursalesMesasPageState
       _sucursalRepository = SucursalRemoteRepository(
         SucursalRemoteDataSource(ref: ref),
       );
+      // Inicializar con el último mes
+      final ahora = DateTime.now();
+      _fechaFin = ahora;
+      _fechaInicio = ahora.subtract(const Duration(days: MAX_DIAS - 1));
       _cargarDatos();
     });
   }
 
   Future<void> _cargarDatos() async {
+    if (_fechaInicio == null || _fechaFin == null) {
+      SnackHelper.show(context,
+          message: 'Por favor seleccione un rango de fechas', isError: true);
+      return;
+    }
+
+    // Validar que no exceda el máximo de días
+    final diferencia = _fechaFin!.difference(_fechaInicio!).inDays + 1;
+    if (diferencia > MAX_DIAS) {
+      SnackHelper.show(context,
+          message: 'El rango máximo es de $MAX_DIAS días', isError: true);
+      return;
+    }
+
     ref.read(appStateProvider.notifier).setLoading(true);
 
     try {
@@ -99,8 +126,10 @@ class _ReporteSucursalesMesasPageState
           final sucursalesActivas =
               todasLasSucursales.where((s) => s.isActiva).toList();
 
-          // 2. Obtener todas las ventas (sin filtro de fecha para estadísticas generales)
-          final ventasResult = await _ventaRepository.getVentas();
+          final ventasResult = await _ventaRepository.getVentas(
+            fechaDesde: _fechaInicio,
+            fechaHasta: _fechaFin,
+          );
 
           await ventasResult.fold(
             (failure) async {
@@ -110,7 +139,7 @@ class _ReporteSucursalesMesasPageState
                 ref.read(appStateProvider.notifier).setLoading(false);
               }
             },
-            (todasLasVentas) async {
+            (ventasEnRango) async {
               _sucursalesStats.clear();
 
               // 3. Para cada sucursal, obtener sus mesas y calcular estadísticas
@@ -123,8 +152,8 @@ class _ReporteSucursalesMesasPageState
                   (mesas) {
                     final idsMesas = mesas.map((m) => m.idMesa ?? 0).toList();
 
-                    // Filtrar ventas de esta sucursal
-                    final ventasSucursal = todasLasVentas
+                    // Filtrar ventas de esta sucursal (por mesas)
+                    final ventasSucursal = ventasEnRango
                         .where((v) => idsMesas.contains(v.idMesa))
                         .toList();
 
@@ -136,6 +165,13 @@ class _ReporteSucursalesMesasPageState
                         .fold(0.0, (a, b) => a + b);
                     final promedioVenta =
                         totalVentas > 0 ? montoTotal / totalVentas : 0.0;
+
+                    // Clientes únicos de esta sucursal
+                    final clientesUnicos = ventasSucursal
+                        .where((v) => v.cliente.isNotEmpty)
+                        .map((v) => v.cliente)
+                        .toSet();
+                    final totalClientes = clientesUnicos.length;
 
                     // Ventas por mesa
                     final ventasPorMesa = <int, int>{};
@@ -151,15 +187,16 @@ class _ReporteSucursalesMesasPageState
                       totalVentas: totalVentas,
                       montoTotal: montoTotal,
                       promedioVenta: promedioVenta,
+                      totalClientes: totalClientes,
                       ventasPorMesa: ventasPorMesa,
                     ));
                   },
                 );
               }
 
-              // Ordenar sucursales por número de ventas descendente
+              // Ordenar sucursales por monto total descendente
               _sucursalesStats
-                  .sort((a, b) => b.totalVentas.compareTo(a.totalVentas));
+                  .sort((a, b) => b.montoTotal.compareTo(a.montoTotal));
 
               // Calcular estadísticas generales
               _totalSucursales = _sucursalesStats.length;
@@ -172,6 +209,14 @@ class _ReporteSucursalesMesasPageState
               _montoTotalGeneral = _sucursalesStats
                   .map((s) => s.montoTotal)
                   .fold(0.0, (a, b) => a + b);
+
+              // Clientes únicos generales (de todas las sucursales)
+              final clientesUnicosGeneral = ventasEnRango
+                  .where((v) => v.cliente.isNotEmpty)
+                  .map((v) => v.cliente)
+                  .toSet();
+              _totalClientesGeneral = clientesUnicosGeneral.length;
+
               _sucursalTopVentas =
                   _sucursalesStats.isNotEmpty ? _sucursalesStats.first : null;
 
@@ -208,6 +253,31 @@ class _ReporteSucursalesMesasPageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Selector de rango de fechas
+            DateRangeWidget(
+              title: 'Rango de Fechas (Máximo 1 mes)',
+              startDate: _fechaInicio,
+              endDate: _fechaFin,
+              firstDate: DateTime.now().subtract(const Duration(days: 365)),
+              lastDate: DateTime.now(),
+              onDateRangeSelected: (inicio, fin) {
+                if (inicio != null && fin != null) {
+                  final diferencia = fin.difference(inicio).inDays + 1;
+                  if (diferencia > MAX_DIAS) {
+                    SnackHelper.show(context,
+                        message: 'El rango máximo es de 1 mes (30 días)',
+                        isError: true);
+                    return;
+                  }
+                  setState(() {
+                    _fechaInicio = inicio;
+                    _fechaFin = fin;
+                  });
+                  _cargarDatos();
+                }
+              },
+            ),
+            const SizedBox(height: 24),
             // Contenido del reporte
             _buildContenidoReporte(),
             const SizedBox(height: 24),
@@ -232,6 +302,8 @@ class _ReporteSucursalesMesasPageState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildEstadisticas(),
+              const SizedBox(height: 24),
+              _buildGraficoComparativo(),
               const SizedBox(height: 24),
               _buildSucursalTop(),
               const SizedBox(height: 24),
@@ -259,10 +331,121 @@ class _ReporteSucursalesMesasPageState
         children: [
           const Row(
             children: [
-              Icon(Icons.analytics, color: ThemeApp.primary, size: 28),
+              Icon(Icons.analytics, color: ThemeApp.primary, size: 24),
               SizedBox(width: 12),
               Text(
                 'Resumen General',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: ThemeApp.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildStatRow('Total Sucursales', '$_totalSucursales'),
+          _buildStatRow('Total Mesas', '$_totalMesas'),
+          _buildStatRow('Total Ventas', '$_totalVentasGeneral'),
+          _buildStatRow(
+              'Monto Total', '\$${_montoTotalGeneral.toStringAsFixed(2)}'),
+          _buildStatRow('Total Clientes', '$_totalClientesGeneral'),
+          _buildStatRow(
+            'Promedio General',
+            _totalVentasGeneral > 0
+                ? '\$${(_montoTotalGeneral / _totalVentasGeneral).toStringAsFixed(2)}'
+                : '\$0.00',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: ThemeApp.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: ThemeApp.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGraficoComparativo() {
+    if (_sucursalesStats.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Text(
+            'No hay datos para mostrar',
+            style: TextStyle(
+              fontSize: 16,
+              color: ThemeApp.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Ordenar por monto total descendente para mejor visualización
+    final statsOrdenados = List<SucursalMesaStats>.from(_sucursalesStats)
+      ..sort((a, b) => b.montoTotal.compareTo(a.montoTotal));
+
+    final maxVentas = statsOrdenados
+        .map((s) => s.totalVentas)
+        .reduce((a, b) => a > b ? a : b);
+    final maxMonto =
+        statsOrdenados.map((s) => s.montoTotal).reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.bar_chart, color: ThemeApp.primary, size: 28),
+              SizedBox(width: 12),
+              Text(
+                'Comparativo por Sucursal',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -271,43 +454,223 @@ class _ReporteSucursalesMesasPageState
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              EstadisticaCardWidget(
-                titulo: 'Total Sucursales',
-                icon: Icons.store,
-                color: Colors.amber,
-                valor: '$_totalSucursales',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Total Mesas',
-                icon: Icons.table_restaurant,
-                color: Colors.blue,
-                valor: '$_totalMesas',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Total Ventas',
-                icon: Icons.point_of_sale,
-                color: ThemeApp.primary,
-                valor: '$_totalVentasGeneral',
-                onTap: () {},
-              ),
-              EstadisticaCardWidget(
-                titulo: 'Monto Total',
-                icon: Icons.attach_money,
-                color: Colors.green,
-                valor: '\$${_montoTotalGeneral.toStringAsFixed(2)}',
-                onTap: () {},
-              ),
-            ],
+          const SizedBox(height: 24),
+          // Gráfico de barras mejorado
+          SizedBox(
+            height: 400,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: statsOrdenados.asMap().entries.map((entry) {
+                final index = entry.key;
+                final stats = entry.value;
+
+                final alturaVentas =
+                    maxVentas > 0 ? (stats.totalVentas / maxVentas * 320) : 0.0;
+                final alturaMonto =
+                    maxMonto > 0 ? (stats.montoTotal / maxMonto * 320) : 0.0;
+
+                // Colores alternados para mejor diferenciación
+                final colorVentas = [
+                  ThemeApp.primary,
+                  Colors.blue,
+                  Colors.teal,
+                  Colors.orange,
+                  Colors.purple,
+                ][index % 5];
+
+                final colorMonto = [
+                  Colors.green,
+                  Colors.lightGreen,
+                  Colors.greenAccent,
+                  Colors.teal,
+                  Colors.cyan,
+                ][index % 5];
+
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // Información superior
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: colorMonto.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: colorMonto.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                '\$${stats.montoTotal.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorMonto,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${stats.totalVentas} ventas',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorVentas,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Barras del gráfico
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Barra de ventas
+                              Flexible(
+                                flex: 1,
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 2),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        colorVentas,
+                                        colorVentas.withOpacity(0.7),
+                                      ],
+                                    ),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(6),
+                                      topRight: Radius.circular(6),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: colorVentas.withOpacity(0.3),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  height: alturaVentas > 0 ? alturaVentas : 2,
+                                ),
+                              ),
+                              // Barra de monto
+                              Flexible(
+                                flex: 1,
+                                child: Container(
+                                  margin: const EdgeInsets.only(left: 2),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        colorMonto,
+                                        colorMonto.withOpacity(0.7),
+                                      ],
+                                    ),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(6),
+                                      topRight: Radius.circular(6),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: colorMonto.withOpacity(0.3),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  height: alturaMonto > 0 ? alturaMonto : 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Nombre de la sucursal
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: ThemeApp.primary.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            stats.sucursal.nombre,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: ThemeApp.textPrimary,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Leyenda mejorada
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: ThemeApp.primary.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildLegendItem(
+                    'Ventas', ThemeApp.primary, Icons.point_of_sale),
+                const SizedBox(width: 24),
+                _buildLegendItem('Monto', Colors.green, Icons.attach_money),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color, IconData icon) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Icon(icon, color: color, size: 16),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 
@@ -369,30 +732,17 @@ class _ReporteSucursalesMesasPageState
                           color: ThemeApp.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
+                      const SizedBox(height: 16),
+                      Column(
                         children: [
-                          const Icon(Icons.point_of_sale,
-                              size: 16, color: ThemeApp.textSecondary),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${_sucursalTopVentas!.totalVentas} ventas',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: ThemeApp.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Icon(Icons.attach_money,
-                              size: 16, color: ThemeApp.textSecondary),
-                          const SizedBox(width: 4),
-                          Text(
-                            '\$${_sucursalTopVentas!.montoTotal.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: ThemeApp.textSecondary,
-                            ),
-                          ),
+                          _buildStatRow('Total Ventas',
+                              '${_sucursalTopVentas!.totalVentas}'),
+                          _buildStatRow('Monto Total',
+                              '\$${_sucursalTopVentas!.montoTotal.toStringAsFixed(2)}'),
+                          _buildStatRow('Total Clientes',
+                              '${_sucursalTopVentas!.totalClientes}'),
+                          _buildStatRow('Promedio Venta',
+                              '\$${_sucursalTopVentas!.promedioVenta.toStringAsFixed(2)}'),
                         ],
                       ),
                     ],
@@ -542,123 +892,88 @@ class _ReporteSucursalesMesasPageState
               // Estadísticas de la sucursal
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                child: Column(
                   children: [
-                    _buildStatChip(
-                      'Mesas',
-                      '${stats.totalMesas}',
-                      Icons.table_restaurant,
-                      Colors.blue,
-                    ),
-                    _buildStatChip(
-                      'Promedio',
-                      '\$${stats.promedioVenta.toStringAsFixed(2)}',
-                      Icons.trending_flat,
-                      Colors.orange,
-                    ),
+                    _buildStatRow('Total Mesas', '${stats.totalMesas}'),
+                    _buildStatRow('Total Clientes', '${stats.totalClientes}'),
+                    _buildStatRow('Total Ventas', '${stats.totalVentas}'),
+                    _buildStatRow('Monto Total',
+                        '\$${stats.montoTotal.toStringAsFixed(2)}'),
+                    _buildStatRow('Promedio Venta',
+                        '\$${stats.promedioVenta.toStringAsFixed(2)}'),
                   ],
                 ),
               ),
-              // Tabla de mesas
-              if (stats.mesas.isNotEmpty) ...[
-                const Divider(height: 1),
-                ReporteDataTableWidget(
-                  titulo: 'Mesas de la Sucursal',
-                  icono: Icons.table_chart,
-                  mensajeVacio: 'No hay mesas en esta sucursal',
-                  mostrarTitulo: false,
-                  columns: const [
-                    DataColumn(
-                      label: Text(
-                        'ID',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+              const Divider(height: 1),
+              const Column(children: [Text('Mesas de la Sucursal')]),
+              const SizedBox(height: 16),
+              ReporteDataTableWidget(
+                titulo: 'Mesas de la Sucursal',
+                icono: Icons.table_chart,
+                mensajeVacio: 'No hay mesas en esta sucursal',
+                mostrarTitulo: false,
+                columns: const [
+                  DataColumn(
+                    label: Text(
+                      'ID',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    DataColumn(
-                      label: Text(
-                        'Número',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                  ),
+                  DataColumn(
+                    label: Text(
+                      'Sillas',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    DataColumn(
-                      label: Text(
-                        'Estado',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                  ),
+                  DataColumn(
+                    label: Text(
+                      'Estado',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    DataColumn(
-                      label: Text(
-                        'Total Ventas',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                  ),
+                  DataColumn(
+                    label: Text(
+                      'Total Ventas',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  ],
-                  rows: stats.mesas.map((mesa) {
-                    final ventasMesa = stats.ventasPorMesa[mesa.idMesa] ?? 0;
-                    return DataRow(
-                      cells: [
-                        DataCell(Text('${mesa.idMesa ?? 'N/A'}')),
-                        DataCell(Text('${mesa.numero ?? 'N/A'}')),
-                        DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: mesa.estado == 'DISPONIBLE'
-                                      ? Colors.green
-                                      : mesa.estado == 'OCUPADA'
-                                          ? Colors.orange
-                                          : Colors.grey,
-                                ),
+                  ),
+                ],
+                rows: stats.mesas.map((mesa) {
+                  final ventasMesa = stats.ventasPorMesa[mesa.idMesa] ?? 0;
+                  return DataRow(
+                    cells: [
+                      DataCell(Text('${mesa.idMesa ?? 'N/A'}')),
+                      DataCell(Text('${mesa.numero ?? 'N/A'}')),
+                      DataCell(
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: mesa.estado == 'DISPONIBLE'
+                                    ? Colors.green
+                                    : mesa.estado == 'OCUPADA'
+                                        ? Colors.orange
+                                        : Colors.grey,
                               ),
-                              const SizedBox(width: 8),
-                              Text(mesa.estado ?? 'N/A'),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(mesa.estado ?? 'N/A'),
+                          ],
                         ),
-                        DataCell(Text('$ventasMesa')),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ],
+                      ),
+                      DataCell(Text('$ventasMesa')),
+                    ],
+                  );
+                }).toList(),
+              ),
             ],
           ),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildStatChip(
-      String label, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            '$label: $value',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

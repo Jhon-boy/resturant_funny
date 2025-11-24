@@ -101,7 +101,7 @@ class GraficoVentasCompletoWidget extends StatelessWidget {
                           ),
                           child: Text(
                             '${ventaDia.numeroVentas}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: ThemeApp.primary,

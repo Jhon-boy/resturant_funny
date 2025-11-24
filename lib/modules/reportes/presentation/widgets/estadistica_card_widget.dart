@@ -64,14 +64,6 @@ class EstadisticaCardWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  valor,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
                 if (subtitulo != null) ...[
                   const SizedBox(height: 4),
                   Text(
@@ -85,14 +77,12 @@ class EstadisticaCardWidget extends StatelessWidget {
               ],
             ),
           ),
-          if (showArrow && onTap != null) ...[
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 18,
-              color: ThemeApp.textSecondary,
-            ),
-          ],
+          const SizedBox(width: 8),
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 18,
+            color: ThemeApp.textSecondary,
+          ),
         ],
       ),
     );

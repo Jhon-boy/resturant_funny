@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, constant_identifier_names
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -568,7 +568,7 @@ class _ReporteTotalVentasPageState
         _estadisticas!.productosConVentas.take(5).toList();
     final tieneMas = _estadisticas!.productosConVentas.length > 5;
 
-    Widget _buildItemProducto(ProductoVentaCount producto) {
+    Widget buildItemProducto(ProductoVentaCount producto) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
@@ -634,11 +634,11 @@ class _ReporteTotalVentasPageState
       titulo: 'Productos Vendidos',
       icono: Icons.restaurant_menu,
       contenidoInicial: Column(
-        children: productosIniciales.map(_buildItemProducto).toList(),
+        children: productosIniciales.map(buildItemProducto).toList(),
       ),
       contenido: Column(
         children:
-            _estadisticas!.productosConVentas.map(_buildItemProducto).toList(),
+            _estadisticas!.productosConVentas.map(buildItemProducto).toList(),
       ),
       mostrarVerMas: tieneMas,
     );
@@ -653,7 +653,7 @@ class _ReporteTotalVentasPageState
         _estadisticas!.porcionesVendidas.take(5).toList();
     final tieneMas = _estadisticas!.porcionesVendidas.length > 5;
 
-    Widget _buildItemPorcion(PorcionStats porcion) {
+    Widget buildItemPorcion(PorcionStats porcion) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
@@ -732,7 +732,7 @@ class _ReporteTotalVentasPageState
                 ],
               ),
             ),
-          ...porcionesIniciales.map(_buildItemPorcion).toList(),
+          ...porcionesIniciales.map(buildItemPorcion),
         ],
       ),
       contenido: Column(
@@ -775,7 +775,7 @@ class _ReporteTotalVentasPageState
                 ],
               ),
             ),
-          ..._estadisticas!.porcionesVendidas.map(_buildItemPorcion).toList(),
+          ..._estadisticas!.porcionesVendidas.map(buildItemPorcion),
         ],
       ),
       mostrarVerMas: tieneMas,
@@ -791,7 +791,7 @@ class _ReporteTotalVentasPageState
         _estadisticas!.ventasPorEmpleado.take(5).toList();
     final tieneMas = _estadisticas!.ventasPorEmpleado.length > 5;
 
-    Widget _buildItemEmpleado(VentaEmpleadoStats empleado) {
+    Widget buildItemEmpleado(VentaEmpleadoStats empleado) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
@@ -882,7 +882,7 @@ class _ReporteTotalVentasPageState
                 ],
               ),
             ),
-          ...empleadosIniciales.map(_buildItemEmpleado).toList(),
+          ...empleadosIniciales.map(buildItemEmpleado),
         ],
       ),
       contenido: Column(
@@ -925,7 +925,7 @@ class _ReporteTotalVentasPageState
                 ],
               ),
             ),
-          ..._estadisticas!.ventasPorEmpleado.map(_buildItemEmpleado).toList(),
+          ..._estadisticas!.ventasPorEmpleado.map(buildItemEmpleado),
         ],
       ),
       mostrarVerMas: tieneMas,
@@ -1058,7 +1058,7 @@ class _ReporteTotalVentasPageState
     final mesasIniciales = _estadisticas!.ventasPorMesa.take(5).toList();
     final tieneMas = _estadisticas!.ventasPorMesa.length > 5;
 
-    Widget _buildItemMesa(MesaStats mesa) {
+    Widget buildItemMesa(MesaStats mesa) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
@@ -1149,7 +1149,7 @@ class _ReporteTotalVentasPageState
                 ],
               ),
             ),
-          ...mesasIniciales.map(_buildItemMesa).toList(),
+          ...mesasIniciales.map(buildItemMesa),
         ],
       ),
       contenido: Column(
@@ -1192,7 +1192,7 @@ class _ReporteTotalVentasPageState
                 ],
               ),
             ),
-          ..._estadisticas!.ventasPorMesa.map(_buildItemMesa).toList(),
+          ..._estadisticas!.ventasPorMesa.map(buildItemMesa),
         ],
       ),
       mostrarVerMas: tieneMas,
@@ -1210,7 +1210,7 @@ class _ReporteTotalVentasPageState
     final tiposIniciales = tiposOrdenados.take(5).toList();
     final tieneMas = tiposOrdenados.length > 5;
 
-    Widget _buildItemTipo(MapEntry<String, int> entry) {
+    Widget buildItemTipo(MapEntry<String, int> entry) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
@@ -1250,10 +1250,10 @@ class _ReporteTotalVentasPageState
       titulo: 'Ventas por Tipo',
       icono: Icons.category,
       contenidoInicial: Column(
-        children: tiposIniciales.map(_buildItemTipo).toList(),
+        children: tiposIniciales.map(buildItemTipo).toList(),
       ),
       contenido: Column(
-        children: tiposOrdenados.map(_buildItemTipo).toList(),
+        children: tiposOrdenados.map(buildItemTipo).toList(),
       ),
       mostrarVerMas: tieneMas,
     );

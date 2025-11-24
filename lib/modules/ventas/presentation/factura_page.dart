@@ -134,7 +134,7 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
           const SizedBox(height: 25),
           _buildColumnHeaders(),
           const SizedBox(height: 10),
-          ...widget.carrito.map((item) => _buildCarritoItem(item)).toList(),
+          ...widget.carrito.map((item) => _buildCarritoItem(item)),
         ],
       ),
     );

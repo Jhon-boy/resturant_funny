@@ -15,6 +15,7 @@ import 'package:resturant_funny/modules/reportes/presentation/reportes_total_inv
 import 'package:resturant_funny/modules/reportes/presentation/reportes_total_ventas.dart';
 import 'package:resturant_funny/modules/reportes/presentation/reportes_ventas_por_empleado.dart';
 import 'package:resturant_funny/modules/reportes/presentation/reportes_sucursales_mesas.dart';
+import 'package:resturant_funny/modules/reportes/presentation/reportes_resumen_comparativas.dart';
 import 'package:resturant_funny/modules/reportes/presentation/widgets/resumen_ventas_widget.dart';
 import 'package:resturant_funny/shared/enums/tipo_reportes.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -135,23 +136,6 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
                   ),
                   const SizedBox(height: 12),
                   EstadisticaCardWidget(
-                    titulo: 'Inventario',
-                    icon: Icons.inventory,
-                    color: Colors.indigo,
-                    valor: '0',
-                    onTap: () => _navegarAReporte(TipoReporte.inventario),
-                  ),
-                  const SizedBox(height: 12),
-                  EstadisticaCardWidget(
-                    titulo: 'Empleados',
-                    icon: Icons.people,
-                    color: Colors.cyan,
-                    valor: '0',
-                    subtitulo: 'Empleados en el sistema',
-                    onTap: () => _navegarAReporte(TipoReporte.empleados),
-                  ),
-                  const SizedBox(height: 12),
-                  EstadisticaCardWidget(
                     titulo: 'Resumen Comparativas',
                     icon: Icons.compare_arrows,
                     color: Colors.pink,
@@ -233,6 +217,13 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const ReporteSucursalesMesasPage(),
+          ),
+        );
+        break;
+      case TipoReporte.resumenComparativas:
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ReporteResumenComparativasPage(),
           ),
         );
         break;
