@@ -105,12 +105,20 @@ class MenuItem {
       allowedRoles: ['ADM'],
     ),
     MenuItem(
-      label: 'Acerca de',
-      icon: Icons.info_outline,
+      label: 'Roles',
+      icon: Icons.security_outlined,
       index: 10,
       isMainMenu: false,
-      requiresRole: false,
+      requiresRole: true,
+      allowedRoles: ['ADM'],
     ),
+    MenuItem(
+      label: 'Acerca de',
+      icon: Icons.info_outline,
+      index: 11,
+      isMainMenu: false,
+      requiresRole: false,
+    )
   ];
 
   // Obtener menús del drawer filtrados por rol
