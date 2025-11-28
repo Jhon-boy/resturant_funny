@@ -32,7 +32,7 @@ class RolesRepositoryImpl implements RolesRepository {
   Future<Either<Failure, RolEntity>> createRol({
     required String estado,
     required String nombre,
-    required String observacion,
+    required String codigo,
   }) async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
@@ -41,7 +41,7 @@ class RolesRepositoryImpl implements RolesRepository {
     try {
       final roles = await remote.createRol(
         nombre: nombre,
-        observacion: observacion,
+        codigo: codigo,
         estado: estado,
       );
       return Right(roles);
@@ -71,7 +71,7 @@ class RolesRepositoryImpl implements RolesRepository {
   @override
   Future<Either<Failure, RolEntity>> updateRol(RolEntity rol,
       {required String nombre,
-      required String observacion,
+      required String codigo,
       required String estado}) async {
     final isConnected = await _connectivity.checkConnection();
     if (!isConnected) {
@@ -79,7 +79,7 @@ class RolesRepositoryImpl implements RolesRepository {
     }
     try {
       final rolUpdate = await remote.updateRol(rol,
-          nombre: nombre, observacion: observacion, estado: estado);
+          nombre: nombre, codigo: codigo, estado: estado);
       return Right(rolUpdate);
     } catch (_) {
       return const Left(
