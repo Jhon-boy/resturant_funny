@@ -121,7 +121,7 @@ class AppDrawer extends StatelessWidget {
             title: Text(menu.label),
             onTap: () => onDrawerMenuTap(menu.index),
           );
-        }).toList(),
+        }),
       ],
     );
   }

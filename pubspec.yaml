@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.1+5
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -60,6 +60,7 @@ dependencies:
   image_picker: ^1.1.2
   mobile_device_identifier: ^0.0.3
   local_auth: ^3.0.0
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +72,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -79,6 +81,7 @@ dev_dependencies:
 flutter:
   assets:
     - .env
+    - assets/
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -114,3 +117,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+# Configuración del icono de la aplicación
+flutter_launcher_icons:
+  android: false  
+  ios: true       
+  image_path: "assets/ic_launcher_play.png"  
+  remove_alpha_ios: true

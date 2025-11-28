@@ -163,7 +163,7 @@ class _RolesPageState extends ConsumerState<RolesPage> {
                 try {
                   if (esEdicion) {
                     await _actualizarRol(
-                      rolExistente!,
+                      rolExistente,
                       nombre: nombre,
                       codigo: codCtrl.text.trim(),
                       estado: estado,
@@ -215,7 +215,7 @@ class _RolesPageState extends ConsumerState<RolesPage> {
         (failure) {
           SnackHelper.show(
             context,
-            message: failure.message ?? 'Error al crear el rol',
+            message: failure.message,
             isSuccess: false,
           );
         },
@@ -264,7 +264,7 @@ class _RolesPageState extends ConsumerState<RolesPage> {
         (failure) {
           SnackHelper.show(
             context,
-            message: failure.message ?? 'Error al actualizar el rol',
+            message: failure.message,
             isSuccess: false,
           );
         },
@@ -449,10 +449,10 @@ class _RolesPageState extends ConsumerState<RolesPage> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (rol.codigo != null && rol.codigo!.isNotEmpty)
+            if (rol.codigo.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 4.0),
-                child: Text(rol.codigo!),
+                child: Text(rol.codigo),
               ),
             const SizedBox(height: 6),
             Row(

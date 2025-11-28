@@ -11,6 +11,7 @@ import 'package:resturant_funny/core/services/shared_preferences_service.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
+import 'package:resturant_funny/core/utils/imagenes.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
 import 'package:resturant_funny/modules/authentication/data/repository/auth_repository_impl.dart';
@@ -39,10 +40,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool isLoading = false;
   bool canFingerPrint = false;
   bool canFace = false;
+  String versionApp = '';
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppUtils.getVersionApp().then((value) => {
+            setState(() {
+              versionApp = value;
+            })
+          });
       checkBiometric();
       isDeviceLoggedOnce = SharedPrefsService.instance.deviceLoggedOnce();
     });
@@ -233,55 +240,43 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // ===== BANNER MEJORADO =====
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 60),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0D0C22), Color(0xFF1A1A40)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(60),
-                    bottomRight: Radius.circular(60),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: const Column(
+              // ===== LOGO Y TÍTULO LIMPIO =====
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
                   children: [
-                    Text(
-                      "Iniciar Sesión",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    const SizedBox(height: 50),
+                    // Logo limpio y simple
+                    Hero(
+                      tag: 'logo',
+                      child: Image.asset(
+                        Imagenes.logoApp,
+                        width: size.width * 0.5,
+                        height: size.width * 0.5,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      "Ingresa con tu cuenta para continuar",
+                    const Text(
+                      "¡Bienvenido!",
                       style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2C3E50),
+                        letterSpacing: -0.5,
                       ),
                     ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
 
               // ===== FORMULARIO =====
               Padding(
@@ -289,25 +284,57 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("USUARIO"),
+                      const Text("Ingresa tus credenciales para continuar"),
+                      const SizedBox(height: 20),
+
                       const SizedBox(height: 8),
-                      TextFormField(
-                        maxLength: AppConstants.MAX_CARACTERES_TITULOS,
-                        controller: usuarioController,
-                        decoration: const InputDecoration(
-                          hintText: "usuario",
-                          prefixIcon: Icon(Icons.people),
+                      Container(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          maxLength: AppConstants.MAX_CARACTERES_TITULOS,
+                          controller: usuarioController,
+                          decoration: InputDecoration(
+                            labelText: "Usuario",
+                            hintText: "Ingresa tu usuario",
+                            prefixIcon: Icon(Icons.person_outline,
+                                color: Colors.red.shade700),
+                            filled: true,
+                            fillColor: Colors.white,
+                            counterText: "",
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
-                      const Text("CONTRASEÑA"),
+
                       const SizedBox(height: 8),
-                      TextFormField(
-                        obscureText: obscureText,
-                        controller: passwordController,
-                        decoration: InputDecoration(
-                            hintText: "********",
-                            prefixIcon: const Icon(Icons.lock_outline),
+                      Container(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          obscureText: obscureText,
+                          controller: passwordController,
+                          decoration: InputDecoration(
+                            labelText: "Contraseña",
+                            hintText: "Ingresa tu contraseña",
+                            prefixIcon: Icon(Icons.lock_outline,
+                                color: Colors.red.shade700),
+                            filled: true,
+                            fillColor: Colors.white,
                             suffixIcon: IconButton(
                               onPressed: () {
                                 setState(() {
@@ -318,10 +345,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 obscureText
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
+                                color: Colors.grey,
                               ),
-                            )),
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 35),
 
                       // ===== LOGIN BUTTON =====
                       SizedBox(
@@ -375,6 +405,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ],
                         ),
                       ],
+                      const SizedBox(height: 20),
+                      Center(
+                        child: Text(
+                          versionApp,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.normal,
+                              color: ThemeApp.textSecondary),
+                        ),
+                      )
                     ]),
               ),
             ],

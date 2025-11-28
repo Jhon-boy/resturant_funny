@@ -401,7 +401,7 @@ class _ReporteVentasPorEmpleadoPageState
                   final diferencia = hasta.difference(desde);
                   final diasDiferencia = diferencia.inDays;
                   if (diasDiferencia > MAX_DIAS) {
-                    _fechaHasta = desde.add(Duration(days: MAX_DIAS));
+                    _fechaHasta = desde.add(const Duration(days: MAX_DIAS));
                     if (_fechaHasta != null &&
                         _fechaHasta!.isAfter(DateTime.now())) {
                       _fechaHasta = DateTime.now();

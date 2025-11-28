@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/models/deviceInfo_model.dart';
@@ -239,6 +240,7 @@ class AppUtils {
     }
   }
 
+// Cerrar sesión de la aplicación
   static cerrarSesion(BuildContext context) {
     final navigator = AppUtils.navigatorKey.currentState;
     // Limpiar todos los providers antes de cerrar sesión
@@ -246,6 +248,7 @@ class AppUtils {
     navigator?.pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
+// Obtener el genero de la persona
   static String getGenero(String genero) {
     String generoFormat = genero.toUpperCase();
     switch (generoFormat) {
@@ -258,6 +261,7 @@ class AppUtils {
     }
   }
 
+// Mapear el genero desde la base de datos
   static String? mapearGeneroDesdeBD(String? generoBD) {
     if (generoBD == null || generoBD.trim().isEmpty) return null;
     switch (generoBD.toUpperCase().trim()) {
@@ -283,6 +287,7 @@ class AppUtils {
     }
   }
 
+// Color del estado de la orden
   static Color getStatusColor(String? estado) {
     switch (estado?.toUpperCase()) {
       case 'FINALIZADA':
@@ -299,6 +304,7 @@ class AppUtils {
     }
   }
 
+// Icono del estado de la orden
   static IconData getStatusIcon(String? estado) {
     switch (estado?.toUpperCase()) {
       case 'FINALIZADA':
@@ -322,6 +328,7 @@ class AppUtils {
     return firtsName + lasName;
   }
 
+// Icono del genero de la persona
   static IconData getIconoGenero(PersonaEntity persona) {
     final genero = persona.genero?.toUpperCase() ?? '';
     if (genero.contains('FEMENINO') || genero == 'F') {
@@ -331,10 +338,18 @@ class AppUtils {
     }
     return Icons.person;
   }
-  static  List<String> botonesMenu = [
+
+// Botones del menu
+  static List<String> botonesMenu = [
     'Estadísticas',
     'Ordenes',
     'Clientes',
     'Buscar',
   ];
+
+  //Obtiene al version de la aplicacion
+  static Future<String> getVersionApp() async {
+    final appInfo = await PackageInfo.fromPlatform();
+    return 'Versión: ${appInfo.version} + ${appInfo.buildNumber}';
+  }
 }
