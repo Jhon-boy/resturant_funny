@@ -32,7 +32,7 @@ class RolesRemoteDataSource {
 
   Future<RolEntity> createRol({
     required String nombre,
-    required String observacion,
+    required String codigo,
     required String estado,
   }) async {
     try {
@@ -41,7 +41,7 @@ class RolesRemoteDataSource {
 
       final data = <String, dynamic>{
         'NOMBRE': nombre,
-        'OBSERVACION': observacion.isEmpty ? null : observacion,
+        'CODIGO': codigo.isEmpty ? null : codigo,
         'ESTADO': estado,
         'FCREACION': ahora.toIso8601String(),
         if (user != null) 'USUARIOINGRESO': user.idUsuario,
@@ -61,7 +61,7 @@ class RolesRemoteDataSource {
   Future<RolEntity> updateRol(
     RolEntity rol, {
     required String nombre,
-    required String observacion,
+    required String codigo,
     required String estado,
   }) async {
     try {
@@ -70,7 +70,7 @@ class RolesRemoteDataSource {
 
       final data = <String, dynamic>{
         'NOMBRE': nombre,
-        'OBSERVACION': observacion.isEmpty ? null : observacion,
+        'CODIGO': codigo.isEmpty ? null : codigo,
         'ESTADO': estado,
         'FMODIFICACION': ahora.toIso8601String(),
         if (user != null) 'USERMODIFICACION': user.idUsuario,
