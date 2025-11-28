@@ -7,12 +7,12 @@ abstract class RolesRepository {
 
   Future<Either<Failure, RolEntity>> createRol(
       {required String nombre,
-      required String observacion,
+      required String codigo,
       required String estado});
 
   Future<Either<Failure, RolEntity>> updateRol(RolEntity rol,
       {required String nombre,
-      required String observacion,
+      required String codigo,
       required String estado});
 
   Future<Either<Failure, bool>> deleteRol(RolEntity rol);
