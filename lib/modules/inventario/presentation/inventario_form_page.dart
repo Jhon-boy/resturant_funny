@@ -17,6 +17,7 @@ import 'package:resturant_funny/modules/inventario/domain/repository/inventario_
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
 import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/enums/categorias_producto.dart';
+import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/custom_dropdown.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -27,12 +28,13 @@ class InventarioFormPage extends ConsumerStatefulWidget {
     required this.sucursales,
     this.inventario,
     this.titulo,
+    this.isEmployee = false,
   });
 
   final List<SucursalEntity> sucursales;
   final InventarioEntity? inventario;
   final String? titulo;
-
+  final bool isEmployee;
   bool get esEdicion => inventario != null;
 
   static Future<InventarioEntity?> navigate({
@@ -65,6 +67,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
   late final TextEditingController _precioCtrl;
 
   late int _idSucursalSeleccionada;
+  EstadosPersona? _estadoSeleccionado;
 
   late final InventarioRepository _inventarioRepository;
 
@@ -107,7 +110,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
           ? inventario!.precioUnitario!.toStringAsFixed(2)
           : '',
     );
-    _idSucursalSeleccionada = inventario?.idSucursal ??
+    _idSucursalSeleccionada = ref.read(userProvider).user?.idSucursal ??
         (widget.sucursales
                 .firstWhere(
                   (s) => s.idSucursal != null,
@@ -117,6 +120,27 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
                 )
                 .idSucursal ??
             0);
+
+    if (inventario != null && inventario.estado != null) {
+      try {
+        _estadoSeleccionado = EstadosPersona.all.firstWhere(
+          (e) => e.getState == inventario.estado!.toUpperCase(),
+          orElse: () => EstadosPersona.PENDIENTE,
+        );
+      } catch (e) {
+        _estadoSeleccionado = EstadosPersona.PENDIENTE;
+      }
+      if (widget.isEmployee) {
+        _estadoSeleccionado = EstadosPersona.PENDIENTE;
+      }
+    } else {
+      // Si es creación
+      if (widget.isEmployee) {
+        _estadoSeleccionado = EstadosPersona.PENDIENTE;
+      } else {
+        _estadoSeleccionado = EstadosPersona.ACTIVO;
+      }
+    }
   }
 
   Future<void> _guardarInventario() async {
@@ -137,6 +161,12 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
       return;
     }
 
+    if (_estadoSeleccionado == null) {
+      SnackHelper.show(context,
+          message: 'Seleccione el estado del inventario', isError: true);
+      return;
+    }
+
     ref.read(appStateProvider.notifier).setLoading(true);
 
     final nombre = _nombreCtrl.text.trim();
@@ -144,12 +174,17 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     final categoria = _categoriaCtrl.text.trim();
 
     if (widget.esEdicion) {
+      // Si es empleado, forzar estado PENDIENTE para aprobación
+      final estadoParaActualizar =
+          widget.isEmployee ? EstadosPersona.PENDIENTE : _estadoSeleccionado!;
+
       await _actualizarInventario(
         nombre: nombre,
         descripcion: descripcion,
         categoria: categoria,
         stock: stock,
         precio: precio,
+        estado: estadoParaActualizar,
       );
     } else {
       await _crearInventario(
@@ -158,6 +193,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
         categoria: categoria,
         stock: stock,
         precio: precio,
+        estado: _estadoSeleccionado!,
       );
     }
   }
@@ -168,6 +204,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     required String categoria,
     required int stock,
     required double precio,
+    required EstadosPersona estado,
   }) async {
     final user = ref.read(userProvider).user;
     if (user == null) {
@@ -184,7 +221,8 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
         categoria,
         stock,
         precio,
-        user.idUsuario?.toString() ?? user.usuario ?? 'Admin');
+        user.idUsuario?.toString() ?? user.usuario ?? 'Admin',
+        estado);
     final result =
         await _inventarioRepository.createInventario(nuevoInventario, user);
     if (!mounted) {
@@ -217,6 +255,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     required String categoria,
     required int stock,
     required double precio,
+    required EstadosPersona estado,
   }) async {
     final inventario = widget.inventario;
     if (inventario?.idInventario == null) {
@@ -247,7 +286,8 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
         stock,
         precio,
         user.idUsuario?.toString() ?? user.usuario ?? 'Admin',
-        _idSucursalSeleccionada);
+        _idSucursalSeleccionada,
+        estado);
 
     final result = await _inventarioRepository.updateInventario(
       inventario!.idInventario!,
@@ -363,6 +403,31 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Estado'),
+                    const SizedBox(height: 8),
+                    CustomDropdown<EstadosPersona>(
+                      value: _estadoSeleccionado,
+                      label: 'Estado',
+                      hint: widget.isEmployee
+                          ? 'Pendiente (requiere aprobación)'
+                          : 'Seleccione el estado',
+                      items: EstadosPersona.all,
+                      displayText: (estado) => estado.label,
+                      onChanged: widget.isEmployee
+                          ? (_) {}
+                          : (estado) {
+                              setState(() {
+                                _estadoSeleccionado = estado;
+                              });
+                            },
+                      enabled: !widget.isEmployee,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _stockCtrl,
                   decoration: ThemeApp.inputDecoration(
@@ -414,10 +479,32 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                if (widget.isEmployee) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    color: ThemeApp.primary.withOpacity(0.1),
+                    child: const Card(
+                        child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Icon(Icons.info, color: ThemeApp.primary),
+                        Expanded(
+                          child: Text(
+                              'Nota: Este inventario requiere aprobación por parte del Administrador'),
+                        )
+                      ],
+                    )),
+                  )
+                ],
+                const SizedBox(height: 16),
                 CustomButton(
                   icon: Icons.save,
-                  text: widget.esEdicion ? 'Actualizar' : 'Guardar',
+                  text: widget.esEdicion
+                      ? 'Actualizar'
+                      : widget.isEmployee
+                          ? 'Solicitar'
+                          : 'Guardar',
                   onPressed: _guardarInventario,
                 ),
               ],

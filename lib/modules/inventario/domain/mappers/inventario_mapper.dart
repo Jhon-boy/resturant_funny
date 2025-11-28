@@ -10,7 +10,8 @@ class InventarioMapper {
       String categoria,
       int stock,
       double precio,
-      String usuarioIngreso) {
+      String usuarioIngreso,
+      EstadosPersona estado) {
     return InventarioEntity(
         idSucursal: idSucursal,
         nombre: nombre,
@@ -19,7 +20,7 @@ class InventarioMapper {
         stock: stock,
         precioUnitario: precio,
         usuarioIngreso: usuarioIngreso,
-        estado: EstadosPersona.ACTIVO.getState,
+        estado: estado.getState,
         fCreacion: AppUtils.getFechaActual());
   }
 
@@ -30,7 +31,8 @@ class InventarioMapper {
       int stock,
       double precio,
       String usuarioModificacion,
-      int idSucursal) {
+      int idSucursal,
+      EstadosPersona estado) {
     return {
       'NOMBRE': nombre,
       'DESCRIPCION': descripcion.isEmpty ? null : descripcion,
@@ -38,6 +40,7 @@ class InventarioMapper {
       'STOCK': stock,
       'PRECIO_UNITARIO': precio,
       'IDSUCURSAL': idSucursal,
+      'ESTADO': estado.getState,
       'USERMODIFICACION': usuarioModificacion,
       'FMODIFICACION': DateTime.now().toIso8601String(),
     };

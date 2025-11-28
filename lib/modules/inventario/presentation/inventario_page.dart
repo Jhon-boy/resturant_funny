@@ -35,6 +35,7 @@ class InventarioPage extends ConsumerStatefulWidget {
 class _InventarioPageState extends ConsumerState<InventarioPage> {
   late final InventarioRepository _inventarioRepository;
   late final SucursalRepository _sucursalRepository;
+  bool isEmployee = false;
 
   List<SucursalEntity> _sucursales = [];
   SucursalEntity? _selectedSucursal;
@@ -51,6 +52,7 @@ class _InventarioPageState extends ConsumerState<InventarioPage> {
         SucursalRemoteRepository(SucursalRemoteDataSource(ref: ref));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      isEmployee = ref.read(isEmployeeProvider);
       _loadInitialData();
     });
   }
@@ -128,6 +130,7 @@ class _InventarioPageState extends ConsumerState<InventarioPage> {
     );
   }
 
+// Resuelve la sucursal inicial según el rol del usuario
   SucursalEntity? _resolveInitialSucursal(List<SucursalEntity> sucursales) {
     if (sucursales.isEmpty) return null;
     final user = ref.read(userProvider).user;
@@ -234,74 +237,90 @@ class _InventarioPageState extends ConsumerState<InventarioPage> {
     return PantallaBase(
       onBack: () => Navigator.of(context).pop(),
       title: widget.titulo,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Seleccione la sucursal',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 5),
-            CustomDropdown<SucursalEntity>(
-              value: _selectedSucursal,
-              label: 'Sucursal',
-              hint: 'Seleccione una sucursal',
-              displayText: (sucursal) => sucursal.nombre,
-              items: _sucursales,
-              onChanged: (sucursal) {
-                if (sucursal == null ||
-                    sucursal.idSucursal == _selectedSucursal?.idSucursal) {
-                  return;
-                }
-                setState(() {
-                  _selectedSucursal = sucursal;
-                });
-                _fetchInventarios(sucursal.idSucursal!);
-              },
-            ),
-            const SizedBox(height: 8),
-            Text.rich(TextSpan(children: [
-              const TextSpan(text: 'Inventario de la sucursal: '),
-              TextSpan(
-                  text: _selectedSucursal?.nombre ?? '',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-            ])),
-            const SizedBox(height: 8),
-            if (_inventariosPendientes.isNotEmpty)
-              const Text('Inventarios pendientes de aprobación',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            InventarioPendienteWidget(
-              inventariosPendientes: _inventariosPendientes,
-              inventarioRepository: _inventarioRepository,
-              onRefresh: _refreshInventarios,
-              isLoading: isLoading,
-            ),
-            if (_inventariosPendientes.isNotEmpty) const SizedBox(height: 16),
-            Expanded(
-              child: _InventariosList(
-                isLoading: isLoading,
-                inventarios: _inventarios,
-                onRefresh: _refreshInventarios,
-                onSelect: _mostrarDetalleInventario,
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!isEmployee) ...[
+                    const Text('Seleccione la sucursal',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5),
+                    CustomDropdown<SucursalEntity>(
+                      value: _selectedSucursal,
+                      label: 'Sucursal',
+                      hint: 'Seleccione una sucursal',
+                      displayText: (sucursal) => sucursal.nombre,
+                      items: _sucursales,
+                      onChanged: (sucursal) {
+                        if (sucursal == null ||
+                            sucursal.idSucursal ==
+                                _selectedSucursal?.idSucursal) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedSucursal = sucursal;
+                        });
+                        _fetchInventarios(sucursal.idSucursal!);
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Text.rich(TextSpan(children: [
+                    const TextSpan(text: 'Inventario de la sucursal: '),
+                    TextSpan(
+                        text: _selectedSucursal?.nombre ?? '',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ])),
+                  const SizedBox(height: 8),
+                  if (_inventariosPendientes.isNotEmpty)
+                    InventarioPendienteWidget(
+                      inventariosPendientes: _inventariosPendientes,
+                      inventarioRepository: _inventarioRepository,
+                      onRefresh: _refreshInventarios,
+                      isLoading: isLoading,
+                    ),
+                  if (_inventariosPendientes.isNotEmpty)
+                    const SizedBox(height: 16),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: _InventariosList(
+                      isLoading: isLoading,
+                      inventarios: _inventarios,
+                      onRefresh: _refreshInventarios,
+                      onSelect: _mostrarDetalleInventario,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            CustomButton(
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: CustomButton(
                 icon: Icons.inventory_2,
-                text: 'Registrar Inventario',
+                text: isEmployee
+                    ? 'Solicitar Inventario'
+                    : 'Registrar Inventario',
                 onPressed: () async {
                   final result =
                       await Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) => InventarioFormPage(
-                                titulo: 'Registrar Inventario',
+                                titulo: isEmployee
+                                    ? 'Solicitar Inventario'
+                                    : 'Registrar Inventario',
+                                isEmployee: isEmployee,
                                 sucursales: _sucursales,
                               )));
                   if (result != null) {
                     _fetchInventarios(_selectedSucursal?.idSucursal ?? 1);
                   }
-                })
-          ],
-        ),
+                }),
+          ),
+        ],
       ),
     );
   }
