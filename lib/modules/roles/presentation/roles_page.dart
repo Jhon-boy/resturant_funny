@@ -7,6 +7,10 @@ import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.
 import 'package:resturant_funny/modules/roles/data/datasource/roles_remote_datasource.dart';
 import 'package:resturant_funny/modules/roles/data/repository/roles_repository_impl.dart';
 import 'package:resturant_funny/modules/roles/domain/roles_repository.dart';
+import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
+import 'package:resturant_funny/shared/widgets/not_found_card.dart';
+import 'package:resturant_funny/shared/widgets/dialog_generic_widget.dart';
 
 class RolesPage extends ConsumerStatefulWidget {
   const RolesPage({super.key, required this.titulo});
@@ -82,8 +86,7 @@ class _RolesPageState extends ConsumerState<RolesPage> {
 
   Future<void> _mostrarDialogoRol({RolEntity? rolExistente}) async {
     final nombreCtrl = TextEditingController(text: rolExistente?.nombre ?? '');
-    final obsCtrl =
-        TextEditingController(text: rolExistente?.observacion ?? '');
+    final codCtrl = TextEditingController(text: rolExistente?.codigo ?? '');
     String estado = rolExistente?.estado ?? 'ACT';
 
     final esEdicion = rolExistente != null;
@@ -91,60 +94,63 @@ class _RolesPageState extends ConsumerState<RolesPage> {
     await showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(esEdicion ? 'Editar rol' : 'Nuevo rol'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nombreCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: obsCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Observación',
-                  ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: estado,
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'ACT',
-                      child: Text('Activo'),
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return DialogoPersonalizadoWidget(
+              titulo: esEdicion ? 'Editar rol' : 'Nuevo rol',
+              buttonTitle: esEdicion ? 'Guardar' : 'Crear',
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nombreCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre del rol',
+                      ),
                     ),
-                    DropdownMenuItem(
-                      value: 'INA',
-                      child: Text('Inactivo'),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: codCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Código del rol',
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(right: 11), // evita desborde
+                      child: DropdownButtonFormField<String>(
+                        value: estado,
+                        isExpanded: true, // ocupa todo el ancho
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre del rol',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'ACT',
+                            child: Text('Activo'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'INA',
+                            child: Text('Inactivo'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setStateDialog(() {
+                            estado = value; // actualiza y redibuja
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
-                  decoration: const InputDecoration(
-                    labelText: 'Estado',
-                  ),
-                  onChanged: (val) {
-                    if (val != null) {
-                      estado = val;
-                    }
-                  },
                 ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
+              ),
+              onAceptarPressed: () async {
                 final nombre = nombreCtrl.text.trim();
-
                 if (nombre.isEmpty) {
                   SnackHelper.show(
                     context,
@@ -159,16 +165,17 @@ class _RolesPageState extends ConsumerState<RolesPage> {
                     await _actualizarRol(
                       rolExistente!,
                       nombre: nombre,
-                      observacion: obsCtrl.text.trim(),
+                      codigo: codCtrl.text.trim(),
                       estado: estado,
                     );
                   } else {
                     await _crearRol(
                       nombre: nombre,
-                      observacion: obsCtrl.text.trim(),
+                      codigo: codCtrl.text.trim(),
                       estado: estado,
                     );
                   }
+
                   if (mounted) Navigator.of(ctx).pop();
                 } catch (e) {
                   SnackHelper.show(
@@ -178,9 +185,8 @@ class _RolesPageState extends ConsumerState<RolesPage> {
                   );
                 }
               },
-              child: Text(esEdicion ? 'Guardar' : 'Crear'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -188,86 +194,135 @@ class _RolesPageState extends ConsumerState<RolesPage> {
 
   Future<void> _crearRol({
     required String nombre,
-    required String observacion,
+    required String codigo,
     required String estado,
   }) async {
-    final appState = ref.watch(appStateProvider);
+    final appState = ref.read(appStateProvider);
+
     setState(() {
       _isLoading = true;
     });
     appState.setLoading(true);
+
     try {
       final result = await _rolesRepository.createRol(
-          nombre: nombre, observacion: observacion, estado: estado);
-      final nuevoRol = RolEntity.fromJson(result as Map<String, dynamic>);
+        nombre: nombre,
+        codigo: codigo,
+        estado: estado,
+      );
 
-      setState(() {
-        _roles.insert(0, nuevoRol);
-      });
+      result.fold(
+        (failure) {
+          SnackHelper.show(
+            context,
+            message: failure.message ?? 'Error al crear el rol',
+            isSuccess: false,
+          );
+        },
+        (nuevoRol) {
+          if (!mounted) return;
 
-      SnackHelper.show(
-        context,
-        message: 'Rol creado correctamente',
-        isSuccess: true,
+          setState(() {
+            _roles.insert(0, nuevoRol);
+          });
+
+          SnackHelper.show(
+            context,
+            message: 'Rol creado correctamente',
+            isSuccess: true,
+          );
+        },
       );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      appState.setLoading(false);
     }
   }
 
   Future<void> _actualizarRol(
     RolEntity rol, {
     required String nombre,
-    required String observacion,
+    required String codigo,
     required String estado,
   }) async {
+    final appState = ref.read(appStateProvider);
+
     setState(() => _isLoading = true);
+    appState.setLoading(true);
+
     try {
-      final result = await _rolesRepository.updateRol(rol,
-          nombre: nombre, observacion: observacion, estado: estado);
-      final actualizado = RolEntity.fromJson(result as Map<String, dynamic>);
+      final result = await _rolesRepository.updateRol(
+        rol,
+        nombre: nombre,
+        codigo: codigo,
+        estado: estado,
+      );
 
-      setState(() {
-        final index = _roles.indexWhere((r) => r.idRol == rol.idRol);
-        if (index != -1) {
-          _roles[index] = actualizado;
-        }
-      });
+      result.fold(
+        (failure) {
+          SnackHelper.show(
+            context,
+            message: failure.message ?? 'Error al actualizar el rol',
+            isSuccess: false,
+          );
+        },
+        (rolActualizado) {
+          if (!mounted) return;
 
-      SnackHelper.show(
-        context,
-        message: 'Rol actualizado correctamente',
-        isSuccess: true,
+          setState(() {
+            final index = _roles.indexWhere((r) => r.idRol == rol.idRol);
+            if (index != -1) {
+              _roles[index] = rolActualizado;
+            }
+          });
+
+          SnackHelper.show(
+            context,
+            message: 'Rol actualizado correctamente',
+            isSuccess: true,
+          );
+        },
       );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      appState.setLoading(false);
     }
   }
 
   Future<void> _eliminarRol(RolEntity rol) async {
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar rol'),
-        content: Text(
-          '¿Estás seguro de eliminar el rol "${rol.nombre}"? Esta acción no se puede deshacer.',
+      builder: (ctx) => DialogoPersonalizadoWidget(
+        titulo: 'Eliminar rol',
+        buttonTitle: 'Eliminar',
+        cancelTitle: 'Cancelar',
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text(
+            '¿Estás seguro de eliminar el rol "${rol.nombre}"? '
+            'Esta acción no se puede deshacer.',
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
+        onAceptarPressed: () {
+          Navigator.of(ctx).pop(true);
+        },
+        onCancelPressed: () {
+          Navigator.of(ctx).pop(false);
+        },
       ),
     );
 
     if (confirmar != true) return;
 
+    final appState = ref.watch(appStateProvider);
     setState(() => _isLoading = true);
+    appState.setLoading(true);
     try {
       await _rolesRepository.deleteRol(rol);
       setState(() {
@@ -287,6 +342,7 @@ class _RolesPageState extends ConsumerState<RolesPage> {
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
+      appState.setLoading(false);
     }
   }
 
@@ -314,91 +370,133 @@ class _RolesPageState extends ConsumerState<RolesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Roles'),
+    return PantallaBase(
+      title: widget.titulo,
+      onBack: () => Navigator.of(context).pop(),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return ThemeApp.buildShimmerLoading();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_roles.isEmpty)
+            const Expanded(
+              child: Center(
+                child: NotFoundCard(
+                  message: 'No hay roles registrados',
+                  icon: Icons.security_outlined,
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _cargarRoles,
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 16),
+                  itemCount: _roles.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (ctx, index) =>
+                      _buildRolItem(ctx, _roles[index]),
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          CustomButton(
+            text: 'Crear rol',
+            icon: Icons.add,
+            onPressed: _crearRolDialog,
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _crearRolDialog,
-        child: const Icon(Icons.add),
+    );
+  }
+
+  Widget _buildRolItem(BuildContext context, RolEntity rol) {
+    final estadoColor = _colorEstado(rol.estado);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _roles.isEmpty
-              ? const Center(child: Text('No hay roles registrados'))
-              : RefreshIndicator(
-                  onRefresh: _cargarRoles,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _roles.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (ctx, index) {
-                      final rol = _roles[index];
-                      return Card(
-                        child: ListTile(
-                          title: Text(
-                            rol.nombre,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (rol.observacion != null &&
-                                  rol.observacion!.isNotEmpty)
-                                Text(rol.observacion!),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _colorEstado(rol.estado)
-                                          .withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      _labelEstado(rol.estado),
-                                      style: TextStyle(
-                                        color: _colorEstado(rol.estado),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'ID: ${rol.idRol}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(color: Colors.grey[600]),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => _editarRolDialog(rol),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () => _eliminarRol(rol),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        title: Text(
+          rol.nombre,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (rol.codigo != null && rol.codigo!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(rol.codigo!),
+              ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: estadoColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _labelEstado(rol.estado),
+                    style: TextStyle(
+                      color: estadoColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                Text(
+                  'ID: ${rol.idRol}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => _editarRolDialog(rol),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => _eliminarRol(rol),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
