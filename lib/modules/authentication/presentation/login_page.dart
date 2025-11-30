@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:resturant_funny/core/app_constants.dart';
+import 'package:resturant_funny/core/app_constants.dart'; 
 import 'package:resturant_funny/core/services/shared_preferences_service.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
@@ -14,10 +14,14 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/imagenes.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
+import 'package:resturant_funny/modules/authentication/data/datasource/sesion_remote_data_source.dart';
 import 'package:resturant_funny/modules/authentication/data/repository/auth_repository_impl.dart';
+import 'package:resturant_funny/modules/authentication/data/repository/sesion_repository_impl.dart'; 
+import 'package:resturant_funny/modules/authentication/domain/mappers/auth_mapper.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
+import 'package:resturant_funny/modules/authentication/domain/repository/sesion_repository.dart';
 import 'package:resturant_funny/modules/authentication/presentation/splash_page.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -35,6 +39,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   late final AuthRepository _authRepository;
+  late final SesionRepository _sesionRepository;
   bool isDeviceLoggedOnce = false;
   bool canLogin = false;
   bool isLoading = false;
@@ -56,6 +61,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     _authRepository = AuthRepositoryImpl(
       remoteDataSource: AuthRemoteDataSourceImpl(ref: ref),
+    );
+    _sesionRepository = SessionRepositoryImpl(
+      SessionRemoteDataSource(ref: ref),
     );
     usuarioController.addListener(_validateFields);
     passwordController.addListener(_validateFields);
@@ -114,6 +122,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
       );
 
+      await _crearSesion(user);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const SplashPage()),
@@ -126,6 +136,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         message: "Error al cargar la información del usuario",
         onConfirmed: () {},
       );
+    }
+  }
+
+  Future<void> _crearSesion(UserModel user) async {
+    try {
+      final result = await _sesionRepository.createSesion(
+          AuthMapper.toSesionEntity(user), user);
+
+      result.fold(
+        (failure) {
+          debugPrint("Error al crear sesión: ${failure.message}");
+        },
+        (sesionCreada) {
+          debugPrint("Sesión creada exitosamente: ${sesionCreada.idSesion}");
+        },
+      );
+    } catch (e) {
+      debugPrint("Error al crear sesión: $e");
     }
   }
 

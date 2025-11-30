@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart';
+import 'package:resturant_funny/modules/reportes/presentation/reportes_sesion.dart';
 import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
 import 'package:resturant_funny/modules/sucursales/data/repository/sucursal_repository.dart';
 import 'package:resturant_funny/modules/sucursales/domain/sucursal_repository.dart';
@@ -111,7 +112,15 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
                     onTap: () => _navegarAReporte(TipoReporte.totalInventario),
                   ),
                   const SizedBox(height: 32),
-
+                  EstadisticaCardWidget(
+                    titulo: 'Sesiones',
+                    icon: Icons.login,
+                    color: Colors.blue,
+                    valor: 'Ver',
+                    subtitulo: 'Sesiones en el sistema',
+                    onTap: () => _navegarAReporte(TipoReporte.sesiones),
+                  ),
+                  const SizedBox(height: 32),
                   // SECCIÓN: ESTADÍSTICAS
                   _buildSectionTitle('Estadísticas'),
                   const SizedBox(height: 12),
@@ -224,6 +233,15 @@ class _ReportesPageState extends ConsumerState<ReportesPage> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const ReporteResumenComparativasPage(),
+          ),
+        );
+        break;
+      case TipoReporte.sesiones:
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ReportesSesionPage(
+              title: 'Sesiones',
+            ),
           ),
         );
         break;

@@ -9,4 +9,5 @@ enum TipoReporte {
   empleados,
   resumenComparativas,
   sucursalesYMesas,
+  sesiones,
 }

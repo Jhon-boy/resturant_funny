@@ -5,15 +5,12 @@ import 'package:resturant_funny/modules/authentication/domain/model/user_model.d
 
 abstract class SesionRepository {
   Future<Either<Failure, List<SesionEntity>>> getAllSesiones(
-      {DateTime? fechaDesde, DateTime? fechaHasta});
+      DateTime? fechaDesde, DateTime? fechaHasta);
   Future<Either<Failure, SesionEntity>> getSesionById(String idSesion);
   Future<Either<Failure, List<SesionEntity>>> getSesionesByUsuario(
       int idUsuario,
       {DateTime? fechaDesde,
       DateTime? fechaHasta});
   Future<Either<Failure, SesionEntity>> createSesion(
-      SesionEntity sesion, UserModel user);
-  Future<Either<Failure, SesionEntity>> updateSesion(
-      String idSesion, Map<String, dynamic> data);
-  Future<Either<Failure, bool>> deleteSesion(String idSesion);
+      SesionEntity sesion, UserModel user); 
 }

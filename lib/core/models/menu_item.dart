@@ -118,6 +118,14 @@ class MenuItem {
       index: 11,
       isMainMenu: false,
       requiresRole: false,
+    ),
+      MenuItem(
+      label: 'Sesión',
+      icon: Icons.logout_outlined,
+      index: 12,
+        isMainMenu: true,
+      requiresRole: true,
+       allowedRoles: ['ADM'],
     )
   ];
 

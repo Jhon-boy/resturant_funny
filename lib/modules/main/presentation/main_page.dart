@@ -10,6 +10,7 @@ import 'package:resturant_funny/modules/main/presentation/inicio_page.dart';
 import 'package:resturant_funny/modules/notification/notifications_list.dart';
 import 'package:resturant_funny/modules/notification/providers/notification_provider.dart';
 import 'package:resturant_funny/modules/reportes/presentation/reportes_page.dart';
+import 'package:resturant_funny/modules/reportes/presentation/reportes_sesion.dart';
 import 'package:resturant_funny/modules/roles/presentation/roles_page.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/sucursales_page.dart';
 import 'package:resturant_funny/modules/user/presentation/empleados_page.dart';
@@ -215,7 +216,7 @@ class _MainPageState extends ConsumerState<MainPage> {
           ),
         );
         break;
-      case 11: // Acerca de
+      case 9: // Acerca de
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const ReportesPage(
@@ -224,6 +225,14 @@ class _MainPageState extends ConsumerState<MainPage> {
           ),
         );
         break;
+      case 12: // Sesión
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ReportesSesionPage(
+              title: 'Gestión de Sesión',
+            ),
+          ),
+        );
     }
   }
 }
