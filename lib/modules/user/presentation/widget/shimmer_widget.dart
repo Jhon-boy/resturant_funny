@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:resturant_funny/core/theme_app.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ShimmerWidget extends StatelessWidget {
@@ -42,8 +43,9 @@ class _ShimmerListItem extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: const Card(
+        color: ThemeApp.cardColors,
         margin: EdgeInsets.only(bottom: 12),
-        elevation: 2,
+        elevation: 3,
         child: ListTile(
           leading: _CirclePlaceholder(),
           title: _BarPlaceholder(height: 16),

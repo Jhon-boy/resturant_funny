@@ -621,7 +621,8 @@ class _ReporteVentasPorEmpleadoPageState
     final tieneVentas = stats.totalVentas > 0;
 
     return Card(
-      elevation: 2,
+      elevation: 3,
+      color: ThemeApp.cardColors,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),

@@ -154,7 +154,13 @@ class _SucursalesListaPageState extends ConsumerState<SucursalesListaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sucursales'),
+        backgroundColor: ThemeApp.primary,
+        iconTheme: const IconThemeData(color: ThemeApp.baseText),
+        title: Text('Sucursales',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: ThemeApp.baseText)),
         centerTitle: true,
       ),
       body: RefreshIndicator(
@@ -216,6 +222,7 @@ class _SucursalItem extends StatelessWidget {
     return Card(
       elevation: 4,
       margin: const EdgeInsets.only(bottom: 16),
+      color: ThemeApp.cardColors,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -333,6 +340,7 @@ class _SucursalItem extends StatelessWidget {
                               backgroundColor: ThemeApp.success,
                             ),
                             child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   FontAwesomeIcons.whatsapp,
@@ -360,6 +368,7 @@ class _SucursalItem extends StatelessWidget {
                                 backgroundColor: ThemeApp.cardColors,
                               ),
                               child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     FontAwesomeIcons.locationDot,

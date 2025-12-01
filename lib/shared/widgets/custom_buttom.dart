@@ -45,7 +45,7 @@ class CustomButton extends StatelessWidget {
               ? (colorButton ?? ThemeApp.primary)
               : const Color.fromARGB(255, 241, 150, 85),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(23),
           ),
           elevation: 3,
         ),

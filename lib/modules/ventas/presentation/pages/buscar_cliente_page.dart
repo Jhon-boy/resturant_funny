@@ -319,7 +319,8 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
                     // Resultados de búsqueda
                     if (ref.read(appStateProvider).isProcessLoading) ...[
                       Card(
-                        elevation: 1,
+                        color: ThemeApp.cardColors,
+                        elevation: 3,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -338,7 +339,8 @@ class _BuscarClienteWidgetState extends ConsumerState<BuscarClienteWidget> {
                       ),
                     ] else if (_sinResultados) ...[
                       Card(
-                        elevation: 1,
+                        color: ThemeApp.cardColors,
+                        elevation: 3,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/config/env_config.dart';
 import 'package:resturant_funny/app/config/enviroment.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
+import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/services/conection_service.dart';
 import 'package:resturant_funny/core/services/shared_preferences_service.dart';
 import 'package:resturant_funny/core/services/storage_service.dart';
@@ -80,7 +81,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     final appState = ref.watch(appStateProvider);
 
     return MaterialApp(
-      title: 'Restaurant Funny',
+      title: AppConstants.APP_NAME,
       debugShowCheckedModeBanner: false,
 
       // Tema

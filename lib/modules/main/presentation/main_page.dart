@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
+import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
@@ -61,10 +62,10 @@ class _MainPageState extends ConsumerState<MainPage> {
         key: _scaffoldKey,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: ThemeApp.inputBackground,
           foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
           title: Text(
-            'Restaurant Funny',
+            AppConstants.APP_NAME,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           actions: [
@@ -207,6 +208,15 @@ class _MainPageState extends ConsumerState<MainPage> {
           ),
         );
         break;
+      case 9: // Reportes
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ReportesPage(
+              titulo: 'Gestión de Reportes',
+            ),
+          ),
+        );
+        break;
       case 10: // Roles
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -216,16 +226,7 @@ class _MainPageState extends ConsumerState<MainPage> {
           ),
         );
         break;
-      case 9: // Acerca de
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ReportesPage(
-              titulo: 'Gestión de Reportes',
-            ),
-          ),
-        );
-        break;
-      case 12: // Sesión
+      case 11: // Sesión
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const ReportesSesionPage(

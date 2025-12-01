@@ -16,7 +16,7 @@ class InventarioAdminCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: ThemeApp.baseText,
+      color: ThemeApp.cardColors,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,

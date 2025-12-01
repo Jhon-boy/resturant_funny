@@ -259,11 +259,11 @@ class _DispositivoWidgetState extends ConsumerState<DispositivoWidget> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Card(
+        color: ThemeApp.cardColors,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
         elevation: 4,
-        color: ThemeApp.background,
         child: Shimmer.fromColors(
           baseColor: Colors.grey.shade300,
           highlightColor: Colors.grey.shade100,
@@ -328,7 +328,7 @@ class _DispositivoWidgetState extends ConsumerState<DispositivoWidget> {
         borderRadius: BorderRadius.circular(20),
       ),
       elevation: 4,
-      color: ThemeApp.background,
+      color: ThemeApp.cardColors,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child:

@@ -20,6 +20,7 @@ class SucursalCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: ThemeApp.inputBackground,
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       shape: RoundedRectangleBorder(
@@ -91,11 +92,8 @@ class SucursalCardWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 19,
-                    color: ThemeApp.textPrimary
-                  ),
+                  const Icon(Icons.arrow_forward_ios,
+                      size: 19, color: ThemeApp.textPrimary),
                 ],
               ),
               const SizedBox(height: 16),

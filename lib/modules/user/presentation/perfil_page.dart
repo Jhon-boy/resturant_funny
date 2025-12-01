@@ -126,11 +126,11 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
                 ),
                 SizedBox(
                   child: Card(
+                      color: ThemeApp.cardColors,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       elevation: 4,
-                      color: ThemeApp.background,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(20),
                         onTap: () async {

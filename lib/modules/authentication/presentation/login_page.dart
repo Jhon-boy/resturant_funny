@@ -288,7 +288,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       child: Image.asset(
                         Imagenes.logoApp,
                         width: size.width * 0.5,
-                        height: size.width * 0.5,
+                        height: size.width * 0.40,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -301,7 +301,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
                   ],
                 ),
               ),
@@ -314,8 +314,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: [
                       const Text("Ingresa tus credenciales para continuar"),
                       const SizedBox(height: 20),
-
-                      const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           boxShadow: [
@@ -340,9 +338,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Container(
                         decoration: BoxDecoration(
                           boxShadow: [
@@ -379,7 +375,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 35),
+                      const SizedBox(height: 30),
 
                       // ===== LOGIN BUTTON =====
                       SizedBox(
@@ -392,7 +388,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             text: isLoading ? "Cargando..." : "Iniciar Sesión",
                             enable: canLogin,
                           )),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 15),
 
                       // ===== SIGN UP =====
                       const Row(
@@ -408,7 +404,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 25),
                       if (isDeviceLoggedOnce) ...[
                         // ===== OR SOCIAL =====
                         const Row(
@@ -421,14 +417,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             Expanded(child: Divider(thickness: 1)),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 15),
                       ],
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           if (isDeviceLoggedOnce) ...[
                             socialButton(ThemeApp.baseText, Icons.fingerprint,
-                                onTap: () {
+                                title: "Biometria", onTap: () {
                               iniciarConBiometria();
                             }),
                           ],

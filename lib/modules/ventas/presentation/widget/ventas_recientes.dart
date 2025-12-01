@@ -113,8 +113,8 @@ class _VentasRecientesState extends ConsumerState<VentasRecientes> {
                   children: ventasRecientes.asMap().entries.map((entry) {
                     final venta = entry.value;
                     return Card(
-                        color: ThemeApp.background.withOpacity(0.9),
-                        elevation: 1,
+                        color: ThemeApp.cardColors,
+                        elevation: 3,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

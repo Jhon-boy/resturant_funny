@@ -485,16 +485,20 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
                     width: MediaQuery.of(context).size.width * 0.9,
                     color: ThemeApp.primary.withOpacity(0.1),
                     child: const Card(
+                        color: ThemeApp.cardColors,
+                        elevation: 3,
+                        margin:  EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 16),
                         child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Icon(Icons.info, color: ThemeApp.primary),
-                        Expanded(
-                          child: Text(
-                              'Nota: Este inventario requiere aprobación por parte del Administrador'),
-                        )
-                      ],
-                    )),
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Icon(Icons.info, color: ThemeApp.primary),
+                            Expanded(
+                              child: Text(
+                                  'Nota: Este inventario requiere aprobación por parte del Administrador'),
+                            )
+                          ],
+                        )),
                   )
                 ],
                 const SizedBox(height: 16),

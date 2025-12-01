@@ -374,12 +374,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Card(
-          elevation: 1,
+          color: ThemeApp.cardColors,
+          elevation: 3,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: Colors.grey.shade200, width: 1),
           ),
-          color: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -470,8 +470,9 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                           final producto = item.producto;
                           final precioLinea = producto.precio * item.cantidad;
                           return Card(
+                            color: ThemeApp.cardColors,
                             margin: const EdgeInsets.only(bottom: 12),
-                            elevation: 1,
+                            elevation: 3,
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: Row(
@@ -577,8 +578,8 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                             final precioLinea = producto.precio * item.cantidad;
                             return Card(
                               margin: const EdgeInsets.only(bottom: 8),
-                              elevation: 1,
-                              color: Colors.grey.shade50,
+                              elevation: 3,
+                              color: ThemeApp.cardColors,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(
@@ -690,12 +691,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
         ),
         const SizedBox(height: 16),
         Card(
-          elevation: 1,
+          elevation: 3,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: Colors.grey.shade200, width: 1),
           ),
-          color: Colors.white,
+          color: ThemeApp.cardColors,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -737,12 +738,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
         ),
         const SizedBox(height: 16),
         Card(
-            elevation: 1,
+            color: ThemeApp.cardColors,
+            elevation: 3,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(color: Colors.grey.shade200, width: 1),
             ),
-            color: Colors.white,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(

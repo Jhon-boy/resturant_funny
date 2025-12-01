@@ -26,7 +26,7 @@ class AppBottomNav extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       selectedItemColor: ThemeApp.primary,
       unselectedItemColor: ThemeApp.textSecondary,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: ThemeApp.inputBackground,
       items: mainMenus.map((menu) {
         return BottomNavigationBarItem(
           icon: Icon(menu.icon),

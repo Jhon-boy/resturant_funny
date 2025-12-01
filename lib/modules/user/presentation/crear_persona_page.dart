@@ -807,63 +807,32 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
             ],
             if (_index == 2) ...[
               const SizedBox(height: 16),
-              Row(children: [
-                Expanded(
-                  child: CalendarWidget(
-                    title: 'Seleccione *',
-                    hint: 'Fecha desde',
-                    selectedDate: _fechaDesde,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime.now(),
-                    initialDate:
-                        DateTime.now().subtract(const Duration(days: 30)),
-                    icon: Icons.calendar_today,
-                    onDateSelected: (fecha) {
-                      if (fecha == null) return;
-                      setState(() {
-                        _fechaDesde = fecha;
-                        if (_fechaHasta != null &&
-                            _fechaHasta!.difference(fecha).inDays > 31) {
-                          final nuevaFechaHasta =
-                              fecha.add(const Duration(days: 31));
-                          _fechaHasta = nuevaFechaHasta.isBefore(DateTime.now())
-                              ? nuevaFechaHasta
-                              : DateTime.now();
-                        }
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: CalendarWidget(
-                    title: 'Seleccione *',
-                    hint: 'Fecha hasta',
-                    selectedDate: _fechaHasta,
-                    firstDate: _fechaDesde ?? DateTime(2000),
-                    lastDate: _fechaDesde != null
-                        ? _fechaDesde!
-                                .add(const Duration(days: 31))
-                                .isBefore(DateTime.now())
-                            ? _fechaDesde!.add(const Duration(days: 31))
-                            : DateTime.now()
-                        : DateTime.now(),
-                    initialDate: _fechaDesde != null
-                        ? _fechaDesde!
-                                .add(const Duration(days: 15))
-                                .isBefore(DateTime.now())
-                            ? _fechaDesde!.add(const Duration(days: 15))
-                            : DateTime.now()
-                        : DateTime.now(),
-                    icon: Icons.calendar_today,
-                    onDateSelected: (fecha) {
-                      setState(() {
-                        _fechaHasta = fecha;
-                      });
-                    },
-                  ),
-                ),
-              ]),
+              DateRangeWidget(
+                title: 'Rango de fechas *',
+                startDate: _fechaDesde,
+                endDate: _fechaHasta,
+                firstDate: DateTime(2000),
+                lastDate: DateTime.now(),
+                onDateRangeSelected: (fechaDesde, fechaHasta) {
+                  setState(() {
+                    _fechaDesde = fechaDesde;
+                    _fechaHasta = fechaHasta;
+
+                    // Mantener regla de máximo 31 días de diferencia
+                    if (_fechaDesde != null && _fechaHasta != null) {
+                      final diasDiferencia =
+                          _fechaHasta!.difference(_fechaDesde!).inDays;
+                      if (diasDiferencia > 31) {
+                        final nuevaFechaHasta =
+                            _fechaDesde!.add(const Duration(days: 31));
+                        _fechaHasta = nuevaFechaHasta.isBefore(DateTime.now())
+                            ? nuevaFechaHasta
+                            : DateTime.now();
+                      }
+                    }
+                  });
+                },
+              ),
               const SizedBox(height: 24),
               CustomButton(
                 text: 'Listar Personas',

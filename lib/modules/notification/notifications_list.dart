@@ -111,7 +111,7 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      color: notification.isRead ? ThemeApp.cardColors : ThemeApp.white,
+      color: notification.isRead ? ThemeApp.cardColors : ThemeApp.inputBorder,
       child: InkWell(
         onTap: () {
           // Marcar como leída si no lo está
@@ -180,7 +180,7 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
                     const SizedBox(height: 8),
                     Text(
                       notification.description,
-                      style: const  TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         color: ThemeApp.textSecondary,
                         fontFamily: ThemeApp.fontFamily,

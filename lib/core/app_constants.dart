@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_const_declarations, non_constant_identifier_names
 //Constantes de la aplicacion que son usados en toda la aplicacion
 class AppConstants {
-  static final String APP_NAME = "Resturant Funny";
+  static final String APP_NAME = "Cevicheria Riobamba";
   static final String CODIGO_OK = "OK";
   static final String MENSAJE_OK = "PROCESO COMPLETADO CON EXITO";
   static final int STATUS_OK = 200;

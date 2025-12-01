@@ -44,7 +44,7 @@ class _VentaDetailCardState extends State<VentaDetailCard> {
     final venta = widget.venta;
 
     return Card(
-      color: ThemeApp.background,
+      color: ThemeApp.cardColors,
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

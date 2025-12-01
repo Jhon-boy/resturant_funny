@@ -194,10 +194,16 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
       ref.read(appStateProvider.notifier).setLoading(false);
       return;
     }
-    if (_imagenSeleccionada == null) {
-      DialogHelper.error(context,
-          message: 'Selecciona una imagen para el producto',
-          onConfirmed: () {});
+
+    final bool requiereImagen = !esEdicion;
+    final bool tieneAlgunaImagen = _imagenSeleccionada != null ||
+        (_imagenUrl != null && _imagenUrl!.isNotEmpty);
+    if (requiereImagen && !tieneAlgunaImagen) {
+      DialogHelper.error(
+        context,
+        message: 'Selecciona una imagen para el producto',
+        onConfirmed: () {},
+      );
       ref.read(appStateProvider.notifier).setLoading(false);
       return;
     }
@@ -431,8 +437,8 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
 
   Future<void> _eliminarFotoProducto(String path) async {
     try {
-      final foto =
-          await _imagesRepository.deleteFile(path: path, bucket: AppConstants.BUCKET_IMAGES);
+      final foto = await _imagesRepository.deleteFile(
+          path: path, bucket: AppConstants.BUCKET_IMAGES);
       foto.fold((failure) {
         debugPrint(
             'Error al eliminar la foto del producto: ${failure.message}');
@@ -480,7 +486,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
         child: Card(
           shadowColor: Colors.black.withOpacity(0.05),
           elevation: 10,
-          color: Colors.white,
+          color: ThemeApp.cardColors,
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(

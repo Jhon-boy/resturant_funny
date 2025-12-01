@@ -2,7 +2,7 @@
 // JB
 class ParameterUtil {
   static int getTimeAutoReturn() {
-    return 2;
+    return 10;
   }
 
   static String getRucCompany() {

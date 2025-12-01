@@ -186,15 +186,9 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ThemeApp.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: ThemeApp.inputBorder, width: 2),
       ),
       child: Column(
         children: [

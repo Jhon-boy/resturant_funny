@@ -47,8 +47,8 @@ class ProductosMasVendidos extends StatelessWidget {
               : Column(
                   children: productosVendidos.take(3).map((producto) {
                     return Card(
-                        color: ThemeApp.background.withOpacity(0.9),
-                        elevation: 1,
+                      color: ThemeApp.cardColors, 
+                        elevation: 3,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

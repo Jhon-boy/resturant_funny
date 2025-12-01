@@ -13,7 +13,7 @@ import 'package:resturant_funny/modules/main/presentation/widget/producto_card_w
 import 'package:resturant_funny/modules/main/presentation/widget/producto_carrusel_widget.dart';
 import 'package:resturant_funny/shared/widgets/shimer_producto.dart';
 import 'package:resturant_funny/modules/ventas/presentation/producto_detalle_venta_page.dart';
-import 'package:resturant_funny/shared/widgets/dialog_widget.dart'; 
+import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:resturant_funny/core/utils/responsive_util.dart';
 
 class InicioPage extends ConsumerStatefulWidget {
@@ -202,7 +202,7 @@ class _InicioContent extends StatelessWidget {
               ),
               mainAxisSpacing: 10,
               crossAxisSpacing: 16,
-              childAspectRatio: 0.75,
+              childAspectRatio: 0.85,
             ),
             itemBuilder: (context, index) {
               final producto = productos[index];

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 
 class DialogHelper {
   // ================== DIÁLOGO DE ÉXITO ==================
@@ -120,7 +121,19 @@ class DialogHelper {
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton(
+                      child: CustomButton(
+                        text: cancelText,
+                        colorButton: cancelColor,
+                        onPressed: () {
+                          final navigator = Navigator.of(dialogContext);
+                          if (navigator.canPop()) {
+                            navigator.pop();
+                          }
+                          onCancel();
+                        },
+                      ),
+
+                      /* ElevatedButton(
                         onPressed: () {
                           final navigator = Navigator.of(dialogContext);
                           if (navigator.canPop()) {
@@ -131,6 +144,7 @@ class DialogHelper {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: cancelColor,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                        
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -144,11 +158,23 @@ class DialogHelper {
                             fontFamily: ThemeApp.fontFamily,
                           ),
                         ),
-                      ),
+                      ),*/
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: ElevatedButton(
+                      child: CustomButton(
+                          text: okText,
+                          colorButton: okColor,
+                          colorText: okTextColor,
+                          onPressed: () {
+                            final navigator = Navigator.of(dialogContext);
+                            if (navigator.canPop()) {
+                              navigator.pop();
+                            }
+                            onConfirm();
+                          }),
+
+                      /* ElevatedButton(
                         onPressed: () {
                           final navigator = Navigator.of(dialogContext);
                           if (navigator.canPop()) {
@@ -172,7 +198,7 @@ class DialogHelper {
                             fontFamily: ThemeApp.fontFamily,
                           ),
                         ),
-                      ),
+                      ),*/
                     ),
                   ],
                 ),

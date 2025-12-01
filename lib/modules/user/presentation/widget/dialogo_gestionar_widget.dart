@@ -191,6 +191,7 @@ class _GestionarRolesDialogState extends State<GestionarRolesDialog> {
 
   Widget _buildRolCard(BuildContext context, RolEntity rol, bool tieneRol) {
     return Card(
+      color: ThemeApp.cardColors,
       margin: const EdgeInsets.only(bottom: 6),
       elevation: tieneRol ? 1 : 0,
       shape: RoundedRectangleBorder(
@@ -277,7 +278,7 @@ class _GestionarRolesDialogState extends State<GestionarRolesDialog> {
                     ? ThemeApp.error.withOpacity(0.1)
                     : ThemeApp.success.withOpacity(0.1),
                 foregroundColor: tieneRol ? ThemeApp.error : ThemeApp.success,
-                elevation: 0,
+                elevation: 2,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 8,
                   vertical: 6,

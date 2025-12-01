@@ -27,13 +27,15 @@ class DialogoPersonalizadoWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.7;
+    final size = MediaQuery.of(context).size;
+    final maxHeight = size.height * 0.7;
+    final dialogWidth = size.width > 520 ? 520.0 : size.width * 0.9;
 
     return AlertDialog(
       surfaceTintColor: Colors.white,
       contentPadding: EdgeInsets.zero,
       content: SizedBox(
-        width: 520,
+        width: dialogWidth,
         height: maxHeight,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

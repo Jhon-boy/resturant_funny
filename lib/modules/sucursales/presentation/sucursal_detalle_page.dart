@@ -326,7 +326,8 @@ class _SucursalDetallePageState extends ConsumerState<SucursalDetallePage> {
 
   Widget _buildSucursalInfo() {
     return Card(
-      elevation: 2,
+      elevation: 3,
+      color: ThemeApp.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),

@@ -11,7 +11,8 @@ class PersonaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 1,
+      color: ThemeApp.cardColors,
+      elevation: 3,
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),

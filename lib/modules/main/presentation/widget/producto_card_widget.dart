@@ -18,7 +18,8 @@ class ProductoCardWidget extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade300,
+          border: Border.all(color: ThemeApp.inputBorder, width: 2),
+          color: ThemeApp.inputBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.all(8),
@@ -26,8 +27,8 @@ class ProductoCardWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 120,
               width: double.infinity,
+              height: 120,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: Colors.grey.shade200,

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/app_util.dart';
+import 'package:resturant_funny/core/utils/imagenes.dart';
 import 'package:resturant_funny/core/utils/parameter_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
@@ -56,7 +57,6 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
     return PantallaBase(
       title: 'Factura',
       onBack: () => AppUtils.backToHome(),
-      onSectionChange: (index) {},
       body: body(context),
     );
   }
@@ -75,8 +75,24 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 20),
+                  const Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle,
+                            color: ThemeApp.success, size: 30),
+                        SizedBox(width: 10),
+                        Text('Orden exitosa',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: ThemeApp.fontFamily)),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   _buildCarritoSection(),
                   Screenshot(
@@ -120,10 +136,11 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
         children: [
           const Row(
             children: [
+              // Image.asset(Imagenes.okIcon, width: 30, height: 30),
               Icon(Icons.shopping_cart, color: ThemeApp.primary),
               SizedBox(width: 10),
               Text(
-                'Productos Comprados',
+                'Detalle del orden',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -302,11 +319,11 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.receipt, color: ThemeApp.primary),
-              SizedBox(width: 10),
-              Text(
+              Image.asset(Imagenes.logoApp, width: 60, height: 60),
+              const SizedBox(width: 10),
+              const Text(
                 'Datos de la Factura',
                 style: TextStyle(
                   fontSize: 18,

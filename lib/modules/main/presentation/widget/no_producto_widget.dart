@@ -10,10 +10,10 @@ class NoProductosWidget extends StatelessWidget {
     return Center(
         child: Card(
             elevation: 3,
+            color: ThemeApp.cardColors,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            color: Colors.white,
             shadowColor: Colors.black,
             margin: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(

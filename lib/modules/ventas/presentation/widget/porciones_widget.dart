@@ -87,8 +87,9 @@ class _PorcionesWidgetState extends ConsumerState<PorcionesWidget> {
                         final precioTotal = porcion.precio * cantidad;
 
                         return Card(
+                          color: ThemeApp.cardColors,
                           margin: const EdgeInsets.only(bottom: 12),
-                          elevation: 1,
+                          elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: cantidad > 0

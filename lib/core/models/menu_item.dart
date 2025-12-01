@@ -113,20 +113,20 @@ class MenuItem {
       allowedRoles: ['ADM'],
     ),
     MenuItem(
+      label: 'Sesiones',
+      icon: Icons.phone_android_outlined,
+      index: 11,
+      isMainMenu: true,
+      requiresRole: true,
+      allowedRoles: ['ADM'],
+    ),
+    MenuItem(
       label: 'Acerca de',
       icon: Icons.info_outline,
-      index: 11,
+      index: 12,
       isMainMenu: false,
       requiresRole: false,
     ),
-      MenuItem(
-      label: 'Sesión',
-      icon: Icons.logout_outlined,
-      index: 12,
-        isMainMenu: true,
-      requiresRole: true,
-       allowedRoles: ['ADM'],
-    )
   ];
 
   // Obtener menús del drawer filtrados por rol

@@ -197,7 +197,8 @@ class _CrearUsuarioPageState extends ConsumerState<CrearUsuarioPage> {
             children: [
               // Información de la persona
               Card(
-                elevation: 2,
+                color: ThemeApp.cardColors,
+                elevation: 3,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

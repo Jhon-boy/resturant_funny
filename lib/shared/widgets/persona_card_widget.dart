@@ -30,11 +30,11 @@ class PersonaCardWidget extends StatelessWidget {
   Color _getColorGenero() {
     final genero = persona.genero?.toUpperCase() ?? '';
     if (genero.contains('FEMENINO') || genero == 'F') {
-      return Colors.pink.shade300;
+      return ThemeApp.primary;
     } else if (genero.contains('MASCULINO') || genero == 'M') {
-      return Colors.blue.shade300;
+      return ThemeApp.blue;
     }
-    return Colors.grey.shade400;
+    return ThemeApp.textSecondary;
   }
 
   String _formatearFecha(DateTime? fecha) {
@@ -45,7 +45,8 @@ class PersonaCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      color: ThemeApp.cardColors,
+      elevation: 5,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -85,9 +86,9 @@ class PersonaCardWidget extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   persona.identificacion,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: ThemeApp.textSecondary,
                   ),
                 ),
               ],
@@ -119,7 +120,8 @@ class PersonaCardWidget extends StatelessWidget {
                     context,
                     icon: _getIconoGenero(),
                     label: 'Género',
-                    value:  AppUtils.mapearGeneroDesdeBD(persona.genero) ?? 'No especificado',
+                    value: AppUtils.mapearGeneroDesdeBD(persona.genero) ??
+                        'No especificado',
                   ),
                   const SizedBox(height: 12),
                   if (persona.correo != null && persona.correo!.isNotEmpty) ...[
