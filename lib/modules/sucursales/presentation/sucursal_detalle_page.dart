@@ -14,6 +14,7 @@ import 'package:resturant_funny/modules/main/domain/repository/mesa_repository.d
 import 'package:resturant_funny/modules/sucursales/presentation/widgets/crear_mesa_dialog.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/widgets/crear_sucursal.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/widgets/mesa_mini_widget.dart';
+import 'package:resturant_funny/modules/sucursales/presentation/widgets/sucursal_map_widget.dart';
 import 'package:resturant_funny/modules/user/data/datasource/persona_data_source.dart';
 import 'package:resturant_funny/modules/user/data/datasource/rol_usuario_data_source.dart';
 import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source.dart';
@@ -303,11 +304,21 @@ class _SucursalDetallePageState extends ConsumerState<SucursalDetallePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 24),
           _buildSucursalInfo(),
           const SizedBox(height: 24),
           _buildMesasSection(),
           const SizedBox(height: 24),
           _buildEmpleadosSection(),
+          const SizedBox(height: 24),
+          SucursalMapWidget(
+            latitud: _sucursal.latitud,
+            longitud: _sucursal.longitud,
+            sucursalNombre: _sucursal.nombre,
+            sucursalContacto: _sucursal.contacto,
+            enableSelection: false,
+            height: 220,
+          ),
         ],
       ),
     );
@@ -406,7 +417,6 @@ class _SucursalDetallePageState extends ConsumerState<SucursalDetallePage> {
                     label: 'Fecha de Modificación',
                     value: AppUtils.formatDate(_sucursal.fModificacion),
                   ),
-
                   _buildInfoRow(
                     icon: Icons.person_add,
                     label: 'Usuario de Ingreso',

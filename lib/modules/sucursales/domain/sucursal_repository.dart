@@ -4,6 +4,7 @@ import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart'
 
 abstract class SucursalRepository {
   Future<Either<Failure, List<SucursalEntity>>> getSucursalesEntity();
+    Future<Either<Failure, List<SucursalEntity>>> getSucursalesEntityFree();
     Future<Either<Failure, SucursalEntity>> getSucursalesbyIdEntity(int idSucursal);
   Future<Either<Failure, SucursalEntity>> registerSucursalEntity(
       SucursalEntity data);

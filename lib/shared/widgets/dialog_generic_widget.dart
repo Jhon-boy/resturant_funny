@@ -27,59 +27,64 @@ class DialogoPersonalizadoWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
-      builder: (context, container) => AlertDialog(
-        surfaceTintColor: Colors.white,
-        contentPadding: EdgeInsets.zero,
-        content: Column(
+    final maxHeight = MediaQuery.of(context).size.height * 0.7;
+
+    return AlertDialog(
+      surfaceTintColor: Colors.white,
+      contentPadding: EdgeInsets.zero,
+      content: SizedBox(
+        width: 520,
+        height: maxHeight,
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
           children: [
             _TitleCardInformation(titulo: titulo),
-            SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              physics: const BouncingScrollPhysics(),
-              child: child,
-              //PEDIR EL WIDGET
+            const SizedBox(height: 4),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: child,
+              ),
             ),
           ],
         ),
-        actions: [
-          const SizedBox(height: 15),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: CustomButton(
-                    colorButton: ThemeApp.textSecondary,
-                    colorText: ThemeApp.baseText,
-                    text: cancelTitle ?? 'Cancelar',
-                    onPressed: () {
-                      if (onCancelPressed != null) {
-                        onCancelPressed!();
-                      }
-                      Navigator.of(context).pop();
-                    }),
-              ),
-              if (onAceptarPressed != null) const SizedBox(width: 20),
-              Visibility(
-                  visible: onAceptarPressed != null,
-                  child: Expanded(
-                    child: CustomButton(
-                        text: buttonTitle ?? 'Aceptar',
-                        onPressed: blockButton
-                            ? () {}
-                            : () {
-                                if (onAceptarPressed != null) {
-                                  onAceptarPressed!();
-                                }
-                              }),
-                  )),
-            ],
-          ),
-        ],
       ),
+      actions: [
+        const SizedBox(height: 15),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: CustomButton(
+                  colorButton: ThemeApp.textSecondary,
+                  colorText: ThemeApp.baseText,
+                  text: cancelTitle ?? 'Cancelar',
+                  onPressed: () {
+                    if (onCancelPressed != null) {
+                      onCancelPressed!();
+                    }
+                    Navigator.of(context).pop();
+                  }),
+            ),
+            if (onAceptarPressed != null) const SizedBox(width: 20),
+            Visibility(
+              visible: onAceptarPressed != null,
+              child: Expanded(
+                child: CustomButton(
+                    text: buttonTitle ?? 'Aceptar',
+                    onPressed: blockButton
+                        ? () {}
+                        : () {
+                            if (onAceptarPressed != null) {
+                              onAceptarPressed!();
+                            }
+                          }),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -129,7 +129,7 @@ class SupabaseService {
     }
   }
 
-//METODO LIBRE DE SELECCION A TABLAS QUE NO TENGA GUARDADO LA SESION
+  // METODO LIBRE DE SELECCION A TABLAS QUE NO TENGA GUARDADO LA SESION
   static Future<Map<String, dynamic>?> selectSingleFree({
     required String table,
     String columns = '*',
@@ -146,6 +146,61 @@ class SupabaseService {
       return await query.maybeSingle();
     } catch (e) {
       _handleDatabaseError(e, 'SELECT_SINGLE', table);
+      rethrow;
+    }
+  }
+
+  // METODO LIBRE PARA SELECCIONAR VARIOS REGISTROS SIN VALIDAR SESIÓN
+  static Future<List<Map<String, dynamic>>> selectListFree({
+    required String table,
+    String columns = '*',
+    Map<String, dynamic>? filters,
+    String? orderBy,
+    bool ascending = true,
+    int? limit,
+  }) async {
+    try {
+      debugPrint('selectListFree $table');
+
+      PostgrestFilterBuilder query = _supabase.from(table).select(columns);
+
+      // Aplicar filtros (misma lógica que en select normal)
+      if (filters != null) {
+        filters.forEach((column, value) {
+          if (column.endsWith('_gte')) {
+            final realColumn = column.replaceAll('_gte', '');
+            query = query.gte(realColumn, value);
+          } else if (column.endsWith('_lte')) {
+            final realColumn = column.replaceAll('_lte', '');
+            query = query.lte(realColumn, value);
+          } else if (column.endsWith('_gt')) {
+            final realColumn = column.replaceAll('_gt', '');
+            query = query.gt(realColumn, value);
+          } else if (column.endsWith('_lt')) {
+            final realColumn = column.replaceAll('_lt', '');
+            query = query.lt(realColumn, value);
+          } else if (column.endsWith('_neq')) {
+            final realColumn = column.replaceAll('_neq', '');
+            query = query.neq(realColumn, value);
+          } else {
+            query = query.eq(column, value);
+          }
+        });
+      }
+
+      // Aplicar ordenamiento y límite
+      PostgrestTransformBuilder finalQuery = query;
+      if (orderBy != null) {
+        finalQuery = finalQuery.order(orderBy, ascending: ascending);
+      }
+      if (limit != null) {
+        finalQuery = finalQuery.limit(limit);
+      }
+
+      final result = await finalQuery;
+      return List<Map<String, dynamic>>.from(result);
+    } catch (e) {
+      _handleDatabaseError(e, 'SELECT_LIST_FREE', table);
       rethrow;
     }
   }

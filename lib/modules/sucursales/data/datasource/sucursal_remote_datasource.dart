@@ -32,6 +32,18 @@ class SucursalRemoteDataSource {
     }
   }
 
+  Future<List<SucursalEntity>> getSucursalesFree() async {
+    try {
+      final result = await SupabaseService.selectListFree(
+        table: Entities.TSUCURSAL.tableName,
+        filters: {'ESTADO': true},
+      );
+      return result.map((json) => SucursalEntity.fromJson(json)).toList();
+    } catch (e) {
+      _handleError(e, 'getSucursales');
+    }
+  }
+
   /// OBTENER SUCURSAL POR ID
   Future<SucursalEntity?> getSucursalById(int idSucursal) async {
     try {
@@ -95,6 +107,9 @@ class SucursalRemoteDataSource {
         'NOMBRE': sucursal.nombre,
         'DIRECCION': sucursal.direccion,
         'ESTADO': sucursal.estado,
+        'LATITUD': sucursal.latitud,
+        'LONGITUD': sucursal.longitud,
+        'CONTACTO': sucursal.contacto,
         'FMODIFICACION': AppUtils.getFechaActual().toIso8601String(),
         'USERMODIFICACION': sucursal.userModificacion,
       };

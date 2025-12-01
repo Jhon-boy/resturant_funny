@@ -14,6 +14,7 @@ import 'package:resturant_funny/modules/main/domain/entity/sucursal_entity.dart'
 import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
 import 'package:resturant_funny/modules/sucursales/data/repository/sucursal_repository.dart';
 import 'package:resturant_funny/modules/sucursales/domain/sucursal_repository.dart';
+import 'package:resturant_funny/modules/sucursales/presentation/widgets/sucursal_map_widget.dart';
 import 'package:resturant_funny/shared/widgets/dialog_generic_widget.dart';
 
 class CrearSucursal extends ConsumerStatefulWidget {
@@ -230,6 +231,7 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
   @override
   Widget build(BuildContext context) {
     return DialogoPersonalizadoWidget(
+      buttonTitle: widget.isEdit ? 'Editar' : 'Crear',
       titulo: widget.isEdit ? 'Editar Sucursal' : 'Crear Sucursal',
       onAceptarPressed: _isLoading ? null : _guardar,
       blockButton: _isLoading,
@@ -290,66 +292,20 @@ class _CrearSucursalState extends ConsumerState<CrearSucursal> {
                 ),
                 const SizedBox(height: 16),
 
-                // Campo Latitud
-                TextFormField(
-                  controller: _latitudController,
-                  enabled: !_isLoading,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'^-?\d+\.?\d{0,6}')),
-                  ],
-                  decoration: ThemeApp.inputDecoration(
-                    'Latitud',
-                    'Ingrese la latitud (opcional)',
-                    Icons.location_on,
-                    isRequired: false,
-                    fillColor: ThemeApp.white,
-                  ),
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final latitud = double.tryParse(value.trim());
-                      if (latitud == null) {
-                        return 'La latitud debe ser un número válido';
-                      }
-                      if (latitud < -90 || latitud > 90) {
-                        return 'La latitud debe estar entre -90 y 90';
-                      }
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Campo Longitud
-                TextFormField(
-                  controller: _longitudController,
-                  enabled: !_isLoading,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'^-?\d+\.?\d{0,6}')),
-                  ],
-                  decoration: ThemeApp.inputDecoration(
-                    'Longitud',
-                    'Ingrese la longitud (opcional)',
-                    Icons.location_on,
-                    isRequired: false,
-                    fillColor: ThemeApp.white,
-                  ),
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final longitud = double.tryParse(value.trim());
-                      if (longitud == null) {
-                        return 'La longitud debe ser un número válido';
-                      }
-                      if (longitud < -180 || longitud > 180) {
-                        return 'La longitud debe estar entre -180 y 180';
-                      }
-                    }
-                    return null;
+                // Mapa para seleccionar ubicación (latitud/longitud)
+                SucursalMapWidget(
+                  latitud: double.tryParse(_latitudController.text),
+                  longitud: double.tryParse(_longitudController.text),
+                  sucursalNombre: _nombreController.text.trim().isEmpty
+                      ? null
+                      : _nombreController.text.trim(),
+                  enableSelection: true,
+                  height: 220,
+                  onLocationSelected: (lat, lng) {
+                    setState(() {
+                      _latitudController.text = lat.toStringAsFixed(6);
+                      _longitudController.text = lng.toStringAsFixed(6);
+                    });
                   },
                 ),
                 const SizedBox(height: 16),

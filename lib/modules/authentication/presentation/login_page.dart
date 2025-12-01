@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:resturant_funny/core/app_constants.dart'; 
+import 'package:resturant_funny/core/app_constants.dart';
 import 'package:resturant_funny/core/services/shared_preferences_service.dart';
 import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
@@ -16,13 +16,14 @@ import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/auth_remote_data_source.dart';
 import 'package:resturant_funny/modules/authentication/data/datasource/sesion_remote_data_source.dart';
 import 'package:resturant_funny/modules/authentication/data/repository/auth_repository_impl.dart';
-import 'package:resturant_funny/modules/authentication/data/repository/sesion_repository_impl.dart'; 
+import 'package:resturant_funny/modules/authentication/data/repository/sesion_repository_impl.dart';
 import 'package:resturant_funny/modules/authentication/domain/mappers/auth_mapper.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/sesion_repository.dart';
 import 'package:resturant_funny/modules/authentication/presentation/splash_page.dart';
+import 'package:resturant_funny/modules/sucursales/presentation/sucursales_lista_page.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
@@ -281,7 +282,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    const SizedBox(height: 50),
                     // Logo limpio y simple
                     Hero(
                       tag: 'logo',
@@ -422,24 +422,36 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
+                      ],
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (isDeviceLoggedOnce) ...[
                             socialButton(ThemeApp.baseText, Icons.fingerprint,
                                 onTap: () {
                               iniciarConBiometria();
                             }),
-                            const SizedBox(width: 16),
                           ],
-                        ),
-                      ],
+                          const SizedBox(width: 16),
+                          socialButton(ThemeApp.baseText, Icons.map,
+                              title: "Sucursales", onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SucursalesListaPage(),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
                       const SizedBox(height: 20),
                       Center(
                         child: Text(
                           versionApp,
                           style: const TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.normal,
+                              fontWeight: FontWeight.bold,
                               color: ThemeApp.textSecondary),
                         ),
                       )
@@ -452,44 +464,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  Widget socialButton(Color color, IconData icon, {VoidCallback? onTap}) {
+  Widget socialButton(Color color, IconData icon,
+      {VoidCallback? onTap, String? title}) {
     final mediaQuery = MediaQuery.of(context);
     return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(seconds: 2),
-        width: mediaQuery.size.width * 0.23,
-        height: mediaQuery.size.width * 0.22,
-        decoration: BoxDecoration(
-          shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(20),
-          color: color,
-          boxShadow: [
-            BoxShadow(
-              color: ThemeApp.apple.withOpacity(0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+        onTap: onTap,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(seconds: 2),
+              width: mediaQuery.size.width * 0.23,
+              height: mediaQuery.size.width * 0.22,
+              decoration: BoxDecoration(
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(20),
+                color: color,
+                boxShadow: [
+                  BoxShadow(
+                    color: ThemeApp.apple.withOpacity(0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                  BoxShadow(
+                    color: color.withOpacity(0.2),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+                border: Border.all(
+                  color: ThemeApp.baseText.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: ThemeApp.apple,
+                  size: 45,
+                ),
+              ),
             ),
-            BoxShadow(
-              color: color.withOpacity(0.2),
-              blurRadius: 6,
-              spreadRadius: 1,
-              offset: const Offset(0, 3),
-            ),
+            if (title != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.normal,
+                    color: ThemeApp.textSecondary),
+              ),
+            ],
+            const SizedBox(height: 10),
           ],
-          border: Border.all(
-            color: ThemeApp.baseText.withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            icon,
-            color: ThemeApp.apple,
-            size: 35,
-          ),
-        ),
-      ),
-    );
+        ));
   }
 }

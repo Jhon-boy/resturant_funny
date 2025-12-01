@@ -98,4 +98,20 @@ class SucursalRemoteRepository implements SucursalRepository {
           ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<SucursalEntity>>>
+      getSucursalesEntityFree() async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No hay conexión a internet'));
+    }
+    try {
+      final sucursales = await remote.getSucursalesFree();
+      return Right(sucursales);
+    } catch (_) {
+      return const Left(
+          ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
+    }
+  }
 }
