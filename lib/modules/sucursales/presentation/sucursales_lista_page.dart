@@ -77,6 +77,11 @@ class _SucursalesListaPageState extends ConsumerState<SucursalesListaPage> {
           isError: true,
         );
       }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+      appState.setLoading(false);
     }
   }
 
@@ -103,8 +108,7 @@ class _SucursalesListaPageState extends ConsumerState<SucursalesListaPage> {
     final lat = sucursal.latitud;
     final lng = sucursal.longitud;
 
-    final buffer = StringBuffer()
-      ..write('Hola, me interesa la sucursal ${sucursal.nombre}');
+    final buffer = StringBuffer()..write('Hola, ${sucursal.nombre}');
 
     if (lat != null && lng != null) {
       final mapsUrl =

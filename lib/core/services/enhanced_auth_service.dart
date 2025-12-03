@@ -22,14 +22,14 @@ class EnhancedAuthService {
   static bool get isLoggedIn => _currentUser != null && _isSessionValid();
   static String? get sessionToken => _currentSessionToken;
 
-  /// LOGIN SEGURO - IMPLEMENTACIÓN MANUAL (IGUAL QUE TU CÓDIGO ORIGINAL)
+  /// LOGIN SEGURO - IMPLEMENTACIÓN MANUAL ( 
   static Future<Map<String, dynamic>> loginSecure(
       String usuario, String password) async {
     try {
       // Generar hash SHA256 de la contraseña
       final hashedPassword = AppUtils.generateSha256(password);
 
-      // Consultar usuario directamente (igual que tu implementación manual)
+ 
       final usuarioResponse = await _supabase
           .from(Entities.TUSUARIO.tableName)
           .select("*")

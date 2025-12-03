@@ -328,7 +328,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           maxLength: AppConstants.MAX_CARACTERES_TITULOS,
                           controller: usuarioController,
                           decoration: InputDecoration(
+                            focusColor: ThemeApp.primary,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  const BorderSide(color: ThemeApp.primary),
+                            ),
                             labelText: "Usuario",
+                            labelStyle: const TextStyle(color: ThemeApp.apple),
                             hintText: "Ingresa tu usuario",
                             prefixIcon: Icon(Icons.person_outline,
                                 color: Colors.red.shade700),
@@ -353,7 +360,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           obscureText: obscureText,
                           controller: passwordController,
                           decoration: InputDecoration(
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  const BorderSide(color: ThemeApp.primary),
+                            ),
                             labelText: "Contraseña",
+                            labelStyle: const TextStyle(color: ThemeApp.apple),
                             hintText: "Ingresa tu contraseña",
                             prefixIcon: Icon(Icons.lock_outline,
                                 color: Colors.red.shade700),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/core/theme_app.dart';
+import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/usuario_entity.dart';
@@ -616,10 +617,15 @@ class _EmpleadosPageState extends ConsumerState<EmpleadosPage> {
             _empleadosFiltrados.removeWhere((e) =>
                 e.persona.identificacion == personaActualizada.identificacion);
           });
+
           DialogHelper.success(context,
               message: 'Empleado desactivado exitosamente',
               dismissible: true, onConfirmed: () {
             if (_index == 0) {
+              if (personaActualizada.identificacion == user.identificacion) {
+                AppUtils.cerrarSesion(context);
+                return;
+              }
               _cargarEmpleados();
             }
           });

@@ -14,6 +14,7 @@ import 'package:resturant_funny/modules/authentication/domain/entity/rol_entity.
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/shared/enums/endpoints.dart';
 import 'package:resturant_funny/shared/enums/entities.dart';
+import 'package:resturant_funny/shared/enums/estados_persona.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/errors/exception.dart';
 
@@ -119,8 +120,7 @@ class AuthRemoteDataSourceImpl {
   }
 
   /// Verifica si un dispositivo es de confianza
-  Future<DispositivoEntity?> getDeviceByIdDispositivo(
-      String imei) async {
+  Future<DispositivoEntity?> getDeviceByIdDispositivo(String imei) async {
     try {
       final deviceRecord = await SupabaseService.selectSingleFree(
         table: Entities.TDISPOSITIVO.tableName,
@@ -159,6 +159,26 @@ class AuthRemoteDataSourceImpl {
       throw ServerException(
         message:
             "No se encontraron datos de persona para ${userRecord['IDENTIFICACION']}",
+      );
+    }
+    if (personaRecord['ESTADO'] == EstadosPersona.INACTIVO.state) {
+      throw ServerException(
+        message: "Inicio de sesión no permitido: Estado inactivo",
+      );
+    }
+    if (personaRecord['ESTADO'] == EstadosPersona.BLOQUEADO.state) {
+      throw ServerException(
+        message: "Inicio de sesión no permitido: Estado bloqueado",
+      );
+    }
+    if (personaRecord['ESTADO'] == EstadosPersona.SUSPENDIDO.state) {
+      throw ServerException(
+        message: "Inicio de sesión no permitido: Estado suspendido",
+      );
+    }
+    if (personaRecord['ESTADO'] == EstadosPersona.PENDIENTE.state) {
+      throw ServerException(
+        message: "Inicio de sesión no permitido: Estado pendiente",
       );
     }
 
