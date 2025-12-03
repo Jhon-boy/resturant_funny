@@ -6,6 +6,7 @@ import 'package:resturant_funny/modules/ventas/data/datasource/ventas_data_sourc
 import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
 import 'package:resturant_funny/modules/ventas/domain/repository/venta_repository.dart';
 import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/producto_mas_vendido_model.dart';
 
 class VentaRepositoryImpl implements VentaRepository {
   final VentasRemoteDataSource remote;
@@ -206,4 +207,97 @@ class VentaRepositoryImpl implements VentaRepository {
           ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<ProductoMasVendidoModel>>>
+      getProductosMasVendidos(
+    int idEmpleado, {
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    final isConnected = await _connectivity.checkConnection();
+    if (!isConnected) {
+      return const Left(NetworkFailure('No hay conexión a internet'));
+    }
+
+    try {
+      final rows = await remote.getVentasConDetalles(
+        idEmpleado,
+        fechaDesde: fechaDesde,
+        fechaHasta: fechaHasta,
+      );
+
+      final Map<int, _ProductoAcumulado> acumulado = {};
+
+      for (final v in rows) {
+        final detalles = v['TDETALLEVENTA'];
+        if (detalles is! List) continue;
+
+        for (final detRaw in detalles) {
+          if (detRaw is! Map) continue;
+          final det = Map<String, dynamic>.from(detRaw);
+
+          final idProd = (det['IDPRODUCTO'] as num?)?.toInt();
+          if (idProd == null) continue;
+
+          final prod = det['TPRODUCTO'] as Map?;
+          final prodMap = prod?.cast<String, dynamic>();
+          final nombre = (prodMap?['NOMBRE'] ?? '').toString();
+
+          final cantidad = (det['CANTIDAD'] as num?)?.toInt() ?? 0;
+          final subtotal = (det['SUBTOTAL'] as num?)?.toDouble();
+          final precioUnit =
+              (det['PRECIO_UNITARIO'] as num?)?.toDouble() ?? 0.0;
+          final ingreso = subtotal ?? (precioUnit * cantidad);
+
+          final actual = acumulado[idProd];
+          if (actual == null) {
+            acumulado[idProd] = _ProductoAcumulado(
+              idProducto: idProd,
+              nombreProducto: nombre,
+              cantidadVendida: cantidad,
+              ingresosTotales: ingreso,
+            );
+          } else {
+            actual.cantidadVendida += cantidad;
+            actual.ingresosTotales += ingreso;
+          }
+        }
+      }
+
+      final lista = acumulado.values
+          .map(
+            (p) => ProductoMasVendidoModel(
+              idProducto: p.idProducto,
+              nombreProducto: p.nombreProducto,
+              cantidadVendida: p.cantidadVendida,
+              ingresosTotales: p.ingresosTotales,
+            ),
+          )
+          .toList();
+
+      lista.sort(
+        (a, b) => b.cantidadVendida.compareTo(a.cantidadVendida),
+      );
+
+      return Right(lista);
+    } catch (_) {
+      return const Left(
+          ServerFailure('Ha ocurrido un error, inténtalo más tarde'));
+    }
+  }
+}
+
+class _ProductoAcumulado {
+  final int idProducto;
+  final String nombreProducto;
+  int cantidadVendida;
+  double ingresosTotales;
+
+  _ProductoAcumulado({
+    required this.idProducto,
+    required this.nombreProducto,
+    required this.cantidadVendida,
+    required this.ingresosTotales,
+  });
 }

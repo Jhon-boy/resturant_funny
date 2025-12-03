@@ -32,11 +32,12 @@ class MainPage extends ConsumerStatefulWidget {
 class _MainPageState extends ConsumerState<MainPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? _userRole;
-
+  String? _sucursal;
   @override
   void initState() {
     super.initState();
     _userRole = SingletonApp.getRolPrincipal();
+    _sucursal = SingletonApp.getSucursalNombre();
     debugPrint('Rol actual: $_userRole');
   }
 
@@ -128,6 +129,7 @@ class _MainPageState extends ConsumerState<MainPage> {
         drawer: AppDrawer(
           currentIndex: currentIndex,
           userRole: _userRole,
+          sucursal: _sucursal,
           onMainMenuTap: (index) {
             ref.read(navigationIndexProvider.notifier).state = index;
             Navigator.of(context).maybePop();
