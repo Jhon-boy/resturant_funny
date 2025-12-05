@@ -2,12 +2,13 @@
 
 Aplicación móvil desarrollada en Flutter para la gestión integral de un restaurante de comida rápida. Permite administrar empleados, usuarios, inventario, ventas, reportes y múltiples sucursales desde una interfaz moderna y eficiente.
 
-## 📱 Capturas de pantalla
+## 📱 Pantallas principales
 
 | | | |
 |---|---|---|
 | ![Pantalla 1](assets/1_app.png) | ![Pantalla 2](assets/2_app.png) | ![Pantalla 3](assets/3_app.png) |
 | ![Pantalla 4](assets/4_app.png) | ![Pantalla 5](assets/5_app.png) | ![Pantalla 6](assets/6_app.png) |
+| ![Pantalla 7](assets/7_app.png) | ![Pantalla 8](assets/8_app.png) | |
 
 ## ✨ Características Principales
 
