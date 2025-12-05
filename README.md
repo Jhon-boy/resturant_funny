@@ -195,10 +195,6 @@ flutter build appbundle --release
 flutter build ios --release
 ```
 
-## 🤝 Contribución
-
-Este es un proyecto personal, pero las sugerencias y mejoras son bienvenidas.
-
 ## 📝 Licencia
 
 Este proyecto es de uso privado.
