@@ -18,10 +18,8 @@ Aplicación móvil desarrollada en Flutter para la gestión integral de un resta
 - 📊 **Reportes y Estadísticas**: Reportes detallados de ventas, inventario, empleados y comparativas
 - 🏢 **Multi-sucursal**: Administración de múltiples sucursales desde una sola aplicación
 - 👥 **Gestión de Usuarios**: CRUD completo de empleados y usuarios del sistema
-- 🔔 **Notificaciones**: Sistema de notificaciones en tiempo real
 - 🌙 **Modo Oscuro**: Soporte para tema claro y oscuro
 - 🌍 **Multi-idioma**: Soporte para Español e Inglés
-- 📱 **Offline Ready**: Manejo de conectividad y almacenamiento local
 
 ## 🏗️ Arquitectura
 
