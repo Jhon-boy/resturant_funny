@@ -350,14 +350,48 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
             _buildVentaInfo('Comentario', widget.venta.comentario!),
           const Divider(height: 15),
           const SizedBox(height: 5),
+          // Subtotal
           _buildVentaInfo(
               'Subtotal', AppUtils.formatMoney(widget.venta.subtotal ?? 0.00)),
+          if (_calcularIva() > 0)
+            _buildVentaInfo(
+                'IVA ${(AppConstants.IVA * 100).toStringAsFixed(0)}%',
+                AppUtils.formatMoney(_calcularIva())),
+          if (widget.venta.delivery != null && widget.venta.delivery! > 0)
+            _buildVentaInfo(
+                'Delivery', AppUtils.formatMoney(widget.venta.delivery!)),
+          if (widget.venta.montoRecibido != null &&
+              widget.venta.montoRecibido! > 0) ...[
+            _buildVentaInfo('Monto recibido',
+                AppUtils.formatMoney(widget.venta.montoRecibido!)),
+            if (widget.venta.total != null &&
+                widget.venta.montoRecibido! > widget.venta.total!) ...[
+              _buildVentaInfo(
+                  'Cambio',
+                  AppUtils.formatMoney(
+                      widget.venta.montoRecibido! - widget.venta.total!)),
+            ],
+          ],
           _buildVentaInfo(
               'Total', AppUtils.formatMoney(widget.venta.total ?? 0.00),
               isTotal: true),
         ],
       ),
     );
+  }
+
+  double _calcularIva() {
+    final subtotal = widget.venta.subtotal ?? 0.0;
+    final delivery = widget.venta.delivery ?? 0.0;
+    final total = widget.venta.total ?? 0.0;
+
+    final diferencia = total - subtotal - delivery;
+
+    if (diferencia > 0 && diferencia <= (subtotal * AppConstants.IVA * 1.2)) {
+      return diferencia;
+    }
+
+    return 0.0;
   }
 
   Widget _buildVentaInfo(String label, String value, {bool isTotal = false}) {
@@ -374,21 +408,21 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
               label,
               style: TextStyle(
                 fontSize: isTotal ? letterWidth : letterWidth2,
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
                 color: Colors.black87,
               ),
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             flex: 3,
             child: Text(
               value,
               style: TextStyle(
                 fontSize: isTotal ? letterWidth : letterWidth2,
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
                 color: Colors.black87,
               ),
               textAlign: TextAlign.right,

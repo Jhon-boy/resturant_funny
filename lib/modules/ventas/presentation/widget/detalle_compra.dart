@@ -106,8 +106,21 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
         0.0, (acc, item) => acc + (item.producto.precio * item.cantidad));
   }
 
-  double get _iva => _aplicaIva ? _subtotal * 0.15 : 0.0;
+  double get _iva => _aplicaIva ? _subtotal * AppConstants.IVA : 0.0;
   double get _total => _subtotal + _iva + (_conDelivery ? _costoDelivery : 0.0);
+
+  double get _montoRecibido {
+    if (montoRecibidoController.text.trim().isEmpty) return 0.0;
+    return double.tryParse(
+          montoRecibidoController.text.trim().replaceAll(',', '.'),
+        ) ??
+        0.0;
+  }
+
+  double get _vuelto {
+    final cambio = _montoRecibido - _total;
+    return cambio > 0 ? cambio : 0.0;
+  }
 
   void _incrementarCantidad(int index) {
     setState(() {
@@ -265,6 +278,24 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
           isError: true);
       return false;
     }
+
+    // Validar monto recibido cuando es efectivo
+    if (_metodoPago == MetodoPago.EFECTIVO) {
+      if (montoRecibidoController.text.trim().isEmpty) {
+        SnackHelper.show(context,
+            message: "Debe ingresar el monto recibido", isError: true);
+        return false;
+      }
+
+      final montoRecibido = _montoRecibido;
+      if (montoRecibido < _total) {
+        SnackHelper.show(context,
+            message:
+                "El monto recibido debe ser mayor o igual al total a pagar",
+            isError: true);
+        return false;
+      }
+    }
     return true;
   }
 
@@ -290,6 +321,8 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
     ref.read(appStateProvider).setProcessLoading(true);
     final user = ref.read(userProvider).user;
 
+    final montoRecibido = _montoRecibido;
+
     final venta = CompraMapper.toVentaEntity(
       _subtotal,
       _costoDelivery,
@@ -297,6 +330,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       _conDelivery,
       _aplicaIva,
       _total,
+      montoRecibido,
       '${comentarioController.text} | Venta de producto | ${_metodoPago.label}',
       user?.idUsuario?.toString() ??
           EnhancedAuthService.currentUser?.usuario ??
@@ -749,30 +783,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Subtotal"),
-                      Text('\$${_subtotal.toStringAsFixed(2)}'),
-                    ],
-                  ),
                   const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(children: [
-                        const Text("IVA 15%"),
-                        const SizedBox(width: 8),
-                        Switch(
-                          value: _aplicaIva,
-                          onChanged: (v) => setState(() => _aplicaIva = v),
-                        ),
-                        const Text("Aplica"),
-                      ]),
-                      Text('\$${_iva.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                  const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -801,25 +812,17 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                       ]),
                     ],
                   ),
-                  if (_conDelivery && _costoDelivery > 0) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text("Costo Delivery"),
-                        Text('\$${_costoDelivery.toStringAsFixed(2)}'),
-                      ],
-                    ),
-                  ],
-                  const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Total a pagar",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('\$${_total.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18)),
+                      Row(children: [
+                        Text("IVA ${AppConstants.IVA * 100}%"),
+                        const SizedBox(width: 8),
+                        Switch(
+                          value: _aplicaIva,
+                          onChanged: (v) => setState(() => _aplicaIva = v),
+                        ),
+                      ]),
                     ],
                   ),
                   const Divider(),
@@ -856,6 +859,28 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                     },
                   ),
                   const SizedBox(height: 12),
+                  // Monto recibido (solo visible para efectivo)
+                  if (_metodoPago == MetodoPago.EFECTIVO) ...[
+                    TextFormField(
+                      controller: montoRecibidoController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d*'),
+                        ),
+                      ],
+                      onChanged: (_) => setState(() {}),
+                      decoration: ThemeApp.inputDecoration(
+                        "Monto recibido",
+                        "Ingrese el monto recibido",
+                        Icons.payments,
+                        isRequired: true,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 12),
                   Row(children: [
                     Expanded(
                       child: TextFormField(
@@ -874,6 +899,65 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                       ),
                     )
                   ]),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Iva ${AppConstants.IVA * 100}%",
+                          style:
+                              const TextStyle(fontWeight: FontWeight.normal)),
+                      Text('\$${_iva.toStringAsFixed(2)}',
+                          style:
+                              const TextStyle(fontWeight: FontWeight.normal)),
+                    ],
+                  ),
+                  if (_conDelivery && _costoDelivery > 0) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Costo Delivery"),
+                        Text('\$${_costoDelivery.toStringAsFixed(2)}'),
+                      ],
+                    ),
+                  ],
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Cambio",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        '\$${_vuelto.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Subtotal"),
+                      Text('\$${_subtotal.toStringAsFixed(2)}'),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Total a pagar",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: ThemeApp.apple)),
+                      Text('\$${_total.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: ThemeApp.apple)),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,

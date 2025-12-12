@@ -8,6 +8,7 @@ class VentaEntity {
   final double? subtotal;
   final double? delivery;
   final double? total;
+  final double? montoRecibido;
   final String? estado;
   final bool? conFactura;
   final String? comentario;
@@ -26,6 +27,7 @@ class VentaEntity {
     this.subtotal,
     this.delivery,
     this.total,
+    this.montoRecibido,
     this.estado,
     this.conFactura,
     this.comentario,
@@ -47,6 +49,7 @@ class VentaEntity {
       subtotal: json['SUBTOTAL']?.toDouble(),
       delivery: json['DELIVERY']?.toDouble(),
       total: json['TOTAL']?.toDouble(),
+      montoRecibido: json['MONTO_RECIBIDO']?.toDouble() ?? 0.0,
       estado: json['ESTADO'],
       conFactura: json['CONFACTURA'],
       comentario: json['COMENTARIO'],
@@ -71,6 +74,7 @@ class VentaEntity {
       'SUBTOTAL': subtotal,
       'DELIVERY': delivery,
       'TOTAL': total,
+      'MONTO_RECIBIDO': montoRecibido,
       'ESTADO': estado,
       'CONFACTURA': conFactura,
       'COMENTARIO': comentario,
@@ -99,6 +103,7 @@ class VentaEntity {
       'subtotal': subtotal,
       'delivery': delivery,
       'total': total,
+      'montoRecibido': montoRecibido,
       'estado': estado,
       'conFactura': conFactura,
       'comentario': comentario,
@@ -120,6 +125,7 @@ class VentaEntity {
     double? subtotal,
     double? delivery,
     double? total,
+    double? montoRecibido,
     String? estado,
     bool? conFactura,
     String? comentario,
@@ -138,6 +144,7 @@ class VentaEntity {
       subtotal: subtotal ?? this.subtotal,
       delivery: delivery ?? this.delivery,
       total: total ?? this.total,
+      montoRecibido: montoRecibido ?? this.montoRecibido,
       estado: estado ?? this.estado,
       conFactura: conFactura ?? this.conFactura,
       comentario: comentario ?? this.comentario,

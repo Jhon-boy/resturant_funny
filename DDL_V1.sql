@@ -226,6 +226,7 @@ CREATE TABLE public."TVENTA" (
   "SUBTOTAL" numeric,
   "DELIVERY" numeric,
   "TOTAL" numeric,
+  "MONTO_RECIBIDO" numeric,
   "ESTADO" character varying,
   "CONFACTURA" boolean,
   "COMENTARIO" character varying,

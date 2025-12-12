@@ -10,4 +10,5 @@ class AppConstants {
   static final int TOKEN_EXPIRATION = 4;
   static final String BUCKET_IMAGES = "imagenes";
   static final String UNKNOWN = "UNKNOW";
+  static final double IVA = 0.15; 
 }
