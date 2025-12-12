@@ -22,6 +22,7 @@ class SucursalRemoteDataSource {
     try {
       final result = await SupabaseService.select(
         table: Entities.TSUCURSAL.tableName,
+        filters: {'ESTADO': true},
         orderBy: 'FCREACION',
         ascending: false,
       );
