@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
+import 'package:resturant_funny/core/singleton/singleton_app.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/main/data/datasource/mesa_remote_data_source.dart';
@@ -189,12 +190,49 @@ class _SucursalesPageState extends ConsumerState<SucursalesPage> {
     }
   }
 
+  Future<void> _eliminarSucursal(SucursalEntity sucursal) async {
+    if (sucursal.idSucursal == null) return;
+
+    final appState = ref.read(appStateProvider);
+    appState.setLoading(true);
+    final usuario = SingletonApp.getUser();
+
+    final result = await _sucursalRepository.deleteSucursalEntity(
+      sucursal.idSucursal!,
+      usuario!.idUsuario!.toString(),
+    );
+
+    result.fold(
+      (failure) {
+        appState.setLoading(false);
+        if (!mounted) return;
+
+        SnackHelper.show(
+          context,
+          message: 'Error al eliminar sucursal: ${failure.message}',
+          isError: true,
+        );
+        _cargarSucursales();
+      },
+      (success) {
+        appState.setLoading(false);
+        if (!mounted) return;
+
+        SnackHelper.show(
+          context,
+          message: 'Sucursal eliminada correctamente',
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PantallaBase(
-        onBack: () => Navigator.of(context).pop(),
-        title: widget.titulo,
-        body: contenido());
+      onBack: () => Navigator.of(context).pop(),
+      title: widget.titulo,
+      body: contenido(),
+    );
   }
 
   Widget contenido() {
@@ -248,10 +286,73 @@ class _SucursalesPageState extends ConsumerState<SucursalesPage> {
                       ? (_empleadosPorSucursal[idSucursal] ?? [])
                       : <EmpleadoModel>[];
 
-                  return SucursalCardWidget(
-                    sucursal: sucursal,
-                    mesas: mesas,
-                    empleados: empleados,
+                  return Dismissible(
+                    key: ValueKey('sucursal_${sucursal.idSucursal}_$index'),
+                    direction: DismissDirection.endToStart,
+                    background: Container(),
+                    secondaryBackground: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(Icons.delete, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            'Eliminar',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Eliminar sucursal'),
+                              content: Text(
+                                  '¿Deseas eliminar la sucursal "${sucursal.nombre}"?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: const Text('Eliminar'),
+                                ),
+                              ],
+                            ),
+                          ) ??
+                          false;
+                    },
+                    onDismissed: (direction) {
+                      setState(() {
+                        _sucursales.removeAt(index);
+                        if (idSucursal != null) {
+                          _mesasPorSucursal.remove(idSucursal);
+                          _empleadosPorSucursal.remove(idSucursal);
+                          _loadingPorSucursal.remove(idSucursal);
+                        }
+                      });
+                      _eliminarSucursal(sucursal);
+                    },
+                    child: SucursalCardWidget(
+                      sucursal: sucursal,
+                      mesas: mesas,
+                      empleados: empleados,
+                    ),
                   );
                 },
               ),

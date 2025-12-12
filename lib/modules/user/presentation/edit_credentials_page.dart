@@ -7,6 +7,7 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/user/data/datasource/usuario_data_source.dart';
 import 'package:resturant_funny/modules/user/data/repository/usuario_repository_impl.dart';
+import 'package:resturant_funny/shared/baseApp/pantalla_base.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 
@@ -132,15 +133,18 @@ class _EditCredentialsPageState extends ConsumerState<EditCredentialsPage> {
     }
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
+    return PantallaBase(
+      onBack: () => Navigator.of(context).pop(),
+      title: 'Editar Credenciales',
+      body: contenido(),
+    );
+  }
+
+  Widget contenido()  {
     return Scaffold(
       backgroundColor: ThemeApp.background,
-      appBar: AppBar(
-        title: const Text('Editar credenciales'),
-        backgroundColor: ThemeApp.primary,
-        foregroundColor: ThemeApp.baseText,
-      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
