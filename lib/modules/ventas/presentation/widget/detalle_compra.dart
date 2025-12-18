@@ -168,7 +168,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       initialValue: _costoDelivery > 0 ? _costoDelivery.toString() : null,
       title: 'Costo de Delivery',
       label: 'Costo de Delivery',
-      maxLength: 3,
+      maxLength: 4,
     );
     debugPrint("costo: $costo");
     if (costo != null) {
