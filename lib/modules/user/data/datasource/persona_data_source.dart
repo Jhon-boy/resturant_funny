@@ -60,7 +60,7 @@ class PersonasRemoteDataSource {
         table: Entities.TPERSONA.tableName,
         filters: {
           'IDENTIFICACION': idPersona,
-          'ESTADO': EstadosPersona.ACTIVO.state,
+         // 'ESTADO': EstadosPersona.ACTIVO.state,
         },
       );
       if (result == null) return null;
