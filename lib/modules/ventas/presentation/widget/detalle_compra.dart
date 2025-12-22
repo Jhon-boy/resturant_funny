@@ -758,8 +758,6 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
                   hint: "Selecciona la mesa",
                   items: widget.mesasDisponibles,
                   displayText: (mesa) => "Mesa ${mesa.numero ?? 'N/A'}",
-                  subtitleText: (mesa) =>
-                      "Estado: ${mesa.estado ?? 'Disponible'}",
                   onChanged: (mesa) {
                     setState(() {
                       _mesaSeleccionada = mesa;
