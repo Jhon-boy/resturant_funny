@@ -340,6 +340,7 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
           _buildVentaInfo('Fecha', AppUtils.formatDate(widget.venta.fecha)),
           _buildVentaInfo('Tipo de Venta', widget.venta.tipoVentaFormateado),
           _buildVentaInfo('Estado', widget.venta.estadoFormateado),
+          _buildVentaInfo('Producto', widget.carrito.map((item) => ' ${item.producto.nombre}').join('\n'),),
           _buildVentaInfo(
               'Cantidad Productos', widget.carrito.length.toString()),
           _buildVentaInfo(
