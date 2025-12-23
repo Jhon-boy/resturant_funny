@@ -9,6 +9,7 @@ import 'package:resturant_funny/core/utils/app_util.dart';
 import 'package:resturant_funny/core/utils/formatters.dart';
 import 'package:resturant_funny/core/utils/snack_helper.dart';
 import 'package:resturant_funny/modules/authentication/domain/entity/persona_entity.dart';
+import 'package:resturant_funny/modules/authentication/domain/model/user_model.dart';
 import 'package:resturant_funny/modules/authentication/domain/providers/user_provider.dart';
 import 'package:resturant_funny/modules/user/data/datasource/persona_data_source.dart';
 import 'package:resturant_funny/modules/user/data/repository/persona_repository_impl.dart';
@@ -191,19 +192,7 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
       if (widget.esEdicion) {
         // MODO EDICIÓN - Actualizar persona existente
         final identificacion = _identificacionController.text.trim();
-        final data = PersonaMapper.toUpdateMap(
-          nombres: _nombresController.text,
-          apellidos: _apellidosController.text,
-          fechaNacimiento: _fechaNacimiento,
-          genero: _generoSeleccionado,
-          correo: _correoController.text,
-          telefono: _telefonoController.text,
-          direccion: _direccionController.text,
-          tipoIdentificacion: _tipoIdentificacionSeleccionado,
-          estado: _estadoSeleccionado,
-          userModificacion: user.idUsuario!,
-        );
-
+        final data = _buildUpdatePersona(user);
         final result =
             await _personasRepository.updatePersona(identificacion, data);
 
@@ -239,27 +228,36 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
             _isLoading = false;
             ref.read(appStateProvider).setProcessLoading(false);
           });
-          DialogHelper.error(context,
+          DialogHelper.confirm(context,
               message:
                   'La persona con identificación ${_identificacionController.text} ya existe',
-              dismissible: true,
-              onConfirmed: () {});
+              onConfirm: () async {
+            final persona = _buildUpdatePersona(user);
+            final result = await _personasRepository.updatePersona(
+                _identificacionController.text, persona);
+            result.fold((failure) {
+              setState(() {
+                _isLoading = false;
+                ref.read(appStateProvider).setProcessLoading(false);
+              });
+              DialogHelper.error(context,
+                  message: 'Error al actualizar persona: ${failure.message}',
+                  dismissible: true, onConfirmed: () {
+                Navigator.of(context).pop();
+              });
+            }, (right) {
+              DialogHelper.success(context,
+                  message: 'Persona actualizada exitosamente',
+                  dismissible: true, onConfirmed: () {
+                AppUtils.backToHome();
+              });
+            });
+          }, onCancel: () {});
           return;
         }
 
         // MODO CREACIÓN - Crear nueva persona
-        final persona = PersonaMapper.fromFormData(
-          identificacion: _identificacionController.text,
-          nombres: _nombresController.text,
-          apellidos: _apellidosController.text,
-          fechaNacimiento: _fechaNacimiento,
-          genero: AppUtils.getGenero(_generoSeleccionado ?? 'No especificado'),
-          correo: _correoController.text,
-          telefono: _telefonoController.text,
-          direccion: _direccionController.text,
-          tipoIdentificacion: _tipoIdentificacionSeleccionado,
-          estado: _estadoSeleccionado ?? EstadosPersona.ACTIVO.state,
-        );
+        final persona = createPersona();
         final result = await _personasRepository.createPersona(persona, user);
 
         result.fold(
@@ -299,6 +297,36 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
         isError: true,
       );
     }
+  }
+
+  Map<String, dynamic> _buildUpdatePersona(UserModel user) {
+    return PersonaMapper.toUpdateMap(
+      nombres: _nombresController.text,
+      apellidos: _apellidosController.text,
+      fechaNacimiento: _fechaNacimiento,
+      genero: _generoSeleccionado,
+      correo: _correoController.text,
+      telefono: _telefonoController.text,
+      direccion: _direccionController.text,
+      tipoIdentificacion: _tipoIdentificacionSeleccionado,
+      estado: _estadoSeleccionado,
+      userModificacion: user.idUsuario!,
+    );
+  }
+
+  PersonaEntity createPersona() {
+    return PersonaMapper.fromFormData(
+      identificacion: _identificacionController.text,
+      nombres: _nombresController.text,
+      apellidos: _apellidosController.text,
+      fechaNacimiento: _fechaNacimiento,
+      genero: AppUtils.getGenero(_generoSeleccionado ?? 'No especificado'),
+      correo: _correoController.text,
+      telefono: _telefonoController.text,
+      direccion: _direccionController.text,
+      tipoIdentificacion: _tipoIdentificacionSeleccionado,
+      estado: _estadoSeleccionado ?? EstadosPersona.ACTIVO.state,
+    );
   }
 
   Future<void> _listarPersonas() async {
