@@ -23,6 +23,7 @@ import 'package:resturant_funny/modules/authentication/domain/providers/user_pro
 import 'package:resturant_funny/modules/authentication/domain/repository/auth_repository.dart';
 import 'package:resturant_funny/modules/authentication/domain/repository/sesion_repository.dart';
 import 'package:resturant_funny/modules/authentication/presentation/splash_page.dart';
+import 'package:resturant_funny/modules/sucursales/data/datasource/sucursal_remote_datasource.dart';
 import 'package:resturant_funny/modules/sucursales/presentation/sucursales_lista_page.dart';
 import 'package:resturant_funny/shared/widgets/custom_buttom.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
@@ -117,10 +118,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final rolesResult = await _authRepository.getRolesByUser(user.idUsuario!);
       final roles = rolesResult.getOrElse(() => []);
       ref.read(userProvider.notifier).setUser(user, roles: roles);
+
+      // Obtener nombre de la sucursal desde la base de datos (si aplica)
+      String? sucursalNombre;
+      try {
+        if (user.idSucursal != null) {
+          final sucursalDataSource = SucursalRemoteDataSource(ref: ref);
+          final sucursalEntity =
+              await sucursalDataSource.getSucursalById(user.idSucursal!);
+          sucursalNombre = sucursalEntity?.nombre;
+        }
+      } catch (e) {
+        debugPrint('Error obteniendo sucursal del usuario: $e');
+      }
+
       SingletonApp.setUserData(
         user: user,
         roles: roles,
         rolPrincipal: roles.isNotEmpty ? roles.first.codigo : null,
+        sucursalNombre: sucursalNombre,
       );
 
       await _crearSesion(user);

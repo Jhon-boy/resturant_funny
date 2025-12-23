@@ -9,6 +9,7 @@ class AppDrawer extends StatelessWidget {
   final Function(int) onMainMenuTap;
   final Function(int) onDrawerMenuTap;
   final String? userRole;
+  final String? sucursal;
 
   const AppDrawer({
     super.key,
@@ -16,6 +17,7 @@ class AppDrawer extends StatelessWidget {
     required this.onMainMenuTap,
     required this.onDrawerMenuTap,
     this.userRole,
+    this.sucursal,
   });
 
   @override
@@ -119,14 +121,15 @@ class AppDrawer extends StatelessWidget {
                           color: ThemeApp.primary,
                           fontWeight: FontWeight.w500,
                         ),
-                  )
-                else
-                  Text(
-                    'Usuario sin rol asignado',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: ThemeApp.textSecondary,
-                        ),
                   ),
+                if (sucursal != null)
+                  Text(
+                    'Sucursal: ${sucursal!.toUpperCase()}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: ThemeApp.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  )
               ],
             ),
           ),

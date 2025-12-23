@@ -10,18 +10,21 @@ class SingletonApp {
   String? _nombreUsuario;
   List<RolEntity> _roles = [];
   String? _rolPrincipal;
+  String? _sucursalNombre;
 
   // Métodos para obtener valores
   static UserModel? getUser() => _singleton._user;
   static String? getNombreUsuario() => _singleton._nombreUsuario;
   static List<RolEntity> getRoles() => _singleton._roles;
   static String? getRolPrincipal() => _singleton._rolPrincipal;
+  static String? getSucursalNombre() => _singleton._sucursalNombre;
 
   // Setear datos del usuario
   static void setUserData({
     required UserModel user,
     required List<RolEntity> roles,
     String? rolPrincipal,
+    String? sucursalNombre,
   }) {
     final instance = _singleton;
     instance._user = user;
@@ -34,6 +37,8 @@ class SingletonApp {
     } else {
       instance._rolPrincipal = null;
     }
+
+    instance._sucursalNombre = sucursalNombre;
   }
 
   // Cambiar rol principal
@@ -51,6 +56,7 @@ class SingletonApp {
     instance._nombreUsuario = null;
     instance._roles = [];
     instance._rolPrincipal = null;
+    instance._sucursalNombre = null;
   }
 
   bool tieneRol(String nombreRol) {

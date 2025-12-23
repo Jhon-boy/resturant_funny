@@ -11,6 +11,7 @@ class CompraMapper {
       bool conDelivery,
       bool aplicaIva,
       double total,
+      double montoRecibido,
       String comentario,
       String usuarioIngreso,
       int idMesa,
@@ -20,6 +21,7 @@ class CompraMapper {
         subtotal: subtotal,
         delivery: delivery,
         total: total,
+        montoRecibido: montoRecibido,
         conFactura: conFactura,
         comentario:
             '$comentario | $cliente ${conDelivery ? '| Delivery ($delivery)' : ''}',

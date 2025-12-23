@@ -72,7 +72,7 @@ class VentasRemoteDataSource {
             IDVENTA, IDMESA, CLIENTE, TOTAL, FECHA, ESTADO,
             TPERSONA:CLIENTE (NOMBRES, APELLIDOS),
             TDETALLEVENTA!TDETALLEVENTA_IDVENTA_fkey (
-              IDPRODUCTO, CANTIDAD,
+              IDPRODUCTO, CANTIDAD, PRECIO_UNITARIO, SUBTOTAL,
               TPRODUCTO!TDETALLEVENTA_IDPRODUCTO_fkey (NOMBRE)
             )
           ''').eq('CLIENTE', identificacion);
@@ -238,7 +238,7 @@ class VentasRemoteDataSource {
             IDVENTA, IDMESA, CLIENTE, TOTAL, FECHA, ESTADO,
             TPERSONA:CLIENTE (NOMBRES, APELLIDOS),
             TDETALLEVENTA!TDETALLEVENTA_IDVENTA_fkey (
-              IDPRODUCTO, CANTIDAD,
+              IDPRODUCTO, CANTIDAD, PRECIO_UNITARIO, SUBTOTAL,
               TPRODUCTO!TDETALLEVENTA_IDPRODUCTO_fkey (NOMBRE)
             )
           ''').eq('IDEMPLEADO', idEmpleado);

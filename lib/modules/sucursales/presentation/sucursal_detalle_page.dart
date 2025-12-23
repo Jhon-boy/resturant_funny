@@ -578,21 +578,23 @@ class _SucursalDetallePageState extends ConsumerState<SucursalDetallePage> {
             ),
           )
         else
-          ..._mesas.map((mesa) => MesaMiniWidget(
-                mesa: mesa,
-                onMesaUpdated: (mesaActualizada) {
-                  setState(() {
-                    final index = _mesas
-                        .indexWhere((m) => m.idMesa == mesaActualizada.idMesa);
-                    if (index != -1) {
-                      _mesas[index] = mesaActualizada;
-                    }
-                  });
-                },
-                onMesaDeleted: (mesa) async {
-                  await _eliminarMesa(mesa);
-                },
-              )),
+          ...(_mesas.toList()
+                ..sort((a, b) => (a.numero ?? 0).compareTo(b.numero ?? 0)))
+              .map((mesa) => MesaMiniWidget(
+                    mesa: mesa,
+                    onMesaUpdated: (mesaActualizada) {
+                      setState(() {
+                        final index = _mesas.indexWhere(
+                            (m) => m.idMesa == mesaActualizada.idMesa);
+                        if (index != -1) {
+                          _mesas[index] = mesaActualizada;
+                        }
+                      });
+                    },
+                    onMesaDeleted: (mesa) async {
+                      await _eliminarMesa(mesa);
+                    },
+                  )),
       ],
     );
   }

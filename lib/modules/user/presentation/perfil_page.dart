@@ -159,7 +159,7 @@ class _PerfilStatePage extends ConsumerState<PerfilPage> {
                                   Icons.person, 'Usuario', user.usuario ?? "-"),
                               const SizedBox(height: 10),
                               _infoRow(Icons.email, 'Sucursal',
-                                  user.idSucursal.toString()),
+                                  SingletonApp.getSucursalNombre() ?? "-"),
                               const SizedBox(height: 10),
                               _infoRow(Icons.calendar_month, 'Creado',
                                   AppUtils.formatDate(user.fCreacionUsuario)),

@@ -17,6 +17,8 @@ import 'package:resturant_funny/modules/ventas/presentation/widget/productos_mas
 import 'package:resturant_funny/modules/ventas/presentation/widget/ventas_detail_card.dart';
 import 'package:resturant_funny/modules/ventas/presentation/widget/ventas_recientes.dart';
 import 'package:resturant_funny/modules/ventas/domain/models/venta_card_model.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/producto_mas_vendido_model.dart';
+import 'package:resturant_funny/modules/ventas/domain/services/productos_mas_vendidos_service.dart';
 import 'package:resturant_funny/shared/widgets/dialog_widget.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:resturant_funny/shared/widgets/calendar_widget.dart';
@@ -44,8 +46,10 @@ class _EmpleadoEstadisticasPageState
   List<VentaEntity> _ventasAnteayer = [];
   List<VentaCardModel> _ventasLista = [];
   List<VentaCardModel> _ventasClientes = [];
+  List<ProductoMasVendidoModel> _productosMasVendidos = [];
   int _index = 0;
   late final VentaRepository _ventasRepository;
+  late final ProductosMasVendidosService _productosService;
   DateTime _selectedDate = AppUtils.getFechaActual();
   final TextEditingController _identificacionController =
       TextEditingController();
@@ -56,7 +60,9 @@ class _EmpleadoEstadisticasPageState
   @override
   void initState() {
     super.initState();
-    _ventasRepository = VentaRepositoryImpl(VentasRemoteDataSource(ref: ref));
+    final remote = VentasRemoteDataSource(ref: ref);
+    _ventasRepository = VentaRepositoryImpl(remote);
+    _productosService = ProductosMasVendidosService(remote: remote);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _cargarEstadisticas();
       _index = 0;
@@ -70,6 +76,7 @@ class _EmpleadoEstadisticasPageState
     _ventasLista = [];
     _ventasClientes = [];
     _ventasIdentificador = [];
+    _productosMasVendidos = [];
     setState(() {});
     debugPrint('Datos limpiados');
   }
@@ -160,6 +167,21 @@ class _EmpleadoEstadisticasPageState
           debugPrint('Ventas cargadas: ${cards.length}');
         },
       );
+
+      // Productos más vendidos de los últimos 3 meses para este empleado
+      final fechaHastaTop = diaHasta;
+      final fechaDesdeTop =
+          fechaHastaTop.subtract(const Duration(days: 90)); // ~3 meses
+
+      final listaTop = await _productosService.getProductosMasVendidosEmpleado(
+        idEmpleado: widget.empleado.usuario!.idUsuario,
+        fechaDesde: fechaDesdeTop,
+        fechaHasta: fechaHastaTop,
+      );
+
+      setState(() => _productosMasVendidos = listaTop);
+      debugPrint(
+          'Productos más vendidos (empleado) cargados: ${listaTop.length} registros');
     } catch (e) {
       debugPrint('Error cargando estadísticas: $e');
     } finally {
@@ -327,7 +349,7 @@ class _EmpleadoEstadisticasPageState
                   ventasAnteayer: _ventasAnteayer),
               const SizedBox(height: 5),
               ProductosMasVendidos(
-                ventasHoy: _ventasHoy,
+                productos: _productosMasVendidos,
               ),
             ],
             const SizedBox(height: 5),

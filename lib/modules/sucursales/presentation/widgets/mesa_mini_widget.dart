@@ -64,7 +64,7 @@ class MesaMiniWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Mesa ${mesa.idMesa ?? 'N/A'}',
+                    'Mesa ${mesa.numero ?? 'N/A'}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -94,16 +94,16 @@ class MesaMiniWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Row(
-                    children: [
-                      const Text('Sillas: '),
-                      const SizedBox(width: 4),
-                      Text(mesa.numero.toString()),
-                    ],
-                  )
+                  // const SizedBox(
+                  //   width: 10,
+                  // ),
+                  // Row(
+                  //   children: [
+                  //     const Text('Sillas: '),
+                  //     const SizedBox(width: 4),
+                  //     Text(mesa.numero.toString()),
+                  //   ],
+                  // )
                 ],
               ),
             ),

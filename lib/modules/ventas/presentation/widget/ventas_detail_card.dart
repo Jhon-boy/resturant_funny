@@ -227,20 +227,30 @@ class _VentaDetailCardState extends State<VentaDetailCard> {
     final labelStyle =
         textStyle?.copyWith(color: Colors.grey[600], fontSize: 13);
 
+    final double? montoRecibido = venta.montoRecibido;
+    final double? total = venta.total;
+    final double? cambio = (montoRecibido != null && total != null)
+        ? (montoRecibido - total)
+        : null;
+
     final Map<String, String> info = {
       'Cliente': venta.cliente,
       if (venta.tipoVenta != null) 'Tipo': venta.tipoVentaFormateado,
-      if (venta.subtotal != null) 'Subtotal': venta.subtotalFormateado,
       if (venta.idMesa != 0) 'Mesa': venta.idMesa.toString(),
       if (venta.idEmpleado != 0) 'Empleado': venta.idEmpleado.toString(),
       if (venta.fecha != null) 'Fecha': AppUtils.formatDate(venta.fecha),
       if (venta.delivery != null && venta.delivery! > 0)
-        'Delivery': venta.deliveryFormateado,
-      'Total': venta.totalFormateado,
-      if (venta.conFactura != null)
-        'Con factura': venta.conFactura! ? 'Sí' : 'No',
+        if (venta.conFactura != null)
+          'Con factura': venta.conFactura! ? 'Sí' : 'No',
       if (venta.comentario?.isNotEmpty ?? false)
         'Comentario': venta.comentario!,
+      'Delivery': venta.deliveryFormateado,
+      if (montoRecibido != null && montoRecibido > 0)
+        'Monto recibido': '\$${montoRecibido.toStringAsFixed(2)}',
+      if (cambio != null && cambio > 0)
+        'Cambio': '\$${cambio.toStringAsFixed(2)}',
+      if (venta.subtotal != null) 'Subtotal': venta.subtotalFormateado,
+      'Total': venta.totalFormateado,
     };
 
     return Column(
@@ -256,6 +266,7 @@ class _VentaDetailCardState extends State<VentaDetailCard> {
             child: _buildInfoRow(e.key, e.value, labelStyle, textStyle),
           ),
         ),
+        const Divider(),
         const SizedBox(height: 16),
         if (widget.showInDialog)
           Center(

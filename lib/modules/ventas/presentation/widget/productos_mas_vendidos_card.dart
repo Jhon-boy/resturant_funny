@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:resturant_funny/core/theme_app.dart';
-import 'package:resturant_funny/modules/ventas/domain/entity/venta_entity.dart';
+import 'package:resturant_funny/modules/ventas/domain/models/producto_mas_vendido_model.dart';
 
 class ProductosMasVendidos extends StatelessWidget {
-  final List<VentaEntity> ventasHoy;
+  final List<ProductoMasVendidoModel> productos;
 
   const ProductosMasVendidos({
     super.key,
-    required this.ventasHoy,
+    required this.productos,
   });
 
   @override
   Widget build(BuildContext context) {
-    final productosVendidos = _calcularProductosVendidos();
+    final productosVendidos = [...productos]..sort(
+        (a, b) => b.cantidadVendida.compareTo(a.cantidadVendida),
+      );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,13 +43,14 @@ class ProductosMasVendidos extends StatelessWidget {
               ? const Center(
                   child: Padding(
                     padding: EdgeInsets.all(20.0),
-                    child: Text('No hay productos vendidos hoy'),
+                    child: Text(
+                        'No hay datos de productos vendidos en los últimos meses'),
                   ),
                 )
               : Column(
                   children: productosVendidos.take(3).map((producto) {
                     return Card(
-                      color: ThemeApp.cardColors, 
+                        color: ThemeApp.cardColors,
                         elevation: 3,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -59,9 +62,9 @@ class ProductosMasVendidos extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 5.0, vertical: 3),
                               child: _buildProductItem(
-                                'Producto ${producto['id']}',
-                                '${producto['cantidad']} vendidos',
-                                '\$${producto['ingresos'].toStringAsFixed(2)}',
+                                producto.nombreProducto,
+                                '${producto.cantidadVendida} vendidos',
+                                '\$${producto.ingresosTotales.toStringAsFixed(2)}',
                               ),
                             )
                           ],
@@ -71,23 +74,6 @@ class ProductosMasVendidos extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  List<Map<String, dynamic>> _calcularProductosVendidos() {
-    // Simulación de productos vendidos basado en las ventas
-    // En una implementación real, necesitarías hacer JOIN con TDETALLEVENTA
-    final productos = <Map<String, dynamic>>[];
-
-    for (int i = 1; i <= 5; i++) {
-      productos.add({
-        'id': i,
-        'cantidad': ventasHoy.length + i,
-        'ingresos': (ventasHoy.length + i) * 15.0,
-      });
-    }
-
-    productos.sort((a, b) => b['cantidad'].compareTo(a['cantidad']));
-    return productos;
   }
 
   Widget _buildProductItem(String name, String quantity, String price) {
