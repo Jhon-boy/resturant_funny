@@ -230,7 +230,7 @@ class _CrearPersonaPageState extends ConsumerState<CrearPersonaPage> {
           });
           DialogHelper.confirm(context,
               message:
-                  'La persona con identificación ${_identificacionController.text} ya existe',
+                  'La persona con identificación ${_identificacionController.text} ya existe. ¿Desea actualizar los datos?',
               onConfirm: () async {
             final persona = _buildUpdatePersona(user);
             final result = await _personasRepository.updatePersona(
