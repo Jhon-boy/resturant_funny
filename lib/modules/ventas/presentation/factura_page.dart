@@ -94,11 +94,12 @@ class _FacturaPageState extends ConsumerState<FacturaPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  _buildCarritoSection(),
                   Screenshot(
                     controller: screenshotController,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _buildCarritoSection(),
                         const SizedBox(height: 10),
                         _buildVentaSection(),
                       ],

@@ -6,12 +6,15 @@ class SnackHelper {
     required String message,
     bool isError = false,
     bool isSuccess = false,
+    bool isWarning = false,
   }) {
     final color = isError
         ? Colors.red
         : isSuccess
             ? Colors.green
-            : Colors.blueGrey;
+            : isWarning
+                ? Colors.amber.shade700
+                : Colors.blueGrey;
 
     final snackBar = SnackBar(
       content: Text(message),

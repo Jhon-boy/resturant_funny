@@ -32,6 +32,8 @@ import 'package:resturant_funny/shared/widgets/input_dialog.dart';
 import 'package:resturant_funny/core/theme_app.dart';
 import 'package:resturant_funny/app/providers/provider.dart';
 import 'package:resturant_funny/modules/main/domain/entity/mesa_entity.dart';
+import 'package:resturant_funny/modules/inventario/data/datasource/inventario_data_source.dart';
+import 'package:resturant_funny/modules/main/data/datasource/producto_insumo_datasource.dart';
 import 'package:resturant_funny/shared/enums/metodo_pago.dart';
 
 class DetalleCompra extends ConsumerStatefulWidget {
@@ -59,7 +61,6 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
   bool _conFactura = false;
   bool _conDelivery = false;
   double _costoDelivery = 0.0;
-  PersonaEntity? _clienteSeleccionado;
   MetodoPago _metodoPago = MetodoPago.EFECTIVO;
 
   late final VentaRepository _ventaRepository;
@@ -247,12 +248,6 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       return false;
     }
 
-    if (_mesaSeleccionada == null) {
-      SnackHelper.show(context,
-          message: "Debe seleccionar una mesa para la venta", isError: true);
-      return false;
-    }
-
     if (_subtotal <= 0) {
       SnackHelper.show(context,
           message: "El subtotal debe ser mayor a 0", isError: true);
@@ -279,21 +274,18 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       return false;
     }
 
-    // Validar monto recibido cuando es efectivo
+    // Validar monto recibido solo si el usuario ingresó un valor
     if (_metodoPago == MetodoPago.EFECTIVO) {
-      if (montoRecibidoController.text.trim().isEmpty) {
-        SnackHelper.show(context,
-            message: "Debe ingresar el monto recibido", isError: true);
-        return false;
-      }
-
-      final montoRecibido = _montoRecibido;
-      if (montoRecibido < _total) {
-        SnackHelper.show(context,
-            message:
-                "El monto recibido debe ser mayor o igual al total a pagar",
-            isError: true);
-        return false;
+      final texto = montoRecibidoController.text.trim();
+      if (texto.isNotEmpty) {
+        final montoRecibido = _montoRecibido;
+        if (montoRecibido < _total) {
+          SnackHelper.show(context,
+              message:
+                  "El monto recibido debe ser mayor o igual al total a pagar",
+              isError: true);
+          return false;
+        }
       }
     }
     return true;
@@ -308,16 +300,12 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       context: context,
       titulo: "Seleccionar Cliente",
     );
-    if (cliente == null) {
-      ref.read(appStateProvider).setProcessLoading(false);
-      SnackHelper.show(context,
-          message: 'No se selecciono un cliente', isError: true);
-      return;
-    } else {
-      setState(() {
-        _clienteSeleccionado = cliente;
-      });
-    }
+    final clienteEfectivo = cliente ??
+        PersonaEntity(
+          identificacion: 'CONSUMIDOR_FINAL',
+          nombres: 'Consumidor',
+          apellidos: 'Final',
+        );
     ref.read(appStateProvider).setProcessLoading(true);
     final user = ref.read(userProvider).user;
 
@@ -337,7 +325,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
           '',
       _mesaSeleccionada?.idMesa ?? 0,
       _metodoPago.value,
-      _clienteSeleccionado!.identificacion,
+      clienteEfectivo.identificacion,
     );
 
     final ventaFinalizado = await _ventaRepository.createVenta(venta, user!);
@@ -352,6 +340,7 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       ref.read(appStateProvider).setProcessLoading(false);
 
       if (detallesGuardados) {
+        await _descontarStock(_carrito);
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
               builder: (context) => FacturaPage(
@@ -392,6 +381,46 @@ class DetalleCompraState extends ConsumerState<DetalleCompra> {
       });
     }
     return todosLosDetallesGuardados;
+  }
+
+  Future<void> _descontarStock(List<CartProduct> carrito) async {
+    final insumoDatasource = ProductoInsumoDatasource(ref: ref);
+    final inventarioDatasource = InventarioRemoteDataSource(ref: ref);
+    final List<String> sinInsumos = [];
+
+    for (final item in carrito) {
+      try {
+        final insumos =
+            await insumoDatasource.getByProducto(item.producto.idProducto!);
+        if (insumos.isEmpty) {
+          sinInsumos.add(item.producto.nombre);
+          continue;
+        }
+        for (final insumo in insumos) {
+          if (insumo.idInventario == null || insumo.cantidad == null) continue;
+          final inventario =
+              await inventarioDatasource.getInventarioById(insumo.idInventario!);
+          if (inventario == null) continue;
+          final unidades = item.cantidad * insumo.cantidad!;
+          final nuevoStock =
+              ((inventario.stock ?? 0) - unidades).clamp(0, 999999).toInt();
+          await inventarioDatasource
+              .updateInventario(insumo.idInventario!, {'STOCK': nuevoStock});
+        }
+      } catch (e) {
+        debugPrint(
+            'Error al descontar stock de ${item.producto.nombre}: $e');
+      }
+    }
+
+    if (sinInsumos.isNotEmpty && mounted) {
+      SnackHelper.show(
+        context,
+        message:
+            'Sin insumos configurados: ${sinInsumos.join(', ')}',
+        isWarning: true,
+      );
+    }
   }
 
   @override

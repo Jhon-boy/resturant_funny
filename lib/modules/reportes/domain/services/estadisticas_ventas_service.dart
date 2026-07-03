@@ -231,6 +231,25 @@ class EstadisticasVentasService {
         .map((v) => v.delivery!)
         .fold(0.0, (a, b) => a + b);
 
+    // Desglose por método de pago (usando detallesConProductos que incluye METODOPAGO)
+    final Map<String, ({int count, double monto})> mpMap = {};
+    for (final d in detallesConProductos) {
+      final mp = (d['METODOPAGO'] as String?) ?? 'SIN_ESPECIFICAR';
+      final sub = (d['SUBTOTAL'] as num?)?.toDouble() ?? 0.0;
+      final prev = mpMap[mp];
+      mpMap[mp] = prev == null
+          ? (count: 1, monto: sub)
+          : (count: prev.count + 1, monto: prev.monto + sub);
+    }
+    final ventasPorMetodoPago = mpMap.entries
+        .map((e) => MetodoPagoStats(
+              metodoPago: e.key,
+              totalTransacciones: e.value.count,
+              montoTotal: e.value.monto,
+            ))
+        .toList()
+      ..sort((a, b) => b.montoTotal.compareTo(a.montoTotal));
+
     return EstadisticasVentasCompletas(
       totalVentas: totalVentas,
       montoTotalVendido: montoTotalVendido,
@@ -254,6 +273,7 @@ class EstadisticasVentasService {
       ticketPromedio: ticketPromedio,
       ventasConDelivery: ventasConDelivery,
       montoTotalDelivery: montoTotalDelivery,
+      ventasPorMetodoPago: ventasPorMetodoPago,
     );
   }
 

@@ -92,6 +92,19 @@ class ProductoVentaCount {
   });
 }
 
+/// Modelo para desglose de recaudación por método de pago
+class MetodoPagoStats {
+  final String metodoPago;
+  final int totalTransacciones;
+  final double montoTotal;
+
+  MetodoPagoStats({
+    required this.metodoPago,
+    required this.totalTransacciones,
+    required this.montoTotal,
+  });
+}
+
 /// Modelo completo de estadísticas de ventas
 class EstadisticasVentasCompletas {
   // Estadísticas básicas
@@ -136,6 +149,9 @@ class EstadisticasVentasCompletas {
   final int ventasConDelivery;
   final double montoTotalDelivery;
 
+  // Desglose por método de pago
+  final List<MetodoPagoStats> ventasPorMetodoPago;
+
   EstadisticasVentasCompletas({
     required this.totalVentas,
     required this.montoTotalVendido,
@@ -159,5 +175,6 @@ class EstadisticasVentasCompletas {
     required this.ticketPromedio,
     required this.ventasConDelivery,
     required this.montoTotalDelivery,
+    required this.ventasPorMetodoPago,
   });
 }
